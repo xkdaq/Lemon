@@ -21,7 +21,9 @@ public enum PracticeMode {
     /** 错题重练（M4） */
     WRONG(4, "错题重练"),
     /** 收藏练习（M4） */
-    FAVORITE(5, "收藏练习");
+    FAVORITE(5, "收藏练习"),
+    /** 每日打卡：题目按组卷规则抽取，交卷即完成当天打卡 */
+    PUNCH(6, "每日打卡");
 
     private final int code;
     private final String label;
@@ -33,6 +35,6 @@ public enum PracticeMode {
 
     /** 作答后是否立即判题并公布答案 */
     public boolean judgesImmediately() {
-        return this == PRACTICE || this == WRONG || this == FAVORITE;
+        return this == PRACTICE || this == WRONG || this == FAVORITE || this == PUNCH;
     }
 }

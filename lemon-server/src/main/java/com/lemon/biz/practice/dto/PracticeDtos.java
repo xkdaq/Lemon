@@ -27,10 +27,10 @@ public final class PracticeDtos {
      *
      * @param mode    1 练习 2 背题 3 考试
      * @param restart      true：放弃未完成的会话，重新开始
-     * @param questionType 只练该题型（章节下的“节”）；为空练整章。考试不支持
+     * @param section      只练该小节（如 单选题、论述题、材料分析题）；为空练整章。考试不支持
      */
     public record StartReq(@NotNull Long chapterId, @NotNull @Min(1) @Max(3) Integer mode, Boolean restart,
-                           @Min(1) @Max(4) Integer questionType) {
+                           @Size(max = 32) String section) {
     }
 
     /**
@@ -70,7 +70,7 @@ public final class PracticeDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record SessionVO(
             Long id, Long chapterId, String chapterName, Long bankId, String bankName,
-            int mode, Integer questionType, int status, List<Long> questionIds, int currentIndex,
+            int mode, String section, int status, List<Long> questionIds, int currentIndex,
             int answeredCount, int correctCount, Integer timeLimit, Long remainingSeconds,
             BigDecimal score, Integer totalScore,
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startedAt,

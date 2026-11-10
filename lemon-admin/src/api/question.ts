@@ -26,6 +26,8 @@ export interface QuestionSave {
   score?: number
   difficulty?: number
   source?: string
+  /** 小节，如 论述题、材料分析题；不填按题型分组 */
+  section?: string
   sort?: number
   status?: number
 }

@@ -137,7 +137,7 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
 .tab {
   padding: 12rpx 28rpx;
   border-radius: 999rpx;
-  background: #fff;
+  background: $lemon-surface;
   font-size: 28rpx;
 }
 .tab.active {
@@ -164,7 +164,7 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
   gap: 24rpx;
 }
 .link {
-  color: #b88a00;
+  color: $lemon-primary;
   font-size: 26rpx;
 }
 .practice-btn {
@@ -184,7 +184,7 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
   justify-content: space-between;
   align-items: center;
   padding-bottom: 16rpx;
-  border-bottom: 2rpx solid #f2f3f5;
+  border-bottom: 1px solid $lemon-line;
 }
 .bank-name {
   font-size: 30rpx;
@@ -195,7 +195,7 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
   align-items: center;
   justify-content: space-between;
   padding: 20rpx 0;
-  border-bottom: 2rpx solid #f7f8fa;
+  border-bottom: 1px solid $lemon-line;
 }
 .chapter:last-child {
   border-bottom: none;
@@ -213,6 +213,6 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
   padding: 8rpx 24rpx;
   border-radius: 999rpx;
   background: $lemon-primary-light;
-  color: #b88a00;
+  color: $lemon-primary;
 }
 </style>

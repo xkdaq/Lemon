@@ -36,10 +36,28 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '题库', hidden: true },
   },
   {
+    path: 'content/paper-rules',
+    name: 'paperRules',
+    component: () => import('@/views/content/PaperRuleView.vue'),
+    meta: { title: '组卷规则', icon: 'Tickets', group: '内容' },
+  },
+  {
     path: 'content/questions',
     name: 'questions',
     component: () => import('@/views/content/QuestionView.vue'),
     meta: { title: '题目搜索', icon: 'Search', group: '内容' },
+  },
+  {
+    path: 'operation/punch',
+    name: 'punch',
+    component: () => import('@/views/operation/PunchView.vue'),
+    meta: { title: '打卡活动', icon: 'Calendar', group: '运营' },
+  },
+  {
+    path: 'operation/punch/:id',
+    name: 'punchDetail',
+    component: () => import('@/views/operation/PunchDetailView.vue'),
+    meta: { title: '打卡活动', hidden: true },
   },
   {
     path: 'operation/users',

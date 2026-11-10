@@ -1,10 +1,13 @@
 import { http } from '@/utils/request'
 
-/** 1 练习 2 背题 3 考试 4 错题重练 5 收藏练习 */
-export const Mode = { PRACTICE: 1, RECITE: 2, EXAM: 3, WRONG: 4, FAVORITE: 5 } as const
-export const modeLabel: Record<number, string> = { 1: '练习模式', 2: '背题模式', 3: '考试模式', 4: '错题重练', 5: '收藏练习' }
-/** 错题重练、收藏练习和练习模式一样：即时判题 */
-export const isPracticeLike = (mode: number) => mode === Mode.PRACTICE || mode === Mode.WRONG || mode === Mode.FAVORITE
+/** 1 练习 2 背题 3 考试 4 错题重练 5 收藏练习 6 每日打卡 */
+export const Mode = { PRACTICE: 1, RECITE: 2, EXAM: 3, WRONG: 4, FAVORITE: 5, PUNCH: 6 } as const
+export const modeLabel: Record<number, string> = {
+  1: '练习模式', 2: '背题模式', 3: '考试模式', 4: '错题重练', 5: '收藏练习', 6: '每日打卡',
+}
+/** 错题重练、收藏练习、每日打卡和练习模式一样：即时判题 */
+export const isPracticeLike = (mode: number) =>
+  mode === Mode.PRACTICE || mode === Mode.WRONG || mode === Mode.FAVORITE || mode === Mode.PUNCH
 /** 页面参数里的模式名 → 编码 */
 export const modeByName: Record<string, number> = { practice: 1, recite: 2, exam: 3 }
 
@@ -23,8 +26,8 @@ export interface Session {
   /** 错题重练 / 收藏练习没有章节 */
   chapterId?: number
   chapterName?: string
-  /** 按题型练习时的题型，整章为空 */
-  questionType?: number | null
+  /** 按小节练习时的小节名，整章为空 */
+  section?: string | null
   bankId?: number
   bankName?: string
   mode: number
@@ -77,9 +80,9 @@ export interface Result {
   wrongQuestionIds: number[]
 }
 
-/** questionType：只练该题型（章节下的“节”），不传练整章 */
-export const startSession = (chapterId: number, mode: number, restart = false, questionType?: number) =>
-  http.post<Session>('/sessions', { chapterId, mode, restart, questionType })
+/** section：只练该小节（如 论述题），不传练整章 */
+export const startSession = (chapterId: number, mode: number, restart = false, section?: string) =>
+  http.post<Session>('/sessions', { chapterId, mode, restart, section })
 export const getSession = (id: number) => http.get<Session>(`/sessions/${id}`)
 export const getQuestions = (id: number, ids: number[]) =>
   http.get<QuestionItem[]>(`/sessions/${id}/questions`, { ids: ids.join(',') })

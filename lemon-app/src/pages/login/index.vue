@@ -76,7 +76,7 @@ async function submit() {
   margin: 12rpx 0 56rpx;
 }
 .field {
-  background: #fff;
+  background: $lemon-surface;
   border-radius: 16rpx;
   padding: 24rpx 28rpx;
   margin-bottom: 24rpx;
@@ -90,6 +90,6 @@ async function submit() {
 .switch {
   margin-top: 32rpx;
   text-align: center;
-  color: #b88a00;
+  color: $lemon-primary;
 }
 </style>

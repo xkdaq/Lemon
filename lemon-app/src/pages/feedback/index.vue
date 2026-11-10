@@ -92,7 +92,7 @@ async function submit() {
   height: 240rpx;
   font-size: 28rpx;
   line-height: 1.6;
-  background: #f6f7f9;
+  background: $lemon-bg;
   border-radius: 12rpx;
   padding: 20rpx;
   box-sizing: border-box;
@@ -123,7 +123,7 @@ async function submit() {
 }
 .status {
   margin-left: auto;
-  color: #e37318;
+  color: $lemon-key;
 }
 .status.done {
   color: $lemon-success;
@@ -145,7 +145,7 @@ async function submit() {
   line-height: 1.6;
 }
 .reply-label {
-  color: #b88a00;
+  color: $lemon-primary;
   font-weight: 600;
 }
 </style>

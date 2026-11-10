@@ -21,6 +21,7 @@ import com.lemon.biz.practice.dto.PracticeDtos.SessionVO;
 import com.lemon.biz.practice.dto.PracticeDtos.StartReq;
 import com.lemon.biz.practice.entity.PracticeSession;
 import com.lemon.biz.practice.enums.PracticeMode;
+import com.lemon.biz.practice.event.PracticeFinishedEvent;
 import com.lemon.biz.practice.mapper.PracticeSessionMapper;
 import com.lemon.common.BizException;
 import com.lemon.common.ErrorCode;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
@@ -76,6 +78,7 @@ public class PracticeService {
     private final QuestionBankMapper bankMapper;
     private final AnswerRecorder recorder;
     private final FavoriteService favoriteService;
+    private final ApplicationEventPublisher events;
 
     // ==================== 开始 / 查询 ====================
 
@@ -88,15 +91,15 @@ public class PracticeService {
         BizException.throwIf(bank == null || bank.getStatus() != Status.ON, "题库不存在或已下架");
         BizException.throwIf(mode == PracticeMode.EXAM && BankType.of(bank.getType()) != BankType.PAPER,
                 "只有模拟卷可以考试");
-        Integer qType = req.questionType();
-        BizException.throwIf(mode == PracticeMode.EXAM && qType != null, "考试需要做整套试卷");
+        String section = org.springframework.util.StringUtils.hasText(req.section()) ? req.section().strip() : null;
+        BizException.throwIf(mode == PracticeMode.EXAM && section != null, "考试需要做整套试卷");
 
         PracticeSession existing = sessionMapper.selectOne(Wrappers.<PracticeSession>lambdaQuery()
                 .eq(PracticeSession::getUserId, userId)
                 .eq(PracticeSession::getChapterId, chapter.getId())
                 .eq(PracticeSession::getMode, mode.getCode())
-                .eq(qType != null, PracticeSession::getQuestionType, qType)
-                .isNull(qType == null, PracticeSession::getQuestionType)
+                .eq(section != null, PracticeSession::getSection, section)
+                .isNull(section == null, PracticeSession::getSection)
                 .eq(PracticeSession::getStatus, IN_PROGRESS)
                 .orderByDesc(PracticeSession::getId).last("LIMIT 1"));
         if (existing != null) {
@@ -113,17 +116,17 @@ public class PracticeService {
         List<Long> ids = questionMapper.selectList(Wrappers.<Question>lambdaQuery()
                         .select(Question::getId)
                         .eq(Question::getChapterId, chapter.getId())
-                        .eq(qType != null, Question::getType, qType)
+                        .apply(section != null, QuestionMapper.SECTION_EXPR + " = {0}", section)
                         .eq(Question::getStatus, Status.ON)
                         .orderByAsc(Question::getSort).orderByAsc(Question::getId))
                 .stream().map(Question::getId).toList();
-        BizException.throwIf(ids.isEmpty(), qType != null ? "该章节暂时没有这类题目" : "该章节暂时没有题目");
+        BizException.throwIf(ids.isEmpty(), section != null ? "该章节暂时没有这类题目" : "该章节暂时没有题目");
 
         PracticeSession s = new PracticeSession();
         s.setUserId(userId);
         s.setChapterId(chapter.getId());
         s.setMode(mode.getCode());
-        s.setQuestionType(qType);
+        s.setSection(section);
         s.setStatus(IN_PROGRESS);
         s.setQuestionIds(JsonUtil.toJson(ids));
         s.setAnswers("{}");
@@ -149,6 +152,19 @@ public class PracticeService {
                 .eq(PracticeSession::getUserId, userId)
                 .eq(PracticeSession::getMode, mode.getCode())
                 .eq(PracticeSession::getStatus, IN_PROGRESS));
+        return toVO(createUnbound(userId, mode, questionIds), null, null);
+    }
+
+    /**
+     * 打卡：题目由打卡服务按组卷规则抽好，不绑定章节。打卡记录和会话一一对应，这里不处理旧会话。
+     */
+    @Transactional
+    public SessionVO startPunch(Long userId, List<Long> questionIds) {
+        BizException.throwIf(questionIds.isEmpty(), "题库里暂时没有可抽的题目");
+        return toVO(createUnbound(userId, PracticeMode.PUNCH, questionIds), null, null);
+    }
+
+    private PracticeSession createUnbound(Long userId, PracticeMode mode, List<Long> questionIds) {
         PracticeSession s = new PracticeSession();
         s.setUserId(userId);
         s.setMode(mode.getCode());
@@ -160,7 +176,7 @@ public class PracticeService {
         s.setAnsweredCount(0);
         s.setStartedAt(LocalDateTime.now());
         sessionMapper.insert(s);
-        return toVO(s, null, null);
+        return s;
     }
 
     @Transactional
@@ -318,6 +334,8 @@ public class PracticeService {
         s.setStatus(FINISHED);
         s.setFinishedAt(LocalDateTime.now());
         sessionMapper.updateById(s);
+        events.publishEvent(new PracticeFinishedEvent(s.getId(), s.getUserId(), s.getMode(), questionIds(s).size(),
+                s.getAnsweredCount(), s.getCorrectCount()));
     }
 
     private ResultVO result(PracticeSession s) {
@@ -376,26 +394,26 @@ public class PracticeService {
                         .select(PracticeSession::getChapterId, PracticeSession::getMode)
                         .eq(PracticeSession::getUserId, userId)
                         .eq(PracticeSession::getStatus, IN_PROGRESS)
-                        .isNull(PracticeSession::getQuestionType)
+                        .isNull(PracticeSession::getSection)
                         .in(PracticeSession::getChapterId, chapterIds))
                 .stream().collect(Collectors.groupingBy(PracticeSession::getChapterId,
                         Collectors.mapping(PracticeSession::getMode, Collectors.toSet())));
     }
 
-    /** 这些章节里未完成的按题型练习：章节 id → 题型集合 */
-    public Map<Long, Set<Integer>> typesInProgress(Long userId, List<Long> chapterIds) {
+    /** 这些章节里未完成的按小节练习：章节 id → 小节名集合 */
+    public Map<Long, Set<String>> sectionsInProgress(Long userId, List<Long> chapterIds) {
         if (chapterIds.isEmpty()) {
             return Map.of();
         }
         return sessionMapper.selectList(Wrappers.<PracticeSession>lambdaQuery()
-                        .select(PracticeSession::getChapterId, PracticeSession::getQuestionType)
+                        .select(PracticeSession::getChapterId, PracticeSession::getSection)
                         .eq(PracticeSession::getUserId, userId)
                         .eq(PracticeSession::getStatus, IN_PROGRESS)
                         .eq(PracticeSession::getMode, PracticeMode.PRACTICE.getCode())
-                        .isNotNull(PracticeSession::getQuestionType)
+                        .isNotNull(PracticeSession::getSection)
                         .in(PracticeSession::getChapterId, chapterIds))
                 .stream().collect(Collectors.groupingBy(PracticeSession::getChapterId,
-                        Collectors.mapping(PracticeSession::getQuestionType, Collectors.toSet())));
+                        Collectors.mapping(PracticeSession::getSection, Collectors.toSet())));
     }
 
     /** 这些试卷最近一次考试成绩：章节 id → 分数 */
@@ -463,11 +481,11 @@ public class PracticeService {
         Map<String, Ans> answers = answers(s);
         Long remaining = inProgress ? remainingSeconds(s) : null;
         String chapterName = chapter == null ? null
-                : s.getQuestionType() == null ? chapter.getName()
-                : chapter.getName() + " · " + QuestionType.of(s.getQuestionType()).sectionLabel();
+                : s.getSection() == null ? chapter.getName()
+                : chapter.getName() + " · " + s.getSection();
         return new SessionVO(s.getId(), s.getChapterId(), chapterName,
                 bank == null ? null : bank.getId(), bank == null ? null : bank.getName(),
-                s.getMode(), s.getQuestionType(), s.getStatus(), questionIds(s), s.getCurrentIndex(),
+                s.getMode(), s.getSection(), s.getStatus(), questionIds(s), s.getCurrentIndex(),
                 s.getAnsweredCount(), s.getCorrectCount(), s.getTimeLimit(),
                 remaining == null ? null : Math.max(0, remaining),
                 exam && !inProgress ? s.getScore() : null,

@@ -4,7 +4,7 @@ import type { Chapter } from '@/api/types'
 import { goPractice } from '@/utils/nav'
 import ProgressBar from './ProgressBar.vue'
 
-/** 章节下的“节”：按题型（单选题 / 多选题 / 分析题）展开，每节单独练习 */
+/** 章节下的“节”：按小节（单选题 / 论述题 / 材料分析题 …）展开，每节单独练习 */
 const props = defineProps<{ chapter: Chapter }>()
 const open = ref(false)
 </script>
@@ -23,9 +23,9 @@ const open = ref(false)
     <view v-if="open" class="list">
       <view
         v-for="s in props.chapter.sections"
-        :key="s.type"
+        :key="s.name"
         class="item"
-        @click="goPractice(props.chapter.id, 'practice', s.type)"
+        @click="goPractice(props.chapter.id, 'practice', s.name)"
       >
         <view class="item-head">
           <text class="item-name">{{ s.name }}</text>
@@ -51,7 +51,7 @@ const open = ref(false)
   align-items: center;
   gap: 8rpx;
   font-size: 24rpx;
-  color: #b88a00;
+  color: $lemon-primary;
 }
 .arrow {
   display: inline-block;
@@ -63,11 +63,11 @@ const open = ref(false)
 }
 .list {
   margin-top: 16rpx;
-  border-top: 1rpx solid #f0f1f3;
+  border-top: 1px solid $lemon-line;
 }
 .item {
   padding: 20rpx 0 16rpx;
-  border-bottom: 1rpx solid #f0f1f3;
+  border-bottom: 1px solid $lemon-line;
 }
 .item:last-child {
   border-bottom: none;
@@ -84,6 +84,6 @@ const open = ref(false)
 }
 .item-btn {
   font-size: 24rpx;
-  color: #b88a00;
+  color: $lemon-primary;
 }
 </style>

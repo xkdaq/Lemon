@@ -1,8 +1,19 @@
-/* 全局 SCSS 变量（uni-app 自动注入每个页面） */
-$lemon-primary: #f5b800;
-$lemon-primary-light: #fff8d6;
-$lemon-bg: #f6f7f9;
-$lemon-text: #1f2329;
-$lemon-muted: #8a8f99;
-$lemon-success: #2ba471;
-$lemon-danger: #e34d59;
+/*
+ * 全局 SCSS 变量（uni-app 自动注入每个页面）
+ * 主题：暖纸色 + 赭红强调色；实际色值是 App.vue 里定义的 CSS 变量，随系统深色模式切换
+ */
+$lemon-primary: var(--accent);
+$lemon-primary-light: var(--accent-soft);
+$lemon-bg: var(--bg);
+$lemon-surface: var(--surface);
+$lemon-line: var(--line);
+$lemon-text: var(--text);
+$lemon-muted: var(--muted);
+$lemon-key: var(--key);
+$lemon-success: var(--g2);
+$lemon-warning: var(--g1);
+$lemon-danger: var(--g0);
+$lemon-success-soft: var(--g2-soft);
+$lemon-danger-soft: var(--g0-soft);
+$lemon-shadow: var(--shadow);
+$lemon-radius: 28rpx;

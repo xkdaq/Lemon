@@ -27,12 +27,17 @@ onShow(async () => {
 /** 本科目总进度 */
 const sum = (k: 'questionCount' | 'doneCount' | 'correctCount') => chapters.value.reduce((n, c) => n + c[k], 0)
 const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCount'), correct: sum('correctCount') }))
+const accuracy = computed(() => (total.value.done ? Math.round((total.value.correct / total.value.done) * 100) : 0))
 </script>
 
 <template>
   <view>
+    <view v-if="chapters.length" class="hero">
+      <view class="hero-label">本科目 · {{ chapters.length }} 章</view>
+      <view><text class="hero-num">{{ total.done }}</text><text class="hero-unit">/ {{ total.total }} 题</text></view>
+      <view class="hero-sub">{{ total.done ? `正确率 ${accuracy}%` : '还没开始，从第一章刷起' }} · 展开章节可按题型练习</view>
+    </view>
     <view v-if="chapters.length" class="card">
-      <view class="summary-title">总进度</view>
       <ProgressBar :total="total.total" :done="total.done" :correct="total.correct" />
     </view>
     <view v-for="c in chapters" :key="c.id" class="card">
@@ -43,46 +48,26 @@ const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCoun
       <ChapterSections :chapter="c">
         <template #actions>
           <view class="actions">
-            <text class="btn btn-ghost" @click="goPractice(c.id, 'recite')">背题</text>
-            <text class="btn" @click="goPractice(c.id, 'practice')">{{ c.inProgressModes.includes(1) ? '继续练习' : '练习' }}</text>
+            <text class="btn btn-small" @click="goPractice(c.id, 'recite')">背题</text>
+            <text class="btn btn-small btn-primary" @click="goPractice(c.id, 'practice')">{{ c.inProgressModes.includes(1) ? '继续练习' : '练习' }}</text>
           </view>
         </template>
       </ChapterSections>
     </view>
-    <view v-if="loaded && !chapters.length" class="empty muted">暂无章节</view>
+    <view v-if="loaded && !chapters.length" class="empty">暂无章节</view>
   </view>
 </template>
 
 <style lang="scss" scoped>
 .name {
-  font-size: 30rpx;
-  font-weight: 500;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .progress {
   margin-top: 20rpx;
 }
-.summary-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
 .actions {
   display: flex;
   gap: 16rpx;
-}
-.btn {
-  font-size: 24rpx;
-  padding: 10rpx 28rpx;
-  border-radius: 999rpx;
-  background: $lemon-primary;
-  color: #fff;
-}
-.btn-ghost {
-  background: $lemon-primary-light;
-  color: #b88a00;
-}
-.empty {
-  text-align: center;
-  padding: 120rpx 0;
 }
 </style>

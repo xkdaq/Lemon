@@ -6,14 +6,14 @@ import { formatSeconds } from '@/utils/html'
 
 const result = ref<Result>()
 const firstWrongIndex = ref(-1)
-/** 按题型练习时的题型，再练一次沿用 */
-let questionType: number | null | undefined
+/** 按小节练习时的小节，再练一次沿用 */
+let section: string | null | undefined
 
 onLoad(async (query) => {
   const id = Number(query?.sessionId)
   const [r, s] = await Promise.all([getResult(id), getSession(id)])
   result.value = r
-  questionType = s.questionType
+  section = s.section
   firstWrongIndex.value = r.wrongQuestionIds.length ? s.questionIds.indexOf(r.wrongQuestionIds[0]) : -1
   uni.setNavigationBarTitle({ title: r.mode === Mode.EXAM ? '考试成绩' : `${modeLabel[r.mode].replace('模式', '')}结果` })
 })
@@ -37,8 +37,8 @@ const canRestart = computed(() => !!result.value?.chapterId)
 function again() {
   const r = result.value!
   const mode = r.mode === Mode.EXAM ? 'exam' : 'practice'
-  const type = questionType ? `&type=${questionType}` : ''
-  uni.redirectTo({ url: `/pages/practice/index?chapterId=${r.chapterId}&mode=${mode}&restart=1${type}` })
+  const sec = section ? `&section=${encodeURIComponent(section)}` : ''
+  uni.redirectTo({ url: `/pages/practice/index?chapterId=${r.chapterId}&mode=${mode}&restart=1${sec}` })
 }
 
 function back() {
@@ -77,6 +77,7 @@ function back() {
     </view>
     <view v-if="result.wrongQuestionIds.length" class="muted foot">答错的题已自动加入错题集</view>
     <view v-else-if="result.mode === Mode.WRONG && result.correct" class="muted foot">连续答对达到设定次数的题会自动移出错题集</view>
+    <view v-else-if="result.mode === Mode.PUNCH" class="muted foot">打卡已完成，返回活动页可查看打卡日历</view>
   </view>
 </template>
 
@@ -127,7 +128,7 @@ function back() {
   margin-bottom: 20rpx;
   border-radius: 999rpx;
   font-size: 30rpx;
-  background: #fff;
+  background: $lemon-surface;
   color: $lemon-text;
 }
 .btn.primary {

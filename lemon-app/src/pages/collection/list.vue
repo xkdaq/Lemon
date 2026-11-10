@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { confirmModal } from '@/utils/modal'
 import { ref } from 'vue'
 import { onLoad, onReachBottom, onShow } from '@dcloudio/uni-app'
 import { getList, removeWrong, type CollectedQuestion, type Kind, type Scope } from '@/api/collection'
@@ -52,7 +53,7 @@ function open(item: CollectedQuestion) {
 }
 
 async function remove(item: CollectedQuestion) {
-  const { confirm } = await uni.showModal({
+  const { confirm } = await confirmModal({
     title: kind.value === 'favorite' ? '取消收藏？' : '移出错题集？',
     content: item.stemText.slice(0, 40),
   })
@@ -108,7 +109,7 @@ function startAll() {
   padding: 24rpx 32rpx 0;
 }
 .start {
-  color: #b88a00;
+  color: $lemon-primary;
   font-size: 28rpx;
 }
 .item.unavailable {
@@ -122,8 +123,8 @@ function startAll() {
 }
 .type {
   font-size: 22rpx;
-  color: #3a7bd5;
-  background: #e8f3ff;
+  color: $lemon-primary;
+  background: $lemon-primary-light;
   padding: 2rpx 12rpx;
   border-radius: 6rpx;
   flex-shrink: 0;

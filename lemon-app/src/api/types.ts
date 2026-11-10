@@ -52,18 +52,17 @@ export interface Chapter {
   inProgressModes: number[]
   /** 试卷最近一次考试得分 */
   lastScore?: number | null
-  /** 章节下的“节”：按题型分组（单选题 / 多选题 / 分析题） */
+  /** 章节下的“节”：按小节分组（如 单选题 / 论述题 / 材料分析题） */
   sections: ChapterSection[]
 }
 
 export interface ChapterSection {
-  /** 题型：1 单选 2 多选 3 判断 4 主观（分析题） */
-  type: number
+  /** 小节名，也是按小节练习时的标识 */
   name: string
   questionCount: number
   doneCount: number
   correctCount: number
-  /** 有未完成的该题型练习 */
+  /** 有未完成的该小节练习 */
   inProgress: boolean
 }
 

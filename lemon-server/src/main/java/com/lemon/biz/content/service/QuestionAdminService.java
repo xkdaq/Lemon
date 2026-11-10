@@ -172,6 +172,7 @@ public class QuestionAdminService {
         q.setScore(Objects.requireNonNullElse(req.score(), BigDecimal.ZERO));
         q.setDifficulty(Objects.requireNonNullElse(req.difficulty(), DEFAULT_DIFFICULTY));
         q.setSource(req.source());
+        q.setSection(StringUtils.hasText(req.section()) ? req.section().strip() : null);
         if (req.sort() != null) {
             q.setSort(req.sort());
         }

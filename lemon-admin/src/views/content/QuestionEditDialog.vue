@@ -40,6 +40,8 @@ const form = reactive({
   score: 0,
   difficulty: 2,
   source: '',
+  /** 小节：连续录入时保留，方便同一小节连着录 */
+  section: '',
   status: 1,
 })
 
@@ -56,7 +58,7 @@ function open(id?: number, defaults?: { chapterId?: number; type?: number }) {
   editingId.value = id ?? null
   keepCreating.value = false
   resetContent()
-  Object.assign(form, { score: 0, difficulty: 2, status: 1, type: defaults?.type ?? QuestionType.SINGLE, chapterId: defaults?.chapterId })
+  Object.assign(form, { score: 0, difficulty: 2, status: 1, section: '', type: defaults?.type ?? QuestionType.SINGLE, chapterId: defaults?.chapterId })
   visible.value = true
   if (id) {
     load(id)
@@ -80,6 +82,7 @@ async function load(id: number) {
       score: Number(q.score ?? 0),
       difficulty: q.difficulty ?? 2,
       source: q.source ?? '',
+      section: q.section ?? '',
       status: q.status,
     })
   } finally {
@@ -151,6 +154,7 @@ function payload(): api.QuestionSave {
     score: form.score,
     difficulty: form.difficulty,
     source: form.source.trim() || undefined,
+    section: form.section.trim() || undefined,
     status: form.status,
   }
 }
@@ -200,6 +204,10 @@ defineExpose({ open })
         <el-radio-group v-model="form.type" @change="(v) => onTypeChange(Number(v))">
           <el-radio-button v-for="(label, code) in questionTypeLabel" :key="code" :value="Number(code)">{{ label }}</el-radio-button>
         </el-radio-group>
+      </el-form-item>
+      <el-form-item label="小节">
+        <el-input v-model="form.section" maxlength="32" placeholder="选填，如：论述题、材料分析题；不填按题型分组" style="width: 360px" />
+        <span class="tip">用户端在章节 / 试卷下按小节分组练习</span>
       </el-form-item>
       <el-form-item label="题干" required>
         <RichEditor v-model="form.stem" placeholder="输入题干，可粘贴图片；材料题的材料可用“引用”格式" :min-height="100" />

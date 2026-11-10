@@ -9,24 +9,26 @@
     { "path": "pages/favorite/index", "style": { "navigationBarTitleText": "收藏集", "enablePullDownRefresh": true } },
     { "path": "pages/wrong/index", "style": { "navigationBarTitleText": "错题集", "enablePullDownRefresh": true } },
     { "path": "pages/collection/list", "style": { "navigationBarTitleText": "题目列表" } },
+    { "path": "pages/punch/list", "style": { "navigationBarTitleText": "每日打卡", "enablePullDownRefresh": true } },
+    { "path": "pages/punch/detail", "style": { "navigationBarTitleText": "打卡" } },
     { "path": "pages/feedback/index", "style": { "navigationBarTitleText": "意见反馈" } },
     { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
     { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "black",
+    "navigationBarTextStyle": "@navTxtStyle",
     "navigationBarTitleText": "Lemon 刷题",
-    "navigationBarBackgroundColor": "#FFFFFF",
-    "backgroundColor": "#F6F7F9",
+    "navigationBarBackgroundColor": "@navBgColor",
+    "backgroundColor": "@bgColor",
     "maxWidth": 750,
     "rpxCalcMaxDeviceWidth": 750,
     "rpxCalcBaseDeviceWidth": 375
   },
   "tabBar": {
-    "color": "#8A8F99",
-    "selectedColor": "#F5B800",
-    "backgroundColor": "#FFFFFF",
-    "borderStyle": "white",
+    "color": "@tabColor",
+    "selectedColor": "@tabSelectedColor",
+    "backgroundColor": "@tabBgColor",
+    "borderStyle": "@tabBorderStyle",
     "list": [
       { "pagePath": "pages/index/index", "text": "首页" },
       { "pagePath": "pages/mine/index", "text": "我的" }

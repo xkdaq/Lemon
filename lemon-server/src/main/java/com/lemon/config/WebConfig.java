@@ -23,6 +23,7 @@ public class WebConfig implements WebMvcConfigurer {
             "/api/app/home",
             "/api/app/modules/**",
             "/api/app/banks/**",
+            "/api/app/punch-camps/**",
     };
 
     @Value("${lemon.cors.allowed-origins:*}")

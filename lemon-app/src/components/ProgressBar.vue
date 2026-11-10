@@ -3,9 +3,9 @@ import { computed } from 'vue'
 
 /**
  * 三色进度条：
- * - 灰色底：总题数
- * - 黄色：已刷题数
- * - 绿色：答对题数（叠在已刷之上，绿色占黄色的比例就是正确率）
+ * - 底色：总题数
+ * - 浅色：已刷题数
+ * - 深色：答对题数（叠在已刷之上，深色占浅色的比例就是正确率）
  */
 const props = withDefaults(defineProps<{ total: number; done: number; correct: number; small?: boolean; showText?: boolean }>(), {
   small: false,
@@ -33,14 +33,14 @@ const accuracy = computed(() => (props.done > 0 ? Math.round((props.correct / pr
 </template>
 
 <style lang="scss" scoped>
-$track: #eceef2;
-$done: #ffd666;
-$correct: $lemon-success;
+$track: $lemon-line;
+$done: var(--done-color);
+$correct: $lemon-primary;
 
 .track {
   position: relative;
-  height: 14rpx;
-  border-radius: 14rpx;
+  height: 16rpx;
+  border-radius: 8rpx;
   background: $track;
   overflow: hidden;
 }
@@ -86,7 +86,7 @@ $correct: $lemon-success;
 }
 .dot-total {
   background: $track;
-  box-shadow: inset 0 0 0 1rpx #d5d8de;
+  box-shadow: inset 0 0 0 1px $lemon-muted;
 }
 .dot-done {
   background: $done;

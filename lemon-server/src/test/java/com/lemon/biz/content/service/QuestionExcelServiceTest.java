@@ -69,4 +69,13 @@ class QuestionExcelServiceTest {
         assertThat(QuestionExcelService.toHtml("a<b\n第二行")).isEqualTo("<p>a&lt;b</p><p>第二行</p>");
         assertThat(QuestionExcelService.toHtml("  ")).isNull();
     }
+
+    @Test
+    void sectionOf_keepsNamesAndNormalizesGenericChoice() {
+        assertThat(QuestionExcelService.sectionOf(4, "论述题")).isEqualTo("论述题");
+        assertThat(QuestionExcelService.sectionOf(4, " 材料分析题 ")).isEqualTo("材料分析题");
+        assertThat(QuestionExcelService.sectionOf(1, "选择题")).isEqualTo("单选题");
+        assertThat(QuestionExcelService.sectionOf(2, "选择题")).isEqualTo("多选题");
+        assertThat(QuestionExcelService.sectionOf(1, "")).isNull();
+    }
 }

@@ -52,24 +52,25 @@ function openBank(b: QuestionBank) {
       <view
         v-for="t in tabs"
         :key="t.id"
-        class="tab"
-        :class="{ 'tab-active': t.id === active }"
+        class="chip"
+        :class="{ 'chip-on': t.id === active }"
         @click="switchTab(t.id)"
       >
         {{ t.name }}
       </view>
     </scroll-view>
-    <view v-for="b in banks" :key="b.id" class="card bank" @click="openBank(b)">
-      <view class="bank-head">
-        <text class="bank-name">{{ b.name }}</text>
-        <text class="tag" :class="b.type === BankType.PAPER ? 'tag-paper' : ''">
-          {{ b.type === BankType.PAPER ? '模拟卷' : '章节练习' }}
-        </text>
+    <view v-if="banks.length" class="card list-card">
+      <view v-for="b in banks" :key="b.id" class="list-row" @click="openBank(b)">
+        <view class="bank-main">
+          <view class="bank-name">{{ b.name }}</view>
+          <view class="muted">
+            {{ b.type === BankType.PAPER ? '模拟卷' : '章节练习' }} · 共 {{ b.questionCount }} 题<text v-if="b.intro"> · {{ b.intro }}</text>
+          </view>
+        </view>
+        <text class="row-arrow">›</text>
       </view>
-      <view v-if="b.intro" class="muted intro">{{ b.intro }}</view>
-      <view class="muted">共 {{ b.questionCount }} 题</view>
     </view>
-    <view v-if="loaded && !banks.length" class="empty muted">暂无题库，敬请期待</view>
+    <view v-if="loaded && !banks.length" class="empty">暂无题库，敬请期待</view>
   </view>
 </template>
 
@@ -79,50 +80,32 @@ function openBank(b: QuestionBank) {
   top: 0;
   z-index: 10;
   white-space: nowrap;
-  padding: 20rpx 24rpx 12rpx;
+  padding: 24rpx 32rpx 8rpx;
   background: $lemon-bg;
   box-sizing: border-box;
 }
-.tab {
+.chip {
   display: inline-block;
-  margin-right: 16rpx;
-  padding: 12rpx 28rpx;
-  border-radius: 999rpx;
-  font-size: 28rpx;
-  color: #555;
-  background: #fff;
+  margin-right: 12rpx;
+  padding: 6rpx 28rpx;
+  border-radius: 99rpx;
+  border: 1px solid $lemon-line;
+  background: $lemon-surface;
+  color: $lemon-muted;
+  font-size: 26rpx;
 }
-.tab-active {
-  color: $lemon-text;
-  background: $lemon-primary;
+.chip-on {
+  background: $lemon-primary-light;
+  border-color: $lemon-primary;
+  color: $lemon-primary;
   font-weight: 600;
 }
-.bank-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12rpx;
+.bank-main {
+  flex: 1;
+  min-width: 0;
 }
 .bank-name {
   font-size: 32rpx;
   font-weight: 600;
-}
-.tag {
-  font-size: 22rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  background: #e8f3ff;
-  color: #3a7bd5;
-}
-.tag-paper {
-  background: #fff1e8;
-  color: #e37318;
-}
-.intro {
-  margin-bottom: 8rpx;
-}
-.empty {
-  text-align: center;
-  padding: 120rpx 0;
 }
 </style>

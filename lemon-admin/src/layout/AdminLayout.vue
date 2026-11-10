@@ -22,7 +22,9 @@ const menuGroups = computed(() => {
   }
   return groups
 })
-const activeMenu = computed(() => (route.name === 'bankDetail' ? '/content/banks' : route.path))
+const activeMenu = computed(() =>
+  route.name === 'bankDetail' ? '/content/banks' : route.name === 'punchDetail' ? '/operation/punch' : route.path,
+)
 const roleText = computed(() => (userStore.isSuperAdmin ? '超级管理员' : '录题员'))
 
 async function handleLogout() {

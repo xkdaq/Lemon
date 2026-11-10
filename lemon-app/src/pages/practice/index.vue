@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { confirmModal } from '@/utils/modal'
 import { computed, reactive, ref } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import * as api from '@/api/practice'
@@ -80,17 +81,17 @@ async function init() {
       })
     } else {
       const m = modeByName[query?.mode ?? 'practice'] ?? Mode.PRACTICE
-      const type = query?.type ? Number(query.type) : undefined
-      s = await api.startSession(Number(query?.chapterId), m, query?.restart === '1', type)
+      const section = query?.section ? decodeURIComponent(query.section) : undefined
+      s = await api.startSession(Number(query?.chapterId), m, query?.restart === '1', section)
       if (s.status === 0 && (s.answeredCount > 0 || s.currentIndex > 0) && query?.restart !== '1') {
-        const { confirm } = await uni.showModal({
+        const { confirm } = await confirmModal({
           title: '继续上次进度？',
           content: `上次做到第 ${s.currentIndex + 1} 题，已答 ${s.answeredCount} 题`,
           confirmText: '继续',
           cancelText: '重新开始',
         })
         if (!confirm) {
-          s = await api.startSession(s.chapterId!, s.mode, true, s.questionType ?? undefined)
+          s = await api.startSession(s.chapterId!, s.mode, true, s.section ?? undefined)
         }
       }
     }
@@ -274,7 +275,7 @@ async function finish() {
   }
   const unanswered = s.questionIds.length - Object.keys(s.answers).length
   if (mode.value !== Mode.RECITE) {
-    const { confirm } = await uni.showModal({
+    const { confirm } = await confirmModal({
       title: mode.value === Mode.EXAM ? '确认交卷？' : '结束练习？',
       content: unanswered > 0 ? `还有 ${unanswered} 题未作答` : '已全部作答',
       confirmText: mode.value === Mode.EXAM ? '交卷' : '结束',
@@ -473,23 +474,23 @@ function onTouchEnd(e: TouchEvent) {
   align-items: center;
   gap: 16rpx;
   padding: 20rpx 28rpx;
-  background: #fff;
+  background: $lemon-surface;
   font-size: 26rpx;
 }
 .mode-tag {
   padding: 4rpx 14rpx;
   border-radius: 8rpx;
   background: $lemon-primary-light;
-  color: #b88a00;
+  color: $lemon-primary;
   font-size: 22rpx;
 }
 .mode-tag.mode-3 {
-  background: #fff1e8;
-  color: #e37318;
+  background: $lemon-bg;
+  color: $lemon-key;
 }
 .mode-tag.mode-2 {
-  background: #e8f3ff;
-  color: #3a7bd5;
+  background: $lemon-primary-light;
+  color: $lemon-primary;
 }
 .progress {
   margin-left: auto;
@@ -512,8 +513,8 @@ function onTouchEnd(e: TouchEvent) {
 }
 .q-type {
   font-size: 24rpx;
-  color: #3a7bd5;
-  background: #e8f3ff;
+  color: $lemon-primary;
+  background: $lemon-primary-light;
   padding: 2rpx 12rpx;
   border-radius: 6rpx;
 }
@@ -530,7 +531,7 @@ function onTouchEnd(e: TouchEvent) {
   gap: 20rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
-  border: 2rpx solid #eceef2;
+  border: 1px solid $lemon-line;
   border-radius: 16rpx;
   font-size: 30rpx;
   line-height: 1.5;
@@ -542,7 +543,7 @@ function onTouchEnd(e: TouchEvent) {
   line-height: 48rpx;
   text-align: center;
   border-radius: 50%;
-  background: #f2f3f5;
+  background: $lemon-line;
   font-weight: 600;
   font-size: 26rpx;
 }
@@ -556,7 +557,7 @@ function onTouchEnd(e: TouchEvent) {
 }
 .option.is-correct {
   border-color: $lemon-success;
-  background: #eaf7f1;
+  background: $lemon-success-soft;
 }
 .option.is-correct .option-key {
   background: $lemon-success;
@@ -564,7 +565,7 @@ function onTouchEnd(e: TouchEvent) {
 }
 .option.is-wrong {
   border-color: $lemon-danger;
-  background: #fdecee;
+  background: $lemon-danger-soft;
 }
 .option.is-wrong .option-key {
   background: $lemon-danger;
@@ -579,12 +580,12 @@ function onTouchEnd(e: TouchEvent) {
 }
 .primary-btn.ghost {
   background: $lemon-primary-light;
-  color: #b88a00;
+  color: $lemon-primary;
 }
 .tip {
   margin-top: 24rpx;
   padding: 20rpx;
-  background: #f6f7f9;
+  background: $lemon-bg;
   border-radius: 12rpx;
   color: $lemon-muted;
   font-size: 26rpx;
@@ -592,7 +593,7 @@ function onTouchEnd(e: TouchEvent) {
 .analysis {
   margin-top: 32rpx;
   padding-top: 24rpx;
-  border-top: 2rpx dashed #e5e6eb;
+  border-top: 1px dashed $lemon-line;
   font-size: 28rpx;
   line-height: 1.7;
 }
@@ -654,7 +655,7 @@ function onTouchEnd(e: TouchEvent) {
   align-items: center;
   gap: 16rpx;
   padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: #fff;
+  background: $lemon-surface;
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
   z-index: 10;
@@ -679,7 +680,7 @@ function onTouchEnd(e: TouchEvent) {
   margin: 0;
   font-size: 28rpx;
   border-radius: 999rpx;
-  background: #f2f3f5;
+  background: $lemon-line;
   color: $lemon-text;
 }
 .nav-btn.primary {
@@ -698,7 +699,7 @@ function onTouchEnd(e: TouchEvent) {
 .sheet {
   width: 100%;
   max-width: 750px;
-  background: #fff;
+  background: $lemon-surface;
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
@@ -723,7 +724,7 @@ function onTouchEnd(e: TouchEvent) {
   width: 20rpx;
   height: 20rpx;
   border-radius: 6rpx;
-  background: #f2f3f5;
+  background: $lemon-line;
   margin-left: 16rpx;
 }
 .grid-scroll {
@@ -740,7 +741,7 @@ function onTouchEnd(e: TouchEvent) {
   line-height: 72rpx;
   text-align: center;
   border-radius: 12rpx;
-  background: #f2f3f5;
+  background: $lemon-line;
   font-size: 26rpx;
 }
 .cell.is-current,
@@ -759,7 +760,7 @@ function onTouchEnd(e: TouchEvent) {
 }
 .is-answered.cell,
 .dot.is-answered {
-  background: #3a7bd5;
+  background: $lemon-primary;
   color: #fff;
 }
 </style>

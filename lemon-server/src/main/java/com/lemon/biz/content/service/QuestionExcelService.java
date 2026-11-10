@@ -72,6 +72,7 @@ public class QuestionExcelService {
     static final String H_SCORE = "分值";
     static final String H_DIFFICULTY = "难度";
     static final String H_SOURCE = "来源";
+    static final String H_SECTION = "小节";
 
     private static final Map<String, Integer> TYPE_ALIASES = Map.ofEntries(
             Map.entry("单选", 1), Map.entry("单选题", 1), Map.entry("1", 1),
@@ -139,13 +140,13 @@ public class QuestionExcelService {
             Sheet sheet = writeHeader(wb, "题目");
             String[][] samples = {
                     {"马原", "第一章 世界的物质性", "单选", "物质的唯一特性是", "客观实在性", "运动", "可知性", "绝对性",
-                            "", "", "", "", "A", "物质的唯一特性是客观实在性。", "1", "简单", "2023 真题"},
+                            "", "", "", "", "A", "物质的唯一特性是客观实在性。", "1", "简单", "2023 真题", "单选题"},
                     {"马原", "第一章 世界的物质性", "多选", "下列属于意识能动作用的有", "目的性", "创造性", "指导实践", "无条件性",
                             "", "", "", "", "ABC", "", "2", "中等", ""},
                     {"马原", "第一章 世界的物质性", "判断", "运动是物质的根本属性。", "", "", "", "",
                             "", "", "", "", "对", "", "", "", ""},
                     {"马原", "第二章 实践与认识", "主观", "论述实践与认识的辩证关系。", "", "", "", "",
-                            "", "", "", "", "", "（1）实践决定认识……\n（2）认识反作用于实践……", "10", "困难", ""},
+                            "", "", "", "", "", "（1）实践决定认识……\n（2）认识反作用于实践……", "10", "困难", "", "论述题"},
             };
             for (int i = 0; i < samples.length; i++) {
                 Row row = sheet.createRow(i + 1);
@@ -167,7 +168,8 @@ public class QuestionExcelService {
                     "7. 科目 / 章节：导入时如果在页面上选了章节，这两列会被忽略；",
                     "   否则科目型题库要填“科目”和“章节”，试卷型题库只看“章节”（即试卷名，“科目”列忽略），不存在的会自动创建；",
                     "   自动创建的试卷总分为导入题目分值之和，考试时长默认 180 分钟，可在后台修改。",
-                    "8. 一次最多 " + MAX_ROWS + " 题。只要有一行出错，整份文件都不会导入，请按提示改好后重新上传。",
+                    "8. 小节：章节 / 试卷下的分组，如“论述题”“材料分析题”，用户端可以按小节单独练习；不填则按题型（单选题 / 多选题 / 判断题 / 分析题）分组。题库导出的“二级目录”会当作小节。",
+                    "9. 一次最多 " + MAX_ROWS + " 题。只要有一行出错，整份文件都不会导入，请按提示改好后重新上传。",
             };
             for (int i = 0; i < lines.length; i++) {
                 help.createRow(i).createCell(0).setCellValue(lines[i]);
@@ -227,7 +229,8 @@ public class QuestionExcelService {
         row.createCell(c++).setCellValue(q.getScore() == null ? "" : q.getScore().stripTrailingZeros().toPlainString());
         int d = q.getDifficulty() == null ? 2 : q.getDifficulty();
         row.createCell(c++).setCellValue(d >= 1 && d <= 3 ? DIFFICULTY_LABELS[d] : "");
-        row.createCell(c).setCellValue(Objects.toString(q.getSource(), ""));
+        row.createCell(c++).setCellValue(Objects.toString(q.getSource(), ""));
+        row.createCell(c).setCellValue(Objects.toString(q.getSection(), ""));
         row.createCell(extraCol).setCellValue(q.getId());
         row.createCell(extraCol + 1).setCellValue(Objects.toString(q.getBankName(), ""));
         row.createCell(extraCol + 2).setCellValue(q.getStatus() != null && q.getStatus() == Status.ON ? "上架" : "下架");
@@ -351,7 +354,7 @@ public class QuestionExcelService {
             Long target = chapterId != null ? chapterId : resolver.resolve(p.courseName(), p.chapterName());
             QuestionSave s = p.save();
             return new QuestionSave(target, s.type(), s.stem(), s.options(), s.answer(), s.analysis(),
-                    s.score(), s.difficulty(), s.source(), null, Status.ON);
+                    s.score(), s.difficulty(), s.source(), null, Status.ON, s.section());
         }).toList();
         int imported = questionAdminService.createBatch(saves);
         if (!courseBank) {
@@ -464,8 +467,21 @@ public class QuestionExcelService {
 
         QuestionSave save = new QuestionSave(null, type, stemHtml, options, answer,
                 analysisHtml, parseScore(cell.get(H_SCORE)), parseDifficulty(cell.get(H_DIFFICULTY)),
-                StringUtils.hasText(cell.get(H_SOURCE)) ? truncate(cell.get(H_SOURCE), 64) : null, null, Status.ON);
+                StringUtils.hasText(cell.get(H_SOURCE)) ? truncate(cell.get(H_SOURCE), 64) : null, null, Status.ON,
+                sectionOf(type, cell.get(H_SECTION)));
         return new ParsedRow(excelRow, courseName, chapterName, save);
+    }
+
+    /** 小节：不填为 null（按题型分组）；客观题的笼统写法“选择题”换成具体题型，避免同一题库里“选择题”“单选题”混用 */
+    static String sectionOf(int type, String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String section = truncate(raw.strip(), 32);
+        if ("选择题".equals(section) && QuestionType.of(type).isAutoJudge()) {
+            return QuestionType.of(type).getLabel();
+        }
+        return section;
     }
 
     private static BigDecimal parseScore(String raw) {
@@ -503,7 +519,7 @@ public class QuestionExcelService {
     /** 常见的其他表头写法 → 模板表头（题库供应商导出的文件常用“题目”“分数”） */
     private static final Map<String, String> HEADER_ALIASES = Map.of(
             "题目", H_STEM, "题目内容", H_STEM, "分数", H_SCORE, "正确答案", H_ANSWER, "答案解析", H_ANALYSIS,
-            "一级目录", H_CHAPTER);
+            "一级目录", H_CHAPTER, "二级目录", H_SECTION, "节", H_SECTION);
 
     /** 表头名 → 列下标；表头里的空格忽略；模板表头不存在时接受别名 */
     private static Map<String, Integer> readHeader(Row header, DataFormatter fmt) {
@@ -592,7 +608,7 @@ public class QuestionExcelService {
         for (int i = 0; i < OPTION_COUNT; i++) {
             headers.add("选项" + (char) ('A' + i));
         }
-        headers.addAll(List.of(H_ANSWER, H_ANALYSIS, H_SCORE, H_DIFFICULTY, H_SOURCE));
+        headers.addAll(List.of(H_ANSWER, H_ANALYSIS, H_SCORE, H_DIFFICULTY, H_SOURCE, H_SECTION));
 
         CellStyle style = wb.createCellStyle();
         Font bold = wb.createFont();

@@ -25,8 +25,8 @@ public class PracticeSession extends BaseEntity {
     /** 1 练习 2 背题 3 考试 4 错题重练 5 收藏练习 */
     private Integer mode;
 
-    /** 按题型练习时的题型（章节下的“节”），null 为整章 */
-    private Integer questionType;
+    /** 按小节练习时的小节名（如 论述题、材料分析题），null 为整章 */
+    private String section;
 
     /** 0 进行中 1 已完成 2 已放弃（重新开始时） */
     private Integer status;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { confirmModal } from '@/utils/modal'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import * as authApi from '@/api/auth'
@@ -24,7 +25,7 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
 const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
 
 async function logout() {
-  const { confirm } = await uni.showModal({ title: '退出登录？' })
+  const { confirm } = await confirmModal({ title: '退出登录？' })
   if (!confirm) return
   await authApi.logout().catch(() => undefined)
   removeToken()
@@ -36,7 +37,7 @@ async function logout() {
 <template>
   <view>
     <view class="card profile" @click="!user && goLogin()">
-      <view class="avatar">{{ user?.nickname?.slice(0, 1) ?? '🍋' }}</view>
+      <view class="avatar">{{ user?.nickname?.slice(0, 1) ?? '柠' }}</view>
       <view>
         <view class="nickname">{{ user?.nickname ?? '点击登录' }}</view>
         <view class="muted">{{ user ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '登录后同步做题记录' }}</view>
@@ -67,9 +68,9 @@ async function logout() {
       </view>
     </view>
 
-    <view class="card menu">
-      <view class="menu-item" @click="go('/pages/feedback/index')">
-        <text>意见反馈</text><text class="muted">›</text>
+    <view class="card list-card">
+      <view class="list-row" @click="go('/pages/feedback/index')">
+        <text class="menu-text">意见反馈</text><text class="row-arrow">›</text>
       </view>
     </view>
 
@@ -88,6 +89,8 @@ async function logout() {
   height: 112rpx;
   border-radius: 50%;
   background: $lemon-primary-light;
+  color: $lemon-primary;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,50 +130,40 @@ async function logout() {
 .collections {
   display: flex;
   gap: 24rpx;
-  margin: 0 24rpx;
+  margin: 0 32rpx;
 }
 .collection {
   flex: 1;
-  border-radius: 16rpx;
-  padding: 28rpx;
-  color: #fff;
-}
-.collection.wrong {
-  background: linear-gradient(135deg, #ff8a65, #e34d59);
-}
-.collection.favorite {
-  background: linear-gradient(135deg, #ffcf40, #f5b800);
+  background: $lemon-surface;
+  border: 1px solid $lemon-line;
+  border-radius: $lemon-radius;
+  box-shadow: $lemon-shadow;
+  padding: 32rpx;
 }
 .collection-name {
   font-size: 30rpx;
   font-weight: 600;
 }
 .collection-count {
-  font-size: 56rpx;
+  font-size: 64rpx;
   font-weight: 700;
+  line-height: 1.2;
   margin: 12rpx 0 4rpx;
+  color: $lemon-primary;
   font-variant-numeric: tabular-nums;
 }
 .unit {
-  font-size: 24rpx;
-  font-weight: 400;
+  font-size: 26rpx;
+  font-weight: 500;
+  color: $lemon-text;
 }
 .collection-tip {
   font-size: 22rpx;
-  opacity: 0.9;
+  color: $lemon-muted;
 }
-.menu {
-  padding: 0 28rpx;
-}
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 30rpx 0;
-  border-bottom: 2rpx solid #f2f3f5;
+.menu-text {
+  flex: 1;
   font-size: 30rpx;
-}
-.menu-item:last-child {
-  border-bottom: none;
 }
 .logout {
   text-align: center;

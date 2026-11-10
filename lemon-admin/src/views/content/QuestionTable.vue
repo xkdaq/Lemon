@@ -211,9 +211,10 @@ defineExpose({
     <el-table ref="tableRef" v-loading="loading" :data="list" border row-key="id" @selection-change="(rows: Question[]) => (selected = rows)">
       <el-table-column type="selection" width="44" />
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column label="题型" width="80">
+      <el-table-column label="题型" width="100">
         <template #default="{ row }">
           <el-tag :type="typeTag[(row as Question).type]" size="small">{{ questionTypeLabel[(row as Question).type] }}</el-tag>
+          <div v-if="(row as Question).section" class="section-name">{{ (row as Question).section }}</div>
         </template>
       </el-table-column>
       <el-table-column label="题干" min-width="280">
@@ -275,6 +276,11 @@ defineExpose({
 </template>
 
 <style scoped>
+.section-name {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
 .toolbar {
   flex-wrap: wrap;
 }

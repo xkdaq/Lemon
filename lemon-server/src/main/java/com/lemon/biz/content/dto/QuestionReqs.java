@@ -41,7 +41,9 @@ public final class QuestionReqs {
             @Min(1) @Max(3) Integer difficulty,
             @Size(max = 64) String source,
             Integer sort,
-            @Min(0) @Max(1) Integer status) {
+            @Min(0) @Max(1) Integer status,
+            /** 小节，如 论述题、材料分析题；不填按题型分组 */
+            @Size(max = 32) String section) {
     }
 
     @Data

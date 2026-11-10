@@ -5,22 +5,30 @@ import { getHome } from '@/api/content'
 import type { Banner, ExamModule, LastSession, Notice } from '@/api/types'
 import { assetUrl } from '@/utils/html'
 import { modeLabel } from '@/api/practice'
+import { getStats, type Stats } from '@/api/mine'
+import { isLoggedIn } from '@/utils/auth'
+import { listCamps, type CampCard } from '@/api/punch'
 
 const modules = ref<ExamModule[]>([])
 const notices = ref<Notice[]>([])
 const lastSession = ref<LastSession | null>(null)
 const banners = ref<Banner[]>([])
+/** 进行中的打卡活动（首页最多显示 3 个） */
+const camps = ref<CampCard[]>([])
+const HOME_CAMPS = 3
+/** 登录后首页顶部显示今日作答次数 */
+const stats = ref<Stats | null>(null)
 /** 网站必须在首页底部展示 ICP 备案号（仅 H5） */
 const icpNo = import.meta.env.VITE_ICP_NO
 
-/** 模块卡片配色，按顺序循环 */
-const themes = [
-  { bg: 'linear-gradient(135deg, #ff8a65, #e34d59)', emoji: '📕' },
-  { bg: 'linear-gradient(135deg, #64b5f6, #3a7bd5)', emoji: '📘' },
-]
-
 async function load() {
-  const res = await getHome()
+  const [res, s, c] = await Promise.all([
+    getHome(),
+    isLoggedIn() ? getStats().catch(() => null) : Promise.resolve(null),
+    listCamps().catch(() => [] as CampCard[]),
+  ])
+  stats.value = s
+  camps.value = c.filter((x) => x.endDate >= today())
   modules.value = res.modules
   notices.value = res.notices
   lastSession.value = res.lastSession
@@ -58,6 +66,19 @@ function continueLast() {
   uni.navigateTo({ url: `/pages/practice/index?sessionId=${lastSession.value!.sessionId}` })
 }
 
+function today() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function openAllCamps() {
+  uni.navigateTo({ url: '/pages/punch/list' })
+}
+
+function openCamp(c: CampCard) {
+  uni.navigateTo({ url: `/pages/punch/detail?id=${c.id}` })
+}
+
 function openModule(m: ExamModule) {
   uni.navigateTo({ url: `/pages/bank/list?moduleId=${m.id}&name=${encodeURIComponent(m.name)}` })
 }
@@ -65,9 +86,17 @@ function openModule(m: ExamModule) {
 
 <template>
   <view class="page">
-    <view class="hero">
-      <view class="hero-title">🍋 Lemon 刷题</view>
-      <view class="hero-sub">考研政治 · 教育学，每天刷一点</view>
+    <view v-if="stats" class="hero">
+      <view class="hero-label">今日作答</view>
+      <view><text class="hero-num">{{ stats.todayCount }}</text><text class="hero-unit">次</text></view>
+      <view class="hero-sub">
+        做过 {{ stats.questionTotal }} 题 · 正确率 {{ stats.accuracy }}%<text v-if="stats.streakDays"> · 连续 {{ stats.streakDays }} 天</text>
+      </view>
+    </view>
+    <view v-else class="hero">
+      <view class="hero-label">考研政治 · 教育学</view>
+      <view class="brand">Lemon 刷题</view>
+      <view class="hero-sub">每天刷一点，登录后记录进度</view>
     </view>
 
     <swiper v-if="banners.length" class="banner" circular autoplay :indicator-dots="banners.length > 1" indicator-active-color="#fff">
@@ -77,32 +106,48 @@ function openModule(m: ExamModule) {
     </swiper>
 
     <view v-if="notices.length" class="card notice">
-      <text class="notice-tag">公告</text>
+      <text class="tag">公告</text>
       <text class="notice-text">{{ notices[0].title }}</text>
     </view>
 
-    <view class="modules">
-      <view
-        v-for="(m, i) in modules"
-        :key="m.id"
-        class="module"
-        :style="{ background: themes[i % themes.length].bg }"
-        @click="openModule(m)"
-      >
-        <text class="module-emoji">{{ themes[i % themes.length].emoji }}</text>
-        <text class="module-name">{{ m.name }}</text>
-        <text class="module-enter">进入题库 ›</text>
+    <view v-if="lastSession" class="card continue">
+      <view class="continue-bar">
+        <view class="continue-fill" :style="{ width: `${Math.round(((lastSession.currentIndex + 1) / lastSession.total) * 100)}%` }" />
+      </view>
+      <view class="btn btn-primary btn-block" @click="continueLast">
+        继续{{ modeLabel[lastSession.mode].replace('模式', '') }}：{{ lastSession.chapterName }}
+      </view>
+      <view class="muted continue-sub">
+        {{ lastSession.bankName }} · 第 {{ lastSession.currentIndex + 1 }}/{{ lastSession.total }} 题
       </view>
     </view>
 
-    <view v-if="lastSession" class="card continue" @click="continueLast">
-      <view>
-        <view class="continue-title">继续上次{{ modeLabel[lastSession.mode].replace('模式', '') }}</view>
-        <view class="muted">{{ lastSession.bankName }} · {{ lastSession.chapterName }}</view>
+    <template v-if="camps.length">
+      <view class="section-label punch-label">
+        <text>每日打卡</text>
+        <text v-if="camps.length > HOME_CAMPS" class="more" @click="openAllCamps">全部 ›</text>
       </view>
-      <view class="continue-right">
-        <text class="continue-progress">{{ lastSession.currentIndex + 1 }}/{{ lastSession.total }}</text>
-        <text class="continue-go">继续 ›</text>
+      <view class="card list-card">
+        <view v-for="c in camps.slice(0, HOME_CAMPS)" :key="c.id" class="list-row" @click="openCamp(c)">
+          <view class="module-main">
+            <view class="module-name">{{ c.name }}</view>
+            <view class="muted">每天 {{ c.questionCount }} 题 · {{ c.memberCount }} 人参加</view>
+          </view>
+          <text v-if="c.todayDone" class="tag tag-done">已打卡</text>
+          <text v-else-if="c.joined" class="tag">去打卡</text>
+          <text class="row-arrow">›</text>
+        </view>
+      </view>
+    </template>
+
+    <view class="section-label">选择科目</view>
+    <view class="card list-card">
+      <view v-for="m in modules" :key="m.id" class="list-row" @click="openModule(m)">
+        <view class="module-main">
+          <view class="module-name">{{ m.name }}</view>
+          <view class="muted">题库 · 模拟卷 · 章节练习</view>
+        </view>
+        <text class="row-arrow">›</text>
       </view>
     </view>
     <!-- #ifdef H5 -->
@@ -112,21 +157,16 @@ function openModule(m: ExamModule) {
 </template>
 
 <style lang="scss" scoped>
-.hero {
-  padding: 48rpx 32rpx 16rpx;
-}
-.hero-title {
-  font-size: 44rpx;
+.brand {
+  font-size: 64rpx;
   font-weight: 700;
-}
-.hero-sub {
-  margin-top: 8rpx;
-  color: $lemon-muted;
+  line-height: 1.3;
+  color: $lemon-primary;
 }
 .banner {
-  margin: 24rpx 24rpx 0;
+  margin: 24rpx 32rpx 0;
   height: 280rpx;
-  border-radius: 20rpx;
+  border-radius: $lemon-radius;
   overflow: hidden;
 }
 .banner-img {
@@ -138,70 +178,49 @@ function openModule(m: ExamModule) {
   align-items: center;
   gap: 16rpx;
 }
-.notice-tag {
-  background: $lemon-primary-light;
-  color: #b88a00;
-  font-size: 22rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
+.notice-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.continue-bar {
+  height: 6rpx;
+  background: $lemon-line;
+  border-radius: 4rpx;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+}
+.continue-fill {
+  height: 100%;
+  background: $lemon-primary;
+}
+.continue-sub {
+  text-align: center;
+  margin-top: 16rpx;
+}
+.module-main {
+  flex: 1;
+}
+.module-name {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.punch-label {
+  display: flex;
+  justify-content: space-between;
+}
+.more {
+  color: $lemon-primary;
+}
+.tag-done {
+  background: $lemon-success-soft;
+  color: $lemon-success;
 }
 .icp {
   text-align: center;
   font-size: 22rpx;
   color: $lemon-muted;
   padding: 48rpx 0 24rpx;
-}
-.continue {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-left: 8rpx solid $lemon-primary;
-}
-.continue-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  margin-bottom: 6rpx;
-}
-.continue-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-.continue-progress {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $lemon-primary;
-}
-.continue-go {
-  font-size: 24rpx;
-  color: $lemon-muted;
-}
-.modules {
-  display: flex;
-  gap: 24rpx;
-  padding: 0 24rpx;
-  margin-top: 24rpx;
-}
-.module {
-  flex: 1;
-  height: 280rpx;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #fff;
-}
-.module-emoji {
-  font-size: 56rpx;
-}
-.module-name {
-  font-size: 40rpx;
-  font-weight: 700;
-}
-.module-enter {
-  font-size: 24rpx;
-  opacity: 0.9;
 }
 </style>

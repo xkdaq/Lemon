@@ -15,7 +15,7 @@ export function renderHtml(html?: string | null): string {
   return html
     .replace(/<img /g, '<img style="max-width:100%;height:auto;display:block;margin:8px 0;" ')
     // 材料题的材料：灰底 + 左侧色条，与小题题干区分开（rich-text 里的元素在小程序中无法用页面样式控制，只能内联）
-    .replace(/<blockquote>/g, '<blockquote style="margin:0 0 12px;padding:10px 12px;background:#f6f7f9;border-left:3px solid #f5b800;border-radius:6px;color:#4b5563;font-size:14px;line-height:1.7;">')
+    .replace(/<blockquote>/g, '<blockquote style="margin:0 0 12px;padding:10px 12px;background:var(--bg);border-left:3px solid var(--accent);border-radius:6px;color:var(--text);font-size:14px;line-height:1.7;">')
     .replace(/src="\/uploads\//g, `src="${ASSET_BASE}/uploads/`)
 }
 

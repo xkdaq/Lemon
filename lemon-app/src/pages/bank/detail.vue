@@ -33,6 +33,7 @@ onShow(async () => {
 /** 整个题库的总进度（试卷型） */
 const sum = (k: 'questionCount' | 'doneCount' | 'correctCount') => papers.value.reduce((n, p) => n + p[k], 0)
 const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCount'), correct: sum('correctCount') }))
+const accuracy = computed(() => (total.value.done ? Math.round((total.value.correct / total.value.done) * 100) : 0))
 
 function openCourse(c: Course) {
   uni.navigateTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&name=${encodeURIComponent(c.name)}` })
@@ -43,26 +44,32 @@ function openCourse(c: Course) {
 <template>
   <view v-if="bank">
     <template v-if="bank.type === BankType.COURSE">
-      <view class="section muted">选择科目</view>
-      <view v-for="c in courses" :key="c.id" class="card row" @click="openCourse(c)">
-        <text class="name">{{ c.name }}</text>
-        <text class="muted">›</text>
+      <view class="section-label">选择科目</view>
+      <view v-if="courses.length" class="card list-card">
+        <view v-for="c in courses" :key="c.id" class="list-row" @click="openCourse(c)">
+          <text class="name">{{ c.name }}</text>
+          <text class="row-arrow">›</text>
+        </view>
       </view>
-      <view v-if="!courses.length" class="empty muted">暂无科目</view>
+      <view v-else class="empty">暂无科目</view>
     </template>
 
     <template v-else>
-      <view v-if="papers.length" class="card summary">
-        <view class="summary-title">总进度</view>
+      <view v-if="papers.length" class="hero">
+        <view class="hero-label">{{ bank.name }} · {{ papers.length }} 套</view>
+        <view><text class="hero-num">{{ total.done }}</text><text class="hero-unit">/ {{ total.total }} 题</text></view>
+        <view class="hero-sub">{{ total.done ? `正确率 ${accuracy}%` : '还没开始，挑一套试试' }} · 展开试卷可按题型练习</view>
+      </view>
+      <view v-if="papers.length" class="card">
         <ProgressBar :total="total.total" :done="total.done" :correct="total.correct" />
       </view>
-      <view class="section muted">选择试卷</view>
+      <view class="section-label">选择试卷</view>
       <view v-for="p in papers" :key="p.id" class="card">
         <view class="paper-head">
           <view class="name">{{ p.name }}</view>
-          <text v-if="p.lastScore != null" class="score">上次 {{ p.lastScore }} 分</text>
+          <text v-if="p.lastScore != null" class="tag">上次 {{ p.lastScore }} 分</text>
         </view>
-        <view class="muted meta">
+        <view class="muted">
           {{ p.questionCount }} 题<text v-if="p.timeLimit"> · {{ p.timeLimit }} 分钟</text><text v-if="p.totalScore"> · 满分 {{ p.totalScore }}</text>
         </view>
         <view class="paper-progress">
@@ -71,41 +78,27 @@ function openCourse(c: Course) {
         <ChapterSections :chapter="p">
           <template #actions>
             <view class="paper-actions">
-              <text class="btn btn-ghost" @click="goPractice(p.id, 'practice')">{{ p.inProgressModes.includes(1) ? '继续练习' : '逐题练习' }}</text>
-              <text class="btn" @click="goPractice(p.id, 'exam')">{{ p.inProgressModes.includes(3) ? '继续考试' : '模拟考试' }}</text>
+              <text class="btn btn-small" @click="goPractice(p.id, 'practice')">{{ p.inProgressModes.includes(1) ? '继续练习' : '逐题练习' }}</text>
+              <text class="btn btn-small btn-primary" @click="goPractice(p.id, 'exam')">{{ p.inProgressModes.includes(3) ? '继续考试' : '模拟考试' }}</text>
             </view>
           </template>
         </ChapterSections>
       </view>
-      <view v-if="!papers.length" class="empty muted">暂无试卷</view>
+      <view v-if="!papers.length" class="empty">暂无试卷</view>
     </template>
   </view>
 </template>
 
 <style lang="scss" scoped>
-.section {
-  padding: 24rpx 32rpx 0;
-}
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 .name {
-  font-size: 30rpx;
-  font-weight: 500;
-}
-.meta {
-  margin-top: 8rpx;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .paper-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-.score {
-  font-size: 24rpx;
-  color: #e37318;
+  gap: 16rpx;
 }
 .paper-progress {
   margin-top: 20rpx;
@@ -114,28 +107,5 @@ function openCourse(c: Course) {
   display: flex;
   justify-content: flex-end;
   gap: 16rpx;
-}
-.summary {
-  margin-top: 24rpx;
-}
-.summary-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
-.btn {
-  font-size: 24rpx;
-  padding: 10rpx 28rpx;
-  border-radius: 999rpx;
-  background: $lemon-primary;
-  color: #fff;
-}
-.btn-ghost {
-  background: $lemon-primary-light;
-  color: #b88a00;
-}
-.empty {
-  text-align: center;
-  padding: 120rpx 0;
 }
 </style>

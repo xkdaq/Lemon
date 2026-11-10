@@ -7,11 +7,15 @@
   "vueVersion": "3",
   "h5": {
     "title": "Lemon 刷题",
-    "router": { "mode": "history", "base": "/" }
+    "router": { "mode": "history", "base": "/" },
+    "darkmode": true,
+    "themeLocation": "theme.json"
   },
   "mp-weixin": {
     "appid": "",
     "setting": { "urlCheck": false, "es6": true, "minified": true },
-    "usingComponents": true
+    "usingComponents": true,
+    "darkmode": true,
+    "themeLocation": "theme.json"
   }
 }

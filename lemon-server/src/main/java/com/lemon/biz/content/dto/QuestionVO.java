@@ -35,6 +35,7 @@ public class QuestionVO {
     private BigDecimal score;
     private Integer difficulty;
     private String source;
+    private String section;
     private Integer sort;
     private Integer status;
 
@@ -59,6 +60,7 @@ public class QuestionVO {
         vo.score = q.getScore();
         vo.difficulty = q.getDifficulty();
         vo.source = q.getSource();
+        vo.section = q.getSection();
         vo.sort = q.getSort();
         vo.status = q.getStatus();
         vo.createdAt = q.getCreatedAt();

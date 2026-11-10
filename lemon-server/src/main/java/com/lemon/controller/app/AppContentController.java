@@ -8,13 +8,13 @@ import com.lemon.biz.content.entity.QuestionBank;
 import com.lemon.biz.content.enums.BankType;
 import com.lemon.biz.content.service.ContentQueryService;
 import com.lemon.biz.practice.dto.PracticeDtos.LastSession;
-import com.lemon.biz.content.enums.QuestionType;
 import com.lemon.biz.content.mapper.QuestionMapper;
-import com.lemon.biz.practice.dto.ChapterTypeStat;
+import com.lemon.biz.practice.dto.ChapterSectionStat;
 import com.lemon.biz.practice.service.PracticeService;
 import com.lemon.security.StpAppUtil;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -101,11 +101,11 @@ public class AppContentController {
     }
 
     /**
-     * 章节下的“节”：按题型分组（单选题 / 多选题 / 分析题），可单独练习
+     * 章节下的“节”：按小节分组（如 单选题 / 论述题 / 材料分析题；题目没填小节时按题型），可单独练习
      *
-     * @param inProgress 有未完成的该题型练习，显示“继续”
+     * @param inProgress 有未完成的该小节练习，显示“继续”
      */
-    public record Section(int type, String name, int questionCount, int doneCount, int correctCount, boolean inProgress) {
+    public record Section(String name, int questionCount, int doneCount, int correctCount, boolean inProgress) {
     }
 
     private List<ChapterItem> withProgress(List<Chapter> chapters) {
@@ -114,25 +114,23 @@ public class AppContentController {
         if (ids.isEmpty()) {
             return List.of();
         }
-        // 按“章节-题型”统计题量和进度（只算上架题，删除 / 下架的题不计入）
-        Map<String, ChapterTypeStat> totals = questionMapper.countByType(ids).stream()
-                .collect(Collectors.toMap(s -> s.getChapterId() + "-" + s.getType(), Function.identity()));
-        Map<String, ChapterTypeStat> done = userId == null ? Map.of() : questionMapper.doneByType(userId, ids).stream()
-                .collect(Collectors.toMap(s -> s.getChapterId() + "-" + s.getType(), Function.identity()));
+        // 按“章节-小节”统计题量和进度（只算上架题，删除 / 下架的题不计入）；小节按在试卷中出现的顺序排列
+        Map<Long, List<ChapterSectionStat>> totals = questionMapper.countBySection(ids).stream()
+                .sorted(Comparator.comparing(ChapterSectionStat::getOrd, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(ChapterSectionStat::getFirstId))
+                .collect(Collectors.groupingBy(ChapterSectionStat::getChapterId));
+        Map<String, ChapterSectionStat> done = userId == null ? Map.of() : questionMapper.doneBySection(userId, ids).stream()
+                .collect(Collectors.toMap(s -> s.getChapterId() + "-" + s.getSectionName(), Function.identity()));
         Map<Long, Set<Integer>> inProgress = userId == null ? Map.of() : practiceService.inProgress(userId, ids);
-        Map<Long, Set<Integer>> typesInProgress = userId == null ? Map.of() : practiceService.typesInProgress(userId, ids);
+        Map<Long, Set<String>> sectionsInProgress = userId == null ? Map.of() : practiceService.sectionsInProgress(userId, ids);
         Map<Long, BigDecimal> scores = userId == null ? Map.of() : practiceService.lastExamScores(userId, ids);
         return chapters.stream().map(c -> {
             List<Section> sections = new ArrayList<>();
-            for (QuestionType t : QuestionType.values()) {
-                ChapterTypeStat total = totals.get(c.getId() + "-" + t.getCode());
-                if (total == null) {
-                    continue;
-                }
-                ChapterTypeStat d = done.get(c.getId() + "-" + t.getCode());
-                sections.add(new Section(t.getCode(), t.sectionLabel(), total.getCnt(),
+            for (ChapterSectionStat total : totals.getOrDefault(c.getId(), List.of())) {
+                ChapterSectionStat d = done.get(c.getId() + "-" + total.getSectionName());
+                sections.add(new Section(total.getSectionName(), total.getCnt(),
                         d == null ? 0 : d.getCnt(), d == null ? 0 : d.getCorrect(),
-                        typesInProgress.getOrDefault(c.getId(), Set.of()).contains(t.getCode())));
+                        sectionsInProgress.getOrDefault(c.getId(), Set.of()).contains(total.getSectionName())));
             }
             return new ChapterItem(c.getId(), c.getBankId(), c.getCourseId(), c.getName(),
                     sections.stream().mapToInt(Section::questionCount).sum(),

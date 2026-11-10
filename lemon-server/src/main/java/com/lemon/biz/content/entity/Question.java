@@ -55,6 +55,10 @@ public class Question extends BaseEntity {
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String source;
 
+    /** 小节（如 论述题、材料分析题）：章节下按它分组练习；为空时按题型分组 */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private String section;
+
     /** 排序 */
     private Integer sort;
 
