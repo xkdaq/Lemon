@@ -80,7 +80,8 @@ async function init() {
       })
     } else {
       const m = modeByName[query?.mode ?? 'practice'] ?? Mode.PRACTICE
-      s = await api.startSession(Number(query?.chapterId), m, query?.restart === '1')
+      const type = query?.type ? Number(query.type) : undefined
+      s = await api.startSession(Number(query?.chapterId), m, query?.restart === '1', type)
       if (s.status === 0 && (s.answeredCount > 0 || s.currentIndex > 0) && query?.restart !== '1') {
         const { confirm } = await uni.showModal({
           title: '继续上次进度？',
@@ -89,7 +90,7 @@ async function init() {
           cancelText: '重新开始',
         })
         if (!confirm) {
-          s = await api.startSession(s.chapterId!, s.mode, true)
+          s = await api.startSession(s.chapterId!, s.mode, true, s.questionType ?? undefined)
         }
       }
     }

@@ -6,11 +6,14 @@ import { formatSeconds } from '@/utils/html'
 
 const result = ref<Result>()
 const firstWrongIndex = ref(-1)
+/** 按题型练习时的题型，再练一次沿用 */
+let questionType: number | null | undefined
 
 onLoad(async (query) => {
   const id = Number(query?.sessionId)
   const [r, s] = await Promise.all([getResult(id), getSession(id)])
   result.value = r
+  questionType = s.questionType
   firstWrongIndex.value = r.wrongQuestionIds.length ? s.questionIds.indexOf(r.wrongQuestionIds[0]) : -1
   uni.setNavigationBarTitle({ title: r.mode === Mode.EXAM ? '考试成绩' : `${modeLabel[r.mode].replace('模式', '')}结果` })
 })
@@ -34,7 +37,8 @@ const canRestart = computed(() => !!result.value?.chapterId)
 function again() {
   const r = result.value!
   const mode = r.mode === Mode.EXAM ? 'exam' : 'practice'
-  uni.redirectTo({ url: `/pages/practice/index?chapterId=${r.chapterId}&mode=${mode}&restart=1` })
+  const type = questionType ? `&type=${questionType}` : ''
+  uni.redirectTo({ url: `/pages/practice/index?chapterId=${r.chapterId}&mode=${mode}&restart=1${type}` })
 }
 
 function back() {

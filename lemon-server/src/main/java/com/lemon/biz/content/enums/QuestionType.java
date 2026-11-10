@@ -22,6 +22,11 @@ public enum QuestionType {
     /** 是否可自动判题 */
     private final boolean autoJudge;
 
+    /** 用户端章节下“节”的名称：主观题在考研政治里就是分析题 */
+    public String sectionLabel() {
+        return this == SUBJECTIVE ? "分析题" : label;
+    }
+
     public static QuestionType of(Integer code) {
         return Arrays.stream(values()).filter(t -> code != null && t.code == code).findFirst()
                 .orElseThrow(() -> new BizException("未知的题型：" + code));

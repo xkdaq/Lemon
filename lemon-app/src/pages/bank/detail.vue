@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getBankDetail } from '@/api/content'
 import { BankType, type Chapter, type Course, type QuestionBank } from '@/api/types'
 import { goPractice } from '@/utils/nav'
+import ProgressBar from '@/components/ProgressBar.vue'
+import ChapterSections from '@/components/ChapterSections.vue'
 
 /**
  * 题库详情：
@@ -28,6 +30,10 @@ onShow(async () => {
   uni.setNavigationBarTitle({ title: res.bank.name })
 })
 
+/** 整个题库的总进度（试卷型） */
+const sum = (k: 'questionCount' | 'doneCount' | 'correctCount') => papers.value.reduce((n, p) => n + p[k], 0)
+const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCount'), correct: sum('correctCount') }))
+
 function openCourse(c: Course) {
   uni.navigateTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&name=${encodeURIComponent(c.name)}` })
 }
@@ -46,6 +52,10 @@ function openCourse(c: Course) {
     </template>
 
     <template v-else>
+      <view v-if="papers.length" class="card summary">
+        <view class="summary-title">总进度</view>
+        <ProgressBar :total="total.total" :done="total.done" :correct="total.correct" />
+      </view>
       <view class="section muted">选择试卷</view>
       <view v-for="p in papers" :key="p.id" class="card">
         <view class="paper-head">
@@ -55,10 +65,17 @@ function openCourse(c: Course) {
         <view class="muted meta">
           {{ p.questionCount }} 题<text v-if="p.timeLimit"> · {{ p.timeLimit }} 分钟</text><text v-if="p.totalScore"> · 满分 {{ p.totalScore }}</text>
         </view>
-        <view class="paper-actions">
-          <text class="btn btn-ghost" @click="goPractice(p.id, 'practice')">{{ p.inProgressModes.includes(1) ? '继续练习' : '逐题练习' }}</text>
-          <text class="btn" @click="goPractice(p.id, 'exam')">{{ p.inProgressModes.includes(3) ? '继续考试' : '模拟考试' }}</text>
+        <view class="paper-progress">
+          <ProgressBar :total="p.questionCount" :done="p.doneCount" :correct="p.correctCount" />
         </view>
+        <ChapterSections :chapter="p">
+          <template #actions>
+            <view class="paper-actions">
+              <text class="btn btn-ghost" @click="goPractice(p.id, 'practice')">{{ p.inProgressModes.includes(1) ? '继续练习' : '逐题练习' }}</text>
+              <text class="btn" @click="goPractice(p.id, 'exam')">{{ p.inProgressModes.includes(3) ? '继续考试' : '模拟考试' }}</text>
+            </view>
+          </template>
+        </ChapterSections>
       </view>
       <view v-if="!papers.length" class="empty muted">暂无试卷</view>
     </template>
@@ -90,11 +107,21 @@ function openCourse(c: Course) {
   font-size: 24rpx;
   color: #e37318;
 }
+.paper-progress {
+  margin-top: 20rpx;
+}
 .paper-actions {
   display: flex;
   justify-content: flex-end;
   gap: 16rpx;
-  margin-top: 20rpx;
+}
+.summary {
+  margin-top: 24rpx;
+}
+.summary-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
 }
 .btn {
   font-size: 24rpx;

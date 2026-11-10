@@ -23,6 +23,8 @@ export interface Session {
   /** 错题重练 / 收藏练习没有章节 */
   chapterId?: number
   chapterName?: string
+  /** 按题型练习时的题型，整章为空 */
+  questionType?: number | null
   bankId?: number
   bankName?: string
   mode: number
@@ -75,8 +77,9 @@ export interface Result {
   wrongQuestionIds: number[]
 }
 
-export const startSession = (chapterId: number, mode: number, restart = false) =>
-  http.post<Session>('/sessions', { chapterId, mode, restart })
+/** questionType：只练该题型（章节下的“节”），不传练整章 */
+export const startSession = (chapterId: number, mode: number, restart = false, questionType?: number) =>
+  http.post<Session>('/sessions', { chapterId, mode, restart, questionType })
 export const getSession = (id: number) => http.get<Session>(`/sessions/${id}`)
 export const getQuestions = (id: number, ids: number[]) =>
   http.get<QuestionItem[]>(`/sessions/${id}/questions`, { ids: ids.join(',') })

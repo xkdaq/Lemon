@@ -6,14 +6,15 @@ import com.lemon.biz.content.entity.Course;
 import com.lemon.biz.content.entity.ExamModule;
 import com.lemon.biz.content.entity.QuestionBank;
 import com.lemon.biz.content.enums.BankType;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.lemon.biz.content.service.ContentQueryService;
 import com.lemon.biz.practice.dto.PracticeDtos.LastSession;
-import com.lemon.biz.practice.entity.UserChapterProgress;
-import com.lemon.biz.practice.mapper.UserChapterProgressMapper;
+import com.lemon.biz.content.enums.QuestionType;
+import com.lemon.biz.content.mapper.QuestionMapper;
+import com.lemon.biz.practice.dto.ChapterTypeStat;
 import com.lemon.biz.practice.service.PracticeService;
 import com.lemon.security.StpAppUtil;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -41,7 +42,7 @@ public class AppContentController {
     private final ContentQueryService service;
     private final PracticeService practiceService;
     private final BannerService bannerService;
-    private final UserChapterProgressMapper progressMapper;
+    private final QuestionMapper questionMapper;
 
     /** lastSession：登录用户最近一次未完成的练习，未登录或没有时为 null */
     public record HomeResp(List<ExamModule> modules, List<Notice> notices, List<Banner> banners, LastSession lastSession) {
@@ -96,23 +97,49 @@ public class AppContentController {
      */
     public record ChapterItem(Long id, Long bankId, Long courseId, String name, int questionCount,
                               Integer timeLimit, Integer totalScore, int doneCount, int correctCount,
-                              Set<Integer> inProgressModes, BigDecimal lastScore) {
+                              Set<Integer> inProgressModes, BigDecimal lastScore, List<Section> sections) {
+    }
+
+    /**
+     * 章节下的“节”：按题型分组（单选题 / 多选题 / 分析题），可单独练习
+     *
+     * @param inProgress 有未完成的该题型练习，显示“继续”
+     */
+    public record Section(int type, String name, int questionCount, int doneCount, int correctCount, boolean inProgress) {
     }
 
     private List<ChapterItem> withProgress(List<Chapter> chapters) {
         Long userId = StpAppUtil.userIdOrNull();
         List<Long> ids = chapters.stream().map(Chapter::getId).toList();
-        Map<Long, UserChapterProgress> progress = userId == null || ids.isEmpty() ? Map.of()
-                : progressMapper.selectList(Wrappers.<UserChapterProgress>lambdaQuery()
-                        .eq(UserChapterProgress::getUserId, userId).in(UserChapterProgress::getChapterId, ids))
-                .stream().collect(Collectors.toMap(UserChapterProgress::getChapterId, Function.identity()));
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        // 按“章节-题型”统计题量和进度（只算上架题，删除 / 下架的题不计入）
+        Map<String, ChapterTypeStat> totals = questionMapper.countByType(ids).stream()
+                .collect(Collectors.toMap(s -> s.getChapterId() + "-" + s.getType(), Function.identity()));
+        Map<String, ChapterTypeStat> done = userId == null ? Map.of() : questionMapper.doneByType(userId, ids).stream()
+                .collect(Collectors.toMap(s -> s.getChapterId() + "-" + s.getType(), Function.identity()));
         Map<Long, Set<Integer>> inProgress = userId == null ? Map.of() : practiceService.inProgress(userId, ids);
+        Map<Long, Set<Integer>> typesInProgress = userId == null ? Map.of() : practiceService.typesInProgress(userId, ids);
         Map<Long, BigDecimal> scores = userId == null ? Map.of() : practiceService.lastExamScores(userId, ids);
         return chapters.stream().map(c -> {
-            UserChapterProgress p = progress.get(c.getId());
-            return new ChapterItem(c.getId(), c.getBankId(), c.getCourseId(), c.getName(), c.getQuestionCount(),
-                    c.getTimeLimit(), c.getTotalScore(), p == null ? 0 : p.getDoneCount(), p == null ? 0 : p.getCorrectCount(),
-                    inProgress.getOrDefault(c.getId(), Set.of()), scores.get(c.getId()));
+            List<Section> sections = new ArrayList<>();
+            for (QuestionType t : QuestionType.values()) {
+                ChapterTypeStat total = totals.get(c.getId() + "-" + t.getCode());
+                if (total == null) {
+                    continue;
+                }
+                ChapterTypeStat d = done.get(c.getId() + "-" + t.getCode());
+                sections.add(new Section(t.getCode(), t.sectionLabel(), total.getCnt(),
+                        d == null ? 0 : d.getCnt(), d == null ? 0 : d.getCorrect(),
+                        typesInProgress.getOrDefault(c.getId(), Set.of()).contains(t.getCode())));
+            }
+            return new ChapterItem(c.getId(), c.getBankId(), c.getCourseId(), c.getName(),
+                    sections.stream().mapToInt(Section::questionCount).sum(),
+                    c.getTimeLimit(), c.getTotalScore(),
+                    sections.stream().mapToInt(Section::doneCount).sum(),
+                    sections.stream().mapToInt(Section::correctCount).sum(),
+                    inProgress.getOrDefault(c.getId(), Set.of()), scores.get(c.getId()), sections);
         }).toList();
     }
 }

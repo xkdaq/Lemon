@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getChapters } from '@/api/content'
 import type { Chapter } from '@/api/types'
 import { goPractice } from '@/utils/nav'
+import ProgressBar from '@/components/ProgressBar.vue'
+import ChapterSections from '@/components/ChapterSections.vue'
 
 const chapters = ref<Chapter[]>([])
 const loaded = ref(false)
@@ -22,25 +24,30 @@ onShow(async () => {
   loaded.value = true
 })
 
-const percent = (c: Chapter) => (c.questionCount ? Math.min(100, Math.round((c.doneCount / c.questionCount) * 100)) : 0)
-const accuracy = (c: Chapter) => (c.doneCount ? Math.round((c.correctCount / c.doneCount) * 100) : 0)
+/** 本科目总进度 */
+const sum = (k: 'questionCount' | 'doneCount' | 'correctCount') => chapters.value.reduce((n, c) => n + c[k], 0)
+const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCount'), correct: sum('correctCount') }))
 </script>
 
 <template>
   <view>
+    <view v-if="chapters.length" class="card">
+      <view class="summary-title">总进度</view>
+      <ProgressBar :total="total.total" :done="total.done" :correct="total.correct" />
+    </view>
     <view v-for="c in chapters" :key="c.id" class="card">
       <view class="name">{{ c.name }}</view>
-      <view class="bar"><view class="bar-fill" :style="{ width: `${percent(c)}%` }" /></view>
-      <view class="foot">
-        <text class="muted">
-          已做 {{ Math.min(c.doneCount, c.questionCount) }}/{{ c.questionCount }}
-          <text v-if="c.doneCount"> · 正确率 {{ accuracy(c) }}%</text>
-        </text>
-        <view class="actions">
-          <text class="btn btn-ghost" @click="goPractice(c.id, 'recite')">背题</text>
-          <text class="btn" @click="goPractice(c.id, 'practice')">{{ c.inProgressModes.includes(1) ? '继续练习' : '练习' }}</text>
-        </view>
+      <view class="progress">
+        <ProgressBar :total="c.questionCount" :done="c.doneCount" :correct="c.correctCount" />
       </view>
+      <ChapterSections :chapter="c">
+        <template #actions>
+          <view class="actions">
+            <text class="btn btn-ghost" @click="goPractice(c.id, 'recite')">背题</text>
+            <text class="btn" @click="goPractice(c.id, 'practice')">{{ c.inProgressModes.includes(1) ? '继续练习' : '练习' }}</text>
+          </view>
+        </template>
+      </ChapterSections>
     </view>
     <view v-if="loaded && !chapters.length" class="empty muted">暂无章节</view>
   </view>
@@ -51,23 +58,13 @@ const accuracy = (c: Chapter) => (c.doneCount ? Math.round((c.correctCount / c.d
   font-size: 30rpx;
   font-weight: 500;
 }
-.bar {
-  height: 8rpx;
-  border-radius: 8rpx;
-  background: #f2f3f5;
+.progress {
   margin-top: 20rpx;
-  overflow: hidden;
 }
-.bar-fill {
-  height: 100%;
-  background: $lemon-primary;
-  border-radius: 8rpx;
-}
-.foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16rpx;
+.summary-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
 }
 .actions {
   display: flex;
