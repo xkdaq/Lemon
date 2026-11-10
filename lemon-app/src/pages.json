@@ -29,8 +29,6 @@
     "borderStyle": "white",
     "list": [
       { "pagePath": "pages/index/index", "text": "首页" },
-      { "pagePath": "pages/favorite/index", "text": "收藏集" },
-      { "pagePath": "pages/wrong/index", "text": "错题集" },
       { "pagePath": "pages/mine/index", "text": "我的" }
     ]
   }

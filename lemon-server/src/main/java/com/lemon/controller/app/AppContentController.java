@@ -1,5 +1,6 @@
 package com.lemon.controller.app;
 
+import com.lemon.biz.content.entity.BankCategory;
 import com.lemon.biz.content.entity.Chapter;
 import com.lemon.biz.content.entity.Course;
 import com.lemon.biz.content.entity.ExamModule;
@@ -57,7 +58,13 @@ public class AppContentController {
                 userId == null ? null : practiceService.last(userId)));
     }
 
-    @Operation(summary = "模块下的题库列表")
+    @Operation(summary = "模块下的分类（上架的），题库列表按分类分组展示")
+    @GetMapping("/modules/{moduleId}/categories")
+    public R<List<BankCategory>> categories(@PathVariable Long moduleId) {
+        return R.ok(service.categories(moduleId));
+    }
+
+    @Operation(summary = "模块下的题库列表（带 categoryId，未分类为 null）")
     @GetMapping("/modules/{moduleId}/banks")
     public R<List<QuestionBank>> banks(@PathVariable Long moduleId) {
         return R.ok(service.banks(moduleId));

@@ -4,6 +4,7 @@ const ASSET_BASE = import.meta.env.VITE_ASSET_BASE ?? ''
 /**
  * 题干 / 解析 HTML 渲染前处理（rich-text 组件用）：
  * - 图片限制宽度，避免撑破屏幕
+ * - 材料题的材料（blockquote）加底色和色条
  * - 相对路径 /uploads/... 补上资源域名（小程序没有“同域”概念）
  * 后端保存时已做白名单过滤，这里不再处理安全问题。
  */
@@ -13,6 +14,8 @@ export function renderHtml(html?: string | null): string {
   }
   return html
     .replace(/<img /g, '<img style="max-width:100%;height:auto;display:block;margin:8px 0;" ')
+    // 材料题的材料：灰底 + 左侧色条，与小题题干区分开（rich-text 里的元素在小程序中无法用页面样式控制，只能内联）
+    .replace(/<blockquote>/g, '<blockquote style="margin:0 0 12px;padding:10px 12px;background:#f6f7f9;border-left:3px solid #f5b800;border-radius:6px;color:#4b5563;font-size:14px;line-height:1.7;">')
     .replace(/src="\/uploads\//g, `src="${ASSET_BASE}/uploads/`)
 }
 

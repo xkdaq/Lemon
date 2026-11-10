@@ -12,3 +12,6 @@ target/
 uploads/
 *.local
 .env
+
+# 题库原始文件（第三方版权内容，不进仓库）
+data/

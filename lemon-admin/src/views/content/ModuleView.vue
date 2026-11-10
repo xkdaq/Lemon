@@ -4,10 +4,12 @@ import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import * as api from '@/api/content'
 import type { ExamModule } from '@/types/content'
 import { useUserStore } from '@/stores/user'
+import CategoryDrawer from './CategoryDrawer.vue'
 
 const userStore = useUserStore()
 
 const list = ref<ExamModule[]>([])
+const categoryDrawer = ref<InstanceType<typeof CategoryDrawer>>()
 const loading = ref(false)
 
 async function load() {
@@ -55,7 +57,7 @@ async function remove(row: ExamModule) {
 <template>
   <div class="page-card">
     <div class="toolbar">
-      <span>首页展示的大入口（政治 / 教育学），一般不需要改动。</span>
+      <span>首页展示的大入口（政治 / 教育学）。点「分类」管理模块下的分类（强化刷题 / 冲刺刷题 / 时政 …）。</span>
       <span class="spacer" />
       <el-button v-if="userStore.isSuperAdmin" type="primary" icon="Plus" @click="openDialog()">新建模块</el-button>
     </div>
@@ -69,10 +71,13 @@ async function remove(row: ExamModule) {
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '上架' : '下架' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-if="userStore.isSuperAdmin" label="操作" width="160">
+      <el-table-column label="操作" width="200">
         <template #default="{ row }">
+          <el-button link type="primary" @click="categoryDrawer?.open(row as ExamModule)">分类</el-button>
+          <template v-if="userStore.isSuperAdmin">
           <el-button link type="primary" @click="openDialog(row as ExamModule)">编辑</el-button>
           <el-button link type="danger" @click="remove(row as ExamModule)">删除</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -97,5 +102,7 @@ async function remove(row: ExamModule) {
         <el-button type="primary" @click="save">保存</el-button>
       </template>
     </el-dialog>
+
+    <CategoryDrawer ref="categoryDrawer" />
   </div>
 </template>

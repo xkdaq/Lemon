@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import Sortable from 'sortablejs'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type TableInstance } from 'element-plus'
 import * as api from '@/api/content'
 import { useContentTree } from '@/composables/useContentTree'
-import { BankType, bankTypeLabel, type ExamModule, type QuestionBank } from '@/types/content'
+import { BankType, bankTypeLabel, type BankCategory, type ExamModule, type QuestionBank } from '@/types/content'
 
 const router = useRouter()
 const { reload: reloadTree } = useContentTree()
 const modules = ref<ExamModule[]>([])
 const moduleName = (id: number) => modules.value.find((m) => m.id === id)?.name ?? '-'
+/** 全部分类（各模块），筛选和表单里按模块过滤 */
+const categories = ref<BankCategory[]>([])
+const categoriesOf = (moduleId?: number) => categories.value.filter((c) => c.moduleId === moduleId)
+const categoryName = (id: number | null) => (id ? categories.value.find((c) => c.id === id)?.name ?? '-' : '未分类')
 
 // ---- 列表 ----
 const query = reactive<api.BankQuery>({ pageNum: 1, pageSize: 20 })
@@ -17,24 +22,67 @@ const list = ref<QuestionBank[]>([])
 const total = ref(0)
 const loading = ref(false)
 
+/**
+ * 拖动排序：选了模块、且没有按类型 / 名称筛选时可用（可再选一个分类，只排该分类内）。
+ * 必须拿到该模块 / 分类的全部题库（不分页）整体重排，避免与看不到的题库序号冲突。
+ */
+const canSort = computed(() => !!query.moduleId && !query.type && !query.keyword?.trim())
+const tableRef = ref<TableInstance>()
+let sortable: Sortable | null = null
+
 async function load() {
   loading.value = true
   try {
-    const res = await api.pageBanks(query)
+    const res = await api.pageBanks(canSort.value ? { ...query, pageNum: 1, pageSize: 200 } : query)
     list.value = res.list
     total.value = res.total
   } finally {
     loading.value = false
   }
+  await nextTick()
+  setupSortable()
 }
+
+function setupSortable() {
+  sortable?.destroy()
+  sortable = null
+  const tbody = tableRef.value?.$el.querySelector('.el-table__body-wrapper tbody') as HTMLElement | null
+  if (!canSort.value || !tbody) return
+  sortable = Sortable.create(tbody, {
+    handle: '.drag-handle',
+    animation: 150,
+    onEnd: async ({ oldIndex, newIndex, item, from }) => {
+      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+      // 先把 Sortable 移动过的 DOM 还原，再改数据，交给 Vue 按新顺序重新渲染
+      from.removeChild(item)
+      from.insertBefore(item, from.children[oldIndex] ?? null)
+      const rows = [...list.value]
+      rows.splice(newIndex, 0, rows.splice(oldIndex, 1)[0])
+      list.value = rows
+      try {
+        await api.sortBanks(rows.map((b) => b.id))
+        ElMessage.success('排序已保存，用户端同步生效')
+      } finally {
+        load()
+      }
+    },
+  })
+}
+
+onBeforeUnmount(() => sortable?.destroy())
 
 function search() {
   query.pageNum = 1
   load()
 }
 
+function onModuleChange() {
+  query.categoryId = undefined
+  search()
+}
+
 onMounted(async () => {
-  modules.value = await api.listModules()
+  ;[modules.value, categories.value] = await Promise.all([api.listModules(), api.listCategories()])
   load()
 })
 
@@ -43,7 +91,8 @@ const dialogVisible = ref(false)
 const editingId = ref<number | null>(null)
 const formRef = ref<FormInstance>()
 const emptyForm = (): api.BankSave => ({
-  moduleId: modules.value[0]?.id ?? 0,
+  moduleId: query.moduleId ?? modules.value[0]?.id ?? 0,
+  categoryId: query.categoryId || null,
   name: '',
   type: BankType.COURSE,
   cover: '',
@@ -56,7 +105,7 @@ const form = reactive<api.BankSave>(emptyForm())
 function openDialog(row?: QuestionBank) {
   editingId.value = row?.id ?? null
   Object.assign(form, row
-    ? { moduleId: row.moduleId, name: row.name, type: row.type, cover: row.cover, intro: row.intro, sort: row.sort, status: row.status }
+    ? { moduleId: row.moduleId, categoryId: row.categoryId, name: row.name, type: row.type, cover: row.cover, intro: row.intro, sort: row.sort, status: row.status }
     : emptyForm())
   dialogVisible.value = true
 }
@@ -95,8 +144,12 @@ async function remove(row: QuestionBank) {
 <template>
   <div class="page-card">
     <div class="toolbar">
-      <el-select v-model="query.moduleId" placeholder="全部模块" clearable style="width: 140px" @change="search">
+      <el-select v-model="query.moduleId" placeholder="全部模块" clearable style="width: 140px" @change="onModuleChange">
         <el-option v-for="m in modules" :key="m.id" :label="m.name" :value="m.id" />
+      </el-select>
+      <el-select v-model="query.categoryId" placeholder="全部分类" clearable :disabled="!query.moduleId" style="width: 140px" @change="search">
+        <el-option v-for="c in categoriesOf(query.moduleId)" :key="c.id" :label="c.name" :value="c.id" />
+        <el-option label="未分类" :value="0" />
       </el-select>
       <el-select v-model="query.type" placeholder="全部类型" clearable style="width: 140px" @change="search">
         <el-option label="科目型" :value="BankType.COURSE" />
@@ -104,14 +157,25 @@ async function remove(row: QuestionBank) {
       </el-select>
       <el-input v-model="query.keyword" placeholder="题库名称" clearable style="width: 200px" @keyup.enter="search" @clear="search" />
       <el-button icon="Search" @click="search">查询</el-button>
+      <span class="sort-tip">{{ canSort ? '拖动左侧 ⠿ 调整顺序，用户端按此顺序展示' : '选择模块后可拖动排序' }}</span>
       <span class="spacer" />
       <el-button type="primary" icon="Plus" @click="openDialog()">新建题库</el-button>
     </div>
 
-    <el-table v-loading="loading" :data="list" border>
+    <el-table ref="tableRef" v-loading="loading" :data="list" border row-key="id">
+      <el-table-column v-if="canSort" width="44" align="center">
+        <template #default>
+          <el-icon class="drag-handle" title="拖动排序"><Rank /></el-icon>
+        </template>
+      </el-table-column>
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column label="模块" width="100">
         <template #default="{ row }">{{ moduleName(row.moduleId) }}</template>
+      </el-table-column>
+      <el-table-column label="分类" width="110">
+        <template #default="{ row }">
+          <span :class="{ muted: !row.categoryId }">{{ categoryName((row as QuestionBank).categoryId) }}</span>
+        </template>
       </el-table-column>
       <el-table-column label="题库名称" min-width="180">
         <template #default="{ row }">
@@ -141,6 +205,7 @@ async function remove(row: QuestionBank) {
     </el-table>
 
     <el-pagination
+      v-if="!canSort"
       v-model:current-page="query.pageNum"
       v-model:page-size="query.pageSize"
       :total="total"
@@ -153,9 +218,15 @@ async function remove(row: QuestionBank) {
     <el-dialog v-model="dialogVisible" :title="editingId ? '编辑题库' : '新建题库'" width="520px">
       <el-form ref="formRef" :model="form" label-width="90px">
         <el-form-item label="所属模块" prop="moduleId" :rules="{ required: true, message: '请选择模块' }">
-          <el-select v-model="form.moduleId">
+          <el-select v-model="form.moduleId" @change="form.categoryId = null">
             <el-option v-for="m in modules" :key="m.id" :label="m.name" :value="m.id" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="所属分类">
+          <el-select v-model="form.categoryId" placeholder="未分类" clearable :empty-values="[null, undefined]" :value-on-clear="null">
+            <el-option v-for="c in categoriesOf(form.moduleId)" :key="c.id" :label="c.status === 1 ? c.name : `${c.name}（已下架）`" :value="c.id" />
+          </el-select>
+          <div class="tip">分类在「模块管理 → 分类」里新增；不选则归入“其他”</div>
         </el-form-item>
         <el-form-item label="题库名称" prop="name" :rules="{ required: true, message: '请输入名称' }">
           <el-input v-model="form.name" maxlength="64" />
@@ -189,6 +260,24 @@ async function remove(row: QuestionBank) {
 </template>
 
 <style scoped>
+.sort-tip {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.drag-handle {
+  cursor: move;
+  color: var(--el-text-color-secondary);
+  font-size: 16px;
+}
+.drag-handle:hover {
+  color: var(--el-color-primary);
+}
+:deep(.sortable-ghost) {
+  background: var(--el-color-primary-light-9);
+}
+.muted {
+  color: var(--el-text-color-placeholder);
+}
 .tip {
   color: #909399;
   font-size: 12px;

@@ -6,12 +6,15 @@ import com.lemon.biz.content.dto.ContentReqs.BankSave;
 import com.lemon.biz.content.dto.ContentReqs.ChapterSave;
 import com.lemon.biz.content.dto.ContentReqs.CourseSave;
 import com.lemon.biz.content.dto.ContentReqs.ModuleSave;
+import com.lemon.biz.content.dto.ContentReqs.CategorySave;
+import com.lemon.biz.content.entity.BankCategory;
 import com.lemon.biz.content.entity.Chapter;
 import com.lemon.biz.content.entity.Course;
 import com.lemon.biz.content.entity.ExamModule;
 import com.lemon.biz.content.entity.Question;
 import com.lemon.biz.content.entity.QuestionBank;
 import com.lemon.biz.content.enums.BankType;
+import com.lemon.biz.content.mapper.BankCategoryMapper;
 import com.lemon.biz.content.mapper.ChapterMapper;
 import com.lemon.biz.content.mapper.CourseMapper;
 import com.lemon.biz.content.mapper.ExamModuleMapper;
@@ -46,6 +49,7 @@ public class ContentAdminService {
     private final ChapterMapper chapterMapper;
     private final QuestionMapper questionMapper;
     private final QuestionCountService countService;
+    private final BankCategoryMapper categoryMapper;
 
     // ==================== 目录树 ====================
 
@@ -56,6 +60,8 @@ public class ContentAdminService {
     public List<TreeNode> tree() {
         Map<Long, String> moduleNames = listModules().stream()
                 .collect(Collectors.toMap(ExamModule::getId, ExamModule::getName));
+        Map<Long, String> categoryNames = listCategories(null).stream()
+                .collect(Collectors.toMap(BankCategory::getId, BankCategory::getName));
         List<QuestionBank> banks = bankMapper.selectList(Wrappers.<QuestionBank>lambdaQuery()
                 .orderByAsc(QuestionBank::getModuleId).orderByAsc(QuestionBank::getSort).orderByDesc(QuestionBank::getId));
         Map<Long, List<Course>> coursesByBank = courseMapper.selectList(Wrappers.<Course>lambdaQuery()
@@ -75,7 +81,8 @@ public class ContentAdminService {
                             chaptersByCourse.getOrDefault(c.getId(), List.of()).stream().map(ContentAdminService::chapterNode).toList()))
                     .toList()
                     : chaptersByBank.getOrDefault(b.getId(), List.of()).stream().map(ContentAdminService::chapterNode).toList();
-            String label = moduleNames.getOrDefault(b.getModuleId(), "?") + " / " + b.getName();
+            String category = b.getCategoryId() == null ? null : categoryNames.get(b.getCategoryId());
+            String label = moduleNames.getOrDefault(b.getModuleId(), "?") + (category == null ? "" : " / " + category) + " / " + b.getName();
             return new TreeNode("bank", b.getId(), label, b.getStatus(), b.getType(), children);
         }).toList();
     }
@@ -117,6 +124,7 @@ public class ContentAdminService {
     public void deleteModule(Long id) {
         BizException.throwIf(bankMapper.exists(Wrappers.<QuestionBank>lambdaQuery().eq(QuestionBank::getModuleId, id)),
                 "该模块下还有题库，不能删除");
+        categoryMapper.delete(Wrappers.<BankCategory>lambdaQuery().eq(BankCategory::getModuleId, id));
         moduleMapper.deleteById(id);
     }
 
@@ -127,11 +135,82 @@ public class ContentAdminService {
         m.setStatus(Objects.requireNonNullElse(req.status(), Status.ON));
     }
 
+    // ==================== 分类 ====================
+
+    public List<BankCategory> listCategories(Long moduleId) {
+        List<BankCategory> list = categoryMapper.selectList(Wrappers.<BankCategory>lambdaQuery()
+                .eq(moduleId != null, BankCategory::getModuleId, moduleId)
+                .orderByAsc(BankCategory::getModuleId).orderByAsc(BankCategory::getSort).orderByAsc(BankCategory::getId));
+        if (!list.isEmpty()) {
+            java.util.Map<Long, Long> counts = bankMapper.selectList(Wrappers.<QuestionBank>lambdaQuery()
+                            .select(QuestionBank::getCategoryId)
+                            .in(QuestionBank::getCategoryId, list.stream().map(BankCategory::getId).toList()))
+                    .stream().collect(Collectors.groupingBy(QuestionBank::getCategoryId, Collectors.counting()));
+            list.forEach(c -> c.setBankCount(counts.getOrDefault(c.getId(), 0L).intValue()));
+        }
+        return list;
+    }
+
+    public Long createCategory(CategorySave req) {
+        BizException.notNull(moduleMapper.selectById(req.moduleId()), "模块不存在");
+        checkCategoryName(req.moduleId(), req.name(), null);
+        BankCategory c = new BankCategory();
+        c.setModuleId(req.moduleId());
+        c.setName(req.name().strip());
+        // 不填排序时排到最后
+        c.setSort(req.sort() != null ? req.sort()
+                : categoryMapper.selectCount(Wrappers.<BankCategory>lambdaQuery().eq(BankCategory::getModuleId, req.moduleId())).intValue() + 1);
+        c.setStatus(Objects.requireNonNullElse(req.status(), Status.ON));
+        categoryMapper.insert(c);
+        return c.getId();
+    }
+
+    public void updateCategory(Long id, CategorySave req) {
+        BankCategory c = BizException.notNull(categoryMapper.selectById(id), "分类不存在");
+        BizException.throwIf(!Objects.equals(c.getModuleId(), req.moduleId()), "分类不能移动到其他模块");
+        checkCategoryName(c.getModuleId(), req.name(), id);
+        c.setName(req.name().strip());
+        if (req.sort() != null) {
+            c.setSort(req.sort());
+        }
+        c.setStatus(Objects.requireNonNullElse(req.status(), Status.ON));
+        categoryMapper.updateById(c);
+    }
+
+    public void deleteCategory(Long id) {
+        BizException.throwIf(bankMapper.exists(Wrappers.<QuestionBank>lambdaQuery().eq(QuestionBank::getCategoryId, id)),
+                "该分类下还有题库，请先把题库移到其他分类");
+        categoryMapper.deleteById(id);
+    }
+
+    /** 拖动排序：同一模块下全部分类的新顺序 */
+    @org.springframework.transaction.annotation.Transactional
+    public void sortCategories(List<Long> ids) {
+        BizException.throwIf(ids == null || ids.isEmpty() || new java.util.HashSet<>(ids).size() != ids.size(), "排序数据不正确");
+        List<BankCategory> list = categoryMapper.selectByIds(ids);
+        BizException.throwIf(list.size() != ids.size(), "部分分类不存在，请刷新后重试");
+        java.util.Set<Long> modules = list.stream().map(BankCategory::getModuleId).collect(Collectors.toSet());
+        BizException.throwIf(modules.size() != 1, "只能在同一模块内排序");
+        long all = categoryMapper.selectCount(Wrappers.<BankCategory>lambdaQuery().eq(BankCategory::getModuleId, modules.iterator().next()));
+        BizException.throwIf(all != ids.size(), "分类列表已变化，请刷新后重试");
+        for (int i = 0; i < ids.size(); i++) {
+            categoryMapper.update(Wrappers.<BankCategory>lambdaUpdate().set(BankCategory::getSort, i + 1).eq(BankCategory::getId, ids.get(i)));
+        }
+    }
+
+    private void checkCategoryName(Long moduleId, String name, Long excludeId) {
+        BizException.throwIf(categoryMapper.exists(Wrappers.<BankCategory>lambdaQuery()
+                .eq(BankCategory::getModuleId, moduleId).eq(BankCategory::getName, name.strip())
+                .ne(excludeId != null, BankCategory::getId, excludeId)), "该模块下已有同名分类");
+    }
+
     // ==================== 题库 ====================
 
     public PageResult<QuestionBank> pageBanks(BankQuery q) {
         return PageResult.of(bankMapper.selectPage(q.toPage(), Wrappers.<QuestionBank>lambdaQuery()
                 .eq(q.getModuleId() != null, QuestionBank::getModuleId, q.getModuleId())
+                .eq(q.getCategoryId() != null && q.getCategoryId() > 0, QuestionBank::getCategoryId, q.getCategoryId())
+                .isNull(q.getCategoryId() != null && q.getCategoryId() == 0, QuestionBank::getCategoryId)
                 .eq(q.getType() != null, QuestionBank::getType, q.getType())
                 .like(StringUtils.hasText(q.getKeyword()), QuestionBank::getName, q.getKeyword())
                 .orderByAsc(QuestionBank::getSort).orderByDesc(QuestionBank::getId)));
@@ -144,6 +223,7 @@ public class ContentAdminService {
     public Long createBank(BankSave req) {
         BizException.notNull(moduleMapper.selectById(req.moduleId()), "模块不存在");
         BankType.of(req.type());
+        checkCategory(req.moduleId(), req.categoryId());
         QuestionBank b = new QuestionBank();
         b.setType(req.type());
         b.setQuestionCount(0);
@@ -157,6 +237,7 @@ public class ContentAdminService {
         BizException.throwIf(!Objects.equals(b.getType(), req.type()), "题库类型创建后不能修改");
         BizException.throwIf(!Objects.equals(b.getModuleId(), req.moduleId())
                 && moduleMapper.selectById(req.moduleId()) == null, "模块不存在");
+        checkCategory(req.moduleId(), req.categoryId());
         copy(req, b);
         bankMapper.updateById(b);
     }
@@ -167,6 +248,39 @@ public class ContentAdminService {
         bankMapper.updateById(b);
     }
 
+    /**
+     * 拖动排序：按给定顺序把 sort 重写为 1、2、3…。必须是同一模块下的全部题库（用户端只在模块内排序），
+     * 避免只传部分题库时与未传的题库序号冲突。
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void sortBanks(List<Long> ids) {
+        BizException.throwIf(ids == null || ids.isEmpty(), "请提供排序后的题库");
+        BizException.throwIf(new java.util.HashSet<>(ids).size() != ids.size(), "题库重复");
+        List<QuestionBank> banks = bankMapper.selectByIds(ids);
+        BizException.throwIf(banks.size() != ids.size(), "部分题库不存在，请刷新后重试");
+        java.util.Set<Long> modules = banks.stream().map(QuestionBank::getModuleId).collect(Collectors.toSet());
+        BizException.throwIf(modules.size() != 1, "只能在同一模块内排序");
+        Long moduleId = modules.iterator().next();
+        long all = bankMapper.selectCount(Wrappers.<QuestionBank>lambdaQuery().eq(QuestionBank::getModuleId, moduleId));
+        if (all != ids.size()) {
+            // 不是整个模块，则必须是同一分类（含“未分类”）下的全部题库
+            java.util.Set<Long> cats = banks.stream().map(b -> b.getCategoryId() == null ? 0L : b.getCategoryId())
+                    .collect(Collectors.toSet());
+            BizException.throwIf(cats.size() != 1, "只能在同一分类内排序");
+            Long cat = cats.iterator().next();
+            long inCat = bankMapper.selectCount(Wrappers.<QuestionBank>lambdaQuery()
+                    .eq(QuestionBank::getModuleId, moduleId)
+                    .isNull(cat == 0L, QuestionBank::getCategoryId)
+                    .eq(cat != 0L, QuestionBank::getCategoryId, cat));
+            BizException.throwIf(inCat != ids.size(), "题库列表已变化，请刷新后重试");
+        }
+        for (int i = 0; i < ids.size(); i++) {
+            bankMapper.update(Wrappers.<QuestionBank>lambdaUpdate()
+                    .set(QuestionBank::getSort, i + 1)
+                    .eq(QuestionBank::getId, ids.get(i)));
+        }
+    }
+
     public void deleteBank(Long id) {
         BizException.throwIf(chapterMapper.exists(Wrappers.<Chapter>lambdaQuery().eq(Chapter::getBankId, id))
                 || courseMapper.exists(Wrappers.<Course>lambdaQuery().eq(Course::getBankId, id)),
@@ -174,8 +288,17 @@ public class ContentAdminService {
         bankMapper.deleteById(id);
     }
 
+    private void checkCategory(Long moduleId, Long categoryId) {
+        if (categoryId == null) {
+            return;
+        }
+        BankCategory c = BizException.notNull(categoryMapper.selectById(categoryId), "分类不存在");
+        BizException.throwIf(!Objects.equals(c.getModuleId(), moduleId), "分类不属于该模块");
+    }
+
     private static void copy(BankSave req, QuestionBank b) {
         b.setModuleId(req.moduleId());
+        b.setCategoryId(req.categoryId());
         b.setName(req.name());
         b.setCover(req.cover());
         b.setIntro(req.intro());

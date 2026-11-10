@@ -1,10 +1,12 @@
 package com.lemon.biz.content.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.lemon.biz.content.entity.BankCategory;
 import com.lemon.biz.content.entity.Chapter;
 import com.lemon.biz.content.entity.Course;
 import com.lemon.biz.content.entity.ExamModule;
 import com.lemon.biz.content.entity.QuestionBank;
+import com.lemon.biz.content.mapper.BankCategoryMapper;
 import com.lemon.biz.content.mapper.ChapterMapper;
 import com.lemon.biz.content.mapper.CourseMapper;
 import com.lemon.biz.content.mapper.ExamModuleMapper;
@@ -30,6 +32,7 @@ public class ContentQueryService {
     private final CourseMapper courseMapper;
     private final ChapterMapper chapterMapper;
     private final NoticeMapper noticeMapper;
+    private final BankCategoryMapper categoryMapper;
 
     public List<ExamModule> modules() {
         return moduleMapper.selectList(Wrappers.<ExamModule>lambdaQuery()
@@ -44,10 +47,21 @@ public class ContentQueryService {
                 .last("LIMIT 5"));
     }
 
+    /** 模块下上架的分类 */
+    public List<BankCategory> categories(Long moduleId) {
+        return categoryMapper.selectList(Wrappers.<BankCategory>lambdaQuery()
+                .eq(BankCategory::getModuleId, moduleId)
+                .eq(BankCategory::getStatus, Status.ON)
+                .orderByAsc(BankCategory::getSort).orderByAsc(BankCategory::getId));
+    }
+
+    /** 模块下上架的题库；所属分类下架或已删除的题库不显示，未分类的照常显示 */
     public List<QuestionBank> banks(Long moduleId) {
         return bankMapper.selectList(Wrappers.<QuestionBank>lambdaQuery()
                 .eq(QuestionBank::getModuleId, moduleId)
                 .eq(QuestionBank::getStatus, Status.ON)
+                .and(w -> w.isNull(QuestionBank::getCategoryId).or()
+                        .inSql(QuestionBank::getCategoryId, "SELECT id FROM bank_category WHERE status = 1 AND deleted = 0"))
                 .orderByAsc(QuestionBank::getSort).orderByDesc(QuestionBank::getId));
     }
 

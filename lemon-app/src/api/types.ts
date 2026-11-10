@@ -13,9 +13,17 @@ export interface Notice {
   content?: string
 }
 
+export interface BankCategory {
+  id: number
+  moduleId: number
+  name: string
+}
+
 export interface QuestionBank {
   id: number
   moduleId: number
+  /** 所属分类，null 为未分类（归入“其他”） */
+  categoryId: number | null
   name: string
   type: number
   cover?: string

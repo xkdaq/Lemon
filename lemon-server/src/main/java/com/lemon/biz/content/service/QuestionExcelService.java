@@ -79,12 +79,53 @@ public class QuestionExcelService {
             Map.entry("判断", 3), Map.entry("判断题", 3), Map.entry("3", 3),
             Map.entry("主观", 4), Map.entry("主观题", 4), Map.entry("简答", 4), Map.entry("简答题", 4),
             Map.entry("论述", 4), Map.entry("论述题", 4), Map.entry("分析", 4), Map.entry("分析题", 4),
-            Map.entry("材料分析题", 4), Map.entry("辨析", 4), Map.entry("辨析题", 4), Map.entry("4", 4));
+            Map.entry("材料分析题", 4), Map.entry("辨析", 4), Map.entry("辨析题", 4), Map.entry("4", 4),
+            Map.entry("问答", 4), Map.entry("问答题", 4), Map.entry("材料", 4), Map.entry("材料题", 4),
+            Map.entry("案例分析题", 4), Map.entry("名词解释", 4), Map.entry("填空题", 4));
 
     private static final Map<String, Integer> DIFFICULTY_ALIASES = Map.of(
             "简单", 1, "易", 1, "1", 1, "中等", 2, "中", 2, "2", 2, "困难", 3, "难", 3, "3", 3);
 
     private static final String[] DIFFICULTY_LABELS = {"", "简单", "中等", "困难"};
+
+    /** 题干开头的题号：可先有 HTML 标签（如“<p>12.”），再是 数字 + . ． 、 */
+    private static final java.util.regex.Pattern LEADING_NUMBER =
+            java.util.regex.Pattern.compile("^\\s*((?:<[^>]+>\\s*)*)(\\d{1,3})\\s*[.．、]\\s*");
+
+    /**
+     * 计算每行题干开头应去掉的题号。同一组（章节 / 套卷）内按 1、2、3… 顺序匹配，
+     * 材料下的小题等不带题号的行跳过不影响计数。至少一半的行匹配上才认为文件带题号，
+     * 否则全部返回 null，避免把“1.5 倍……”这种本身以数字开头的题干误删。
+     */
+    static List<Integer> sequentialNumbers(List<String> stems, List<String> groups) {
+        Map<String, Integer> expected = new HashMap<>();
+        List<Integer> result = new ArrayList<>();
+        int matched = 0;
+        for (int i = 0; i < stems.size(); i++) {
+            int next = expected.getOrDefault(groups.get(i), 1);
+            var m = LEADING_NUMBER.matcher(stems.get(i));
+            if (m.find() && Integer.parseInt(m.group(2)) == next) {
+                result.add(next);
+                expected.put(groups.get(i), next + 1);
+                matched++;
+            } else {
+                result.add(null);
+            }
+        }
+        if (matched * 2 < stems.size()) {
+            return java.util.Collections.nCopies(stems.size(), null);
+        }
+        return result;
+    }
+
+    /** 去掉题干开头与给定题号一致的题号（保留前面的 HTML 标签）；题号为 null 或对不上时原样返回 */
+    static String stripNumber(String stem, Integer questionNo) {
+        if (questionNo == null) {
+            return stem;
+        }
+        var m = LEADING_NUMBER.matcher(stem);
+        return m.find() && Integer.parseInt(m.group(2)) == questionNo ? m.group(1) + stem.substring(m.end()) : stem;
+    }
 
     private final QuestionAdminService questionAdminService;
     private final QuestionBankMapper bankMapper;
@@ -116,13 +157,16 @@ public class QuestionExcelService {
             Sheet help = wb.createSheet("填写说明");
             String[] lines = {
                     "1. 第一行是表头，列名不要改；列的顺序可以调整，多余的列会被忽略。",
-                    "2. 题型：单选 / 多选 / 判断 / 主观（简答、论述、分析、辨析都按主观题处理）。",
+                    "   也兼容题库导出格式：“题目”“分数”“一级目录”分别当作“题干”“分值”“章节”；题干开头的题号（如“12.”）会自动去掉；内容已是 HTML 的会保留格式。",
+                    "2. 题型：单选 / 多选 / 判断 / 主观（简答、论述、问答、分析、辨析都按主观题处理）。",
+                    "   材料题：题型填“材料题”、只填题干（材料内容），后面紧跟的几道不带题号的主观题作为它的小题，材料会附在每道小题前面。",
                     "3. 选项：填在“选项A”~“选项H”，单选和多选至少 2 个；判断题可以不填，默认 A 正确 / B 错误。",
                     "4. 答案：单选填一个字母，如 A；多选填多个字母，如 ABD（A,B,D 也可以）；判断填 对/错 或 A/B；主观题不填。",
-                    "5. 解析：主观题的参考答案填在解析里（必填）；单元格内换行会保留为分段。",
+                    "5. 主观题的参考答案可以填在“答案”或“解析”里（至少填一个）；两者都填时解析接在参考答案后面。单元格内换行会保留为分段。",
                     "6. 分值：可不填，默认 0；难度：简单 / 中等 / 困难，可不填，默认中等。",
                     "7. 科目 / 章节：导入时如果在页面上选了章节，这两列会被忽略；",
-                    "   否则科目型题库要填“科目”和“章节”，试卷型题库只填“章节”（即试卷名），不存在的会自动创建。",
+                    "   否则科目型题库要填“科目”和“章节”，试卷型题库只看“章节”（即试卷名，“科目”列忽略），不存在的会自动创建；",
+                    "   自动创建的试卷总分为导入题目分值之和，考试时长默认 180 分钟，可在后台修改。",
                     "8. 一次最多 " + MAX_ROWS + " 题。只要有一行出错，整份文件都不会导入，请按提示改好后重新上传。",
             };
             for (int i = 0; i < lines.length; i++) {
@@ -228,6 +272,9 @@ public class QuestionExcelService {
                 BizException.throwIf(!cols.containsKey(required), "表头缺少“" + required + "”列，请使用导入模板");
             }
 
+            // 先收集非空行
+            List<Integer> excelRows = new ArrayList<>();
+            List<CellReader> readers = new ArrayList<>();
             for (int r = sheet.getFirstRowNum() + 1; r <= sheet.getLastRowNum(); r++) {
                 Row row = sheet.getRow(r);
                 CellReader cell = name -> {
@@ -241,10 +288,44 @@ public class QuestionExcelService {
                 if (isBlankRow(cell, cols)) {
                     continue;
                 }
-                BizException.throwIf(rows.size() + errors.size() >= MAX_ROWS, "一次最多导入 " + MAX_ROWS + " 题，请拆分文件");
-                int excelRow = r + 1;
+                BizException.throwIf(readers.size() >= MAX_ROWS, "一次最多导入 " + MAX_ROWS + " 题，请拆分文件");
+                excelRows.add(r + 1);
+                readers.add(cell);
+            }
+
+            // 按章节（套卷）分组：页面上选了章节则整份文件一组
+            List<String> groups = readers.stream()
+                    .map(c -> chapterId != null ? "" : (courseBank ? c.get(H_COURSE) : "") + "/" + c.get(H_CHAPTER))
+                    .toList();
+            List<Integer> numbers = sequentialNumbers(readers.stream().map(c -> c.get(H_STEM)).toList(), groups);
+
+            // 材料题：材料行本身不导入，内容附在它后面的小题（不带题号的主观题）题干前
+            Map<String, String> materials = new HashMap<>();
+            Map<String, Integer> unusedMaterialRow = new HashMap<>();
+            for (int i = 0; i < readers.size(); i++) {
+                CellReader cell = readers.get(i);
+                int excelRow = excelRows.get(i);
+                String group = groups.get(i);
                 try {
-                    rows.add(parseRow(excelRow, cell, chapterId != null, courseBank));
+                    if (isMaterialRow(cell)) {
+                        String material = toHtml(stripNumber(cell.get(H_STEM), numbers.get(i)));
+                        BizException.throwIf(material == null || HtmlUtil.isBlank(material), "材料题的材料内容不能为空");
+                        failIfUnused(unusedMaterialRow.put(group, excelRow));
+                        materials.put(group, material);
+                        continue;
+                    }
+                    Integer type = TYPE_ALIASES.get(cell.get(H_TYPE).replace(" ", ""));
+                    // 带题号的行是新的大题，不属于前面的材料；不带题号的主观题才是材料下的小题
+                    boolean subQuestion = type != null && type == QuestionType.SUBJECTIVE.getCode()
+                            && (numbers.get(i) == null) && materials.containsKey(group);
+                    if (!subQuestion) {
+                        failIfUnused(unusedMaterialRow.remove(group));
+                        materials.remove(group);
+                    } else {
+                        unusedMaterialRow.remove(group);
+                    }
+                    rows.add(parseRow(excelRow, cell, chapterId != null, courseBank, numbers.get(i),
+                            subQuestion ? materials.get(group) : null));
                 } catch (BizException e) {
                     if (errors.size() < MAX_ERRORS) {
                         errors.add(new RowError(excelRow, e.getMessage()));
@@ -253,6 +334,7 @@ public class QuestionExcelService {
                     }
                 }
             }
+            unusedMaterialRow.values().forEach(r -> errors.add(new RowError(r, "材料题后面没有小题")));
         } catch (IOException | org.apache.poi.EmptyFileException | org.apache.poi.UnsupportedFileFormatException e) {
             throw new BizException("无法读取文件，请上传 .xlsx 格式的 Excel");
         }
@@ -272,7 +354,51 @@ public class QuestionExcelService {
                     s.score(), s.difficulty(), s.source(), null, Status.ON);
         }).toList();
         int imported = questionAdminService.createBatch(saves);
+        if (!courseBank) {
+            fillNewPapers(resolver.createdChapterIds, saves);
+        }
         return new ImportResult(total, imported, resolver.createdCourses, resolver.createdChapters, List.of());
+    }
+
+    /** 默认考试时长（分钟），导入时新建的试卷使用，之后可在后台修改 */
+    private static final int DEFAULT_PAPER_MINUTES = 180;
+
+    /** 导入时新建的试卷：总分取导入题目的分值之和，时长默认 180 分钟 */
+    private void fillNewPapers(List<Long> chapterIds, List<QuestionSave> saves) {
+        for (Long id : chapterIds) {
+            BigDecimal sum = saves.stream().filter(q -> id.equals(q.chapterId()))
+                    .map(q -> Objects.requireNonNullElse(q.score(), BigDecimal.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+            Chapter c = new Chapter();
+            c.setId(id);
+            c.setTotalScore(sum.setScale(0, java.math.RoundingMode.HALF_UP).intValue());
+            c.setTimeLimit(DEFAULT_PAPER_MINUTES);
+            chapterMapper.updateById(c);
+        }
+    }
+
+    /** 材料行后紧跟的不是小题：材料没被任何小题使用，视为数据错误 */
+    private static void failIfUnused(Integer materialRow) {
+        if (materialRow != null) {
+            throw new BizException("第 " + materialRow + " 行的材料题后面没有小题");
+        }
+    }
+
+    /** 材料题：题型为“材料 / 材料题”，且没有答案和解析（只有材料内容） */
+    private static boolean isMaterialRow(CellReader cell) {
+        String type = cell.get(H_TYPE).replace(" ", "");
+        return ("材料".equals(type) || "材料题".equals(type)) && cell.get(H_ANSWER).isEmpty() && cell.get(H_ANALYSIS).isEmpty();
+    }
+
+    private static final java.util.regex.Pattern HTML_TAG = java.util.regex.Pattern.compile(
+            "<\\s*/?\\s*(p|br|span|strong|b|i|u|em|div|img|ul|ol|li|table|tr|td|sub|sup|blockquote)\\b[^<>]*>",
+            java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    /** 单元格内容转 HTML：已经是 HTML（题库导出常见）则原样保留（保存时统一白名单过滤），否则按纯文本分段 */
+    static String toHtml(String cell) {
+        if (cell == null || cell.isBlank()) {
+            return null;
+        }
+        return HTML_TAG.matcher(cell).find() ? cell.strip() : HtmlUtil.textToHtml(cell);
     }
 
     @FunctionalInterface
@@ -280,41 +406,63 @@ public class QuestionExcelService {
         String get(String header);
     }
 
-    private ParsedRow parseRow(int excelRow, CellReader cell, boolean chapterFixed, boolean courseBank) {
+    /**
+     * @param questionNo 文件带题号时为本行应去掉的题号；不带题号时为 null
+     * @param material   材料题下的小题：所属材料（HTML），会以引用块放在题干前
+     */
+    private ParsedRow parseRow(int excelRow, CellReader cell, boolean chapterFixed, boolean courseBank,
+                               Integer questionNo, String material) {
         Integer type = TYPE_ALIASES.get(cell.get(H_TYPE).replace(" ", ""));
         if (type == null) {
-            throw new BizException("题型“" + cell.get(H_TYPE) + "”无法识别，应为 单选 / 多选 / 判断 / 主观");
+            throw new BizException("题型“" + cell.get(H_TYPE) + "”无法识别，应为 单选 / 多选 / 判断 / 主观（问答、论述、材料等）");
         }
-        String stem = cell.get(H_STEM);
-        BizException.throwIf(stem.isEmpty(), "题干不能为空");
+        // 去掉题干开头的题号（如“12.”“3、”），题号由用户端按顺序显示
+        String stemHtml = toHtml(stripNumber(cell.get(H_STEM), questionNo));
+        BizException.throwIf(stemHtml == null || HtmlUtil.isBlank(stemHtml), "题干不能为空");
+        if (material != null) {
+            stemHtml = "<blockquote>" + material + "</blockquote>" + stemHtml;
+        }
 
         List<OptionItem> options = new ArrayList<>();
         for (int i = 0; i < OPTION_COUNT; i++) {
             String key = String.valueOf((char) ('A' + i));
             String content = cell.get("选项" + key);
             if (!content.isEmpty()) {
-                options.add(new OptionItem(key, content));
+                // 选项只存纯文本
+                options.add(new OptionItem(key, HTML_TAG.matcher(content).find() ? HtmlUtil.htmlToText(content) : content));
             }
         }
-        String analysisHtml = HtmlUtil.textToHtml(cell.get(H_ANALYSIS));
-        // 用和手工录入完全相同的规则校验，保证导入的数据一样合规
-        QuestionNormalizer.normalize(type, options, cell.get(H_ANSWER), analysisHtml);
 
-        String courseName = cell.get(H_COURSE);
+        String answer = cell.get(H_ANSWER);
+        String analysisHtml = toHtml(cell.get(H_ANALYSIS));
+        if (type == QuestionType.SUBJECTIVE.getCode()) {
+            // 主观题：“答案”列是参考答案；同时有解析时接在参考答案后面
+            String reference = toHtml(answer);
+            if (reference != null && !HtmlUtil.isBlank(reference)) {
+                analysisHtml = analysisHtml == null || HtmlUtil.isBlank(analysisHtml)
+                        ? reference
+                        : reference + "<p><strong>解析</strong></p>" + analysisHtml;
+            }
+            answer = null;
+        }
+        // 用和手工录入完全相同的规则校验，保证导入的数据一样合规
+        QuestionNormalizer.normalize(type, options, answer, analysisHtml);
+
+        // 试卷型题库没有科目，“科目”列忽略（题库供应商导出的“科目”通常是套卷系列名）
+        String courseName = courseBank ? cell.get(H_COURSE) : "";
         String chapterName = cell.get(H_CHAPTER);
         if (!chapterFixed) {
             if (courseBank) {
                 BizException.throwIf(courseName.isEmpty() || chapterName.isEmpty(),
                         "科目型题库请填写“科目”和“章节”（或在页面上直接选择章节）");
             } else {
-                BizException.throwIf(!courseName.isEmpty(), "试卷型题库没有科目，请清空“科目”列");
                 BizException.throwIf(chapterName.isEmpty(), "请填写“章节”（试卷名），或在页面上直接选择试卷");
             }
             BizException.throwIf(courseName.length() > 64, "科目名称不能超过 64 个字");
             BizException.throwIf(chapterName.length() > 128, "章节名称不能超过 128 个字");
         }
 
-        QuestionSave save = new QuestionSave(null, type, HtmlUtil.textToHtml(stem), options, cell.get(H_ANSWER),
+        QuestionSave save = new QuestionSave(null, type, stemHtml, options, answer,
                 analysisHtml, parseScore(cell.get(H_SCORE)), parseDifficulty(cell.get(H_DIFFICULTY)),
                 StringUtils.hasText(cell.get(H_SOURCE)) ? truncate(cell.get(H_SOURCE), 64) : null, null, Status.ON);
         return new ParsedRow(excelRow, courseName, chapterName, save);
@@ -352,7 +500,12 @@ public class QuestionExcelService {
         return cols.keySet().stream().allMatch(h -> cell.get(h).isEmpty());
     }
 
-    /** 表头名 → 列下标；表头里的空格忽略 */
+    /** 常见的其他表头写法 → 模板表头（题库供应商导出的文件常用“题目”“分数”） */
+    private static final Map<String, String> HEADER_ALIASES = Map.of(
+            "题目", H_STEM, "题目内容", H_STEM, "分数", H_SCORE, "正确答案", H_ANSWER, "答案解析", H_ANALYSIS,
+            "一级目录", H_CHAPTER);
+
+    /** 表头名 → 列下标；表头里的空格忽略；模板表头不存在时接受别名 */
     private static Map<String, Integer> readHeader(Row header, DataFormatter fmt) {
         BizException.throwIf(header == null, "第一行应为表头，请使用导入模板");
         Map<String, Integer> cols = new LinkedHashMap<>();
@@ -362,6 +515,11 @@ public class QuestionExcelService {
                 cols.putIfAbsent(name, c.getColumnIndex());
             }
         }
+        HEADER_ALIASES.forEach((alias, canonical) -> {
+            if (!cols.containsKey(canonical) && cols.containsKey(alias)) {
+                cols.put(canonical, cols.get(alias));
+            }
+        });
         return cols;
     }
 
@@ -373,6 +531,7 @@ public class QuestionExcelService {
         private final Map<String, Long> chapterIds = new HashMap<>();
         int createdCourses;
         int createdChapters;
+        final List<Long> createdChapterIds = new ArrayList<>();
 
         ChapterResolver(QuestionBank bank) {
             this.bank = bank;
@@ -419,6 +578,7 @@ public class QuestionExcelService {
             c.setQuestionCount(0);
             chapterMapper.insert(c);
             createdChapters++;
+            createdChapterIds.add(c.getId());
             return c.getId();
         }
     }

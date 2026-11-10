@@ -1,6 +1,7 @@
 package com.lemon.biz.user.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.lemon.biz.collection.CollectionService;
 import com.lemon.biz.favorite.entity.UserFavorite;
 import com.lemon.biz.favorite.mapper.UserFavoriteMapper;
 import com.lemon.biz.practice.entity.AnswerRecord;
@@ -53,8 +54,10 @@ public class UserStatsService {
                 recordMapper.selectCount(Wrappers.<AnswerRecord>lambdaQuery()
                         .eq(AnswerRecord::getUserId, userId).ge(AnswerRecord::getCreatedAt, today.atStartOfDay())),
                 wrongMapper.selectCount(Wrappers.<UserWrongQuestion>lambdaQuery()
-                        .eq(UserWrongQuestion::getUserId, userId).eq(UserWrongQuestion::getStatus, Status.ON)),
-                favoriteMapper.selectCount(Wrappers.<UserFavorite>lambdaQuery().eq(UserFavorite::getUserId, userId)));
+                        .eq(UserWrongQuestion::getUserId, userId).eq(UserWrongQuestion::getStatus, Status.ON)
+                        .inSql(UserWrongQuestion::getQuestionId, CollectionService.EXISTING_QUESTIONS)),
+                favoriteMapper.selectCount(Wrappers.<UserFavorite>lambdaQuery().eq(UserFavorite::getUserId, userId)
+                        .inSql(UserFavorite::getQuestionId, CollectionService.EXISTING_QUESTIONS)));
     }
 
     /**

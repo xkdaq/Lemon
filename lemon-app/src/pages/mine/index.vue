@@ -22,7 +22,6 @@ onShow(async () => {
 
 const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
 const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
-const goTab = (url: string) => uni.switchTab({ url })
 
 async function logout() {
   const { confirm } = await uni.showModal({ title: '退出登录？' })
@@ -55,13 +54,20 @@ async function logout() {
       <view class="stat"><view class="num">{{ stats?.answerTotal ?? '-' }}</view><view class="muted">累计作答</view></view>
     </view>
 
+    <view class="collections">
+      <view class="collection wrong" @click="go('/pages/wrong/index')">
+        <view class="collection-name">错题集</view>
+        <view class="collection-count">{{ stats ? stats.wrongCount : '-' }}<text class="unit"> 题</text></view>
+        <view class="collection-tip">答错自动收录，可错题重练</view>
+      </view>
+      <view class="collection favorite" @click="go('/pages/favorite/index')">
+        <view class="collection-name">收藏集</view>
+        <view class="collection-count">{{ stats ? stats.favoriteCount : '-' }}<text class="unit"> 题</text></view>
+        <view class="collection-tip">做题时点“收藏”加入</view>
+      </view>
+    </view>
+
     <view class="card menu">
-      <view class="menu-item" @click="goTab('/pages/wrong/index')">
-        <text>错题集</text><text class="muted">{{ stats ? `${stats.wrongCount} 题` : '' }} ›</text>
-      </view>
-      <view class="menu-item" @click="goTab('/pages/favorite/index')">
-        <text>收藏集</text><text class="muted">{{ stats ? `${stats.favoriteCount} 题` : '' }} ›</text>
-      </view>
       <view class="menu-item" @click="go('/pages/feedback/index')">
         <text>意见反馈</text><text class="muted">›</text>
       </view>
@@ -117,6 +123,41 @@ async function logout() {
   font-weight: 700;
   margin-bottom: 8rpx;
   font-variant-numeric: tabular-nums;
+}
+.collections {
+  display: flex;
+  gap: 24rpx;
+  margin: 0 24rpx;
+}
+.collection {
+  flex: 1;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  color: #fff;
+}
+.collection.wrong {
+  background: linear-gradient(135deg, #ff8a65, #e34d59);
+}
+.collection.favorite {
+  background: linear-gradient(135deg, #ffcf40, #f5b800);
+}
+.collection-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.collection-count {
+  font-size: 56rpx;
+  font-weight: 700;
+  margin: 12rpx 0 4rpx;
+  font-variant-numeric: tabular-nums;
+}
+.unit {
+  font-size: 24rpx;
+  font-weight: 400;
+}
+.collection-tip {
+  font-size: 22rpx;
+  opacity: 0.9;
 }
 .menu {
   padding: 0 28rpx;

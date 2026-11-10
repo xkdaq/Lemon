@@ -52,6 +52,12 @@ public class CollectionService {
 
     public enum Kind { FAVORITE, WRONG }
 
+    /**
+     * 只统计 / 展示题目仍存在的记录。题目（连同题库、章节）被删除后，收藏和错题记录保留在库里，
+     * 但不再出现；题目若恢复，记录也随之恢复。下架的题仍展示，标记为不可练习。
+     */
+    public static final String EXISTING_QUESTIONS = "SELECT id FROM question WHERE deleted = 0";
+
     private final UserFavoriteMapper favoriteMapper;
     private final UserWrongQuestionMapper wrongMapper;
     private final QuestionMapper questionMapper;
@@ -108,7 +114,9 @@ public class CollectionService {
     }
 
     private static <T> QueryWrapper<T> groupQuery(QueryWrapper<T> w) {
-        return w.select("module_id", "bank_id", "chapter_id", "COUNT(*) AS cnt").groupBy("module_id", "bank_id", "chapter_id");
+        return w.select("module_id", "bank_id", "chapter_id", "COUNT(*) AS cnt")
+                .inSql("question_id", EXISTING_QUESTIONS)
+                .groupBy("module_id", "bank_id", "chapter_id");
     }
 
     // ==================== 列表 ====================
@@ -118,6 +126,7 @@ public class CollectionService {
         if (kind == Kind.FAVORITE) {
             var p = favoriteMapper.selectPage(Page.of(pageNum, pageSize), Wrappers.<UserFavorite>lambdaQuery()
                     .eq(UserFavorite::getUserId, userId)
+                    .inSql(UserFavorite::getQuestionId, EXISTING_QUESTIONS)
                     .eq(scope.moduleId() != null, UserFavorite::getModuleId, scope.moduleId())
                     .eq(scope.bankId() != null, UserFavorite::getBankId, scope.bankId())
                     .eq(scope.chapterId() != null, UserFavorite::getChapterId, scope.chapterId())
@@ -184,6 +193,7 @@ public class CollectionService {
                 ? favoriteMapper.selectList(Wrappers.<UserFavorite>lambdaQuery()
                         .select(UserFavorite::getQuestionId)
                         .eq(UserFavorite::getUserId, userId)
+                        .inSql(UserFavorite::getQuestionId, EXISTING_QUESTIONS)
                         .eq(scope.moduleId() != null, UserFavorite::getModuleId, scope.moduleId())
                         .eq(scope.bankId() != null, UserFavorite::getBankId, scope.bankId())
                         .eq(scope.chapterId() != null, UserFavorite::getChapterId, scope.chapterId())
@@ -212,6 +222,7 @@ public class CollectionService {
         return Wrappers.<UserWrongQuestion>lambdaQuery()
                 .eq(UserWrongQuestion::getUserId, userId)
                 .eq(UserWrongQuestion::getStatus, Status.ON)
+                .inSql(UserWrongQuestion::getQuestionId, EXISTING_QUESTIONS)
                 .eq(scope.moduleId() != null, UserWrongQuestion::getModuleId, scope.moduleId())
                 .eq(scope.bankId() != null, UserWrongQuestion::getBankId, scope.bankId())
                 .eq(scope.chapterId() != null, UserWrongQuestion::getChapterId, scope.chapterId());

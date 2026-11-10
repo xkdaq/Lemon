@@ -20,6 +20,10 @@ public class QuestionBank extends BaseEntity {
     /** 所属模块 */
     private Long moduleId;
 
+    /** 所属分类，null 为未分类 */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private Long categoryId;
+
     /** 名称 */
     private String name;
 

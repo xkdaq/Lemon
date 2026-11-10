@@ -1,6 +1,8 @@
 package com.lemon.controller.admin;
 
 import com.lemon.biz.content.dto.ContentReqs.BankQuery;
+import com.lemon.biz.content.dto.ContentReqs.CategorySave;
+import com.lemon.biz.content.entity.BankCategory;
 import com.lemon.biz.content.dto.ContentReqs.BankSave;
 import com.lemon.biz.content.dto.ContentReqs.ChapterSave;
 import com.lemon.biz.content.dto.ContentReqs.CourseSave;
@@ -16,6 +18,8 @@ import com.lemon.common.R;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -70,6 +74,41 @@ public class AdminContentController {
         return R.ok();
     }
 
+    // -------- 分类 --------
+
+    @Operation(summary = "分类列表（可按模块筛选）")
+    @GetMapping("/categories")
+    public R<List<BankCategory>> listCategories(@RequestParam(required = false) Long moduleId) {
+        return R.ok(service.listCategories(moduleId));
+    }
+
+    @Operation(summary = "新建分类（不填排序时排在最后）")
+    @PostMapping("/categories")
+    public R<Long> createCategory(@Valid @RequestBody CategorySave req) {
+        return R.ok(service.createCategory(req));
+    }
+
+    @Operation(summary = "修改分类")
+    @PutMapping("/categories/{id}")
+    public R<Void> updateCategory(@PathVariable Long id, @Valid @RequestBody CategorySave req) {
+        service.updateCategory(id, req);
+        return R.ok();
+    }
+
+    @Operation(summary = "删除分类（分类下还有题库时不能删）")
+    @DeleteMapping("/categories/{id}")
+    public R<Void> deleteCategory(@PathVariable Long id) {
+        service.deleteCategory(id);
+        return R.ok();
+    }
+
+    @Operation(summary = "分类拖动排序：传同一模块下全部分类 id 的新顺序")
+    @PutMapping("/categories/sort")
+    public R<Void> sortCategories(@Valid @RequestBody SortReq req) {
+        service.sortCategories(req.ids());
+        return R.ok();
+    }
+
     // -------- 题库 --------
 
     @Operation(summary = "题库分页")
@@ -101,6 +140,16 @@ public class AdminContentController {
     @PutMapping("/banks/{id}/status")
     public R<Void> updateBankStatus(@PathVariable Long id, @Valid @RequestBody StatusUpdate req) {
         service.updateBankStatus(id, req.status());
+        return R.ok();
+    }
+
+    public record SortReq(@NotEmpty @Size(max = 500) List<Long> ids) {
+    }
+
+    @Operation(summary = "题库拖动排序：传同一模块下全部题库 id 的新顺序")
+    @PutMapping("/banks/sort")
+    public R<Void> sortBanks(@Valid @RequestBody SortReq req) {
+        service.sortBanks(req.ids());
         return R.ok();
     }
 

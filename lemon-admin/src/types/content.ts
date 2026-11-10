@@ -20,8 +20,19 @@ export interface ExamModule extends Base {
   status: number
 }
 
+export interface BankCategory extends Base {
+  moduleId: number
+  name: string
+  sort: number
+  status: number
+  /** 管理端列表返回：分类下题库数 */
+  bankCount?: number
+}
+
 export interface QuestionBank extends Base {
   moduleId: number
+  /** 所属分类，null 为未分类 */
+  categoryId: number | null
   name: string
   type: BankTypeValue
   cover?: string

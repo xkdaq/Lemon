@@ -26,6 +26,8 @@ public final class ContentReqs {
 
     public record BankSave(
             @NotNull Long moduleId,
+            /** 所属分类，可为空（未分类）；必须属于同一模块 */
+            Long categoryId,
             @NotBlank @Size(max = 64) String name,
             /** 1 科目型 2 试卷型；创建后不可修改 */
             @NotNull @Min(1) @Max(2) Integer type,
@@ -39,6 +41,8 @@ public final class ContentReqs {
     @EqualsAndHashCode(callSuper = true)
     public static class BankQuery extends PageQuery {
         private Long moduleId;
+        /** 分类；传 0 表示“未分类” */
+        private Long categoryId;
         private Integer type;
         private String keyword;
     }
@@ -61,6 +65,13 @@ public final class ContentReqs {
             @Min(1) Integer timeLimit,
             /** 试卷型：总分 */
             @Min(1) Integer totalScore) {
+    }
+
+    public record CategorySave(
+            @NotNull Long moduleId,
+            @NotBlank @Size(max = 32) String name,
+            Integer sort,
+            @Min(0) @Max(1) Integer status) {
     }
 
     public record StatusUpdate(@NotNull @Min(0) @Max(1) Integer status) {
