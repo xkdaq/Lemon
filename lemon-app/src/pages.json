@@ -1,0 +1,37 @@
+{
+  "pages": [
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "Lemon 刷题", "enablePullDownRefresh": true } },
+    { "path": "pages/bank/list", "style": { "navigationBarTitleText": "题库" } },
+    { "path": "pages/bank/detail", "style": { "navigationBarTitleText": "题库" } },
+    { "path": "pages/chapter/list", "style": { "navigationBarTitleText": "章节" } },
+    { "path": "pages/practice/index", "style": { "navigationBarTitleText": "做题", "disableScroll": false } },
+    { "path": "pages/practice/result", "style": { "navigationBarTitleText": "练习结果" } },
+    { "path": "pages/favorite/index", "style": { "navigationBarTitleText": "收藏集", "enablePullDownRefresh": true } },
+    { "path": "pages/wrong/index", "style": { "navigationBarTitleText": "错题集", "enablePullDownRefresh": true } },
+    { "path": "pages/collection/list", "style": { "navigationBarTitleText": "题目列表" } },
+    { "path": "pages/feedback/index", "style": { "navigationBarTitleText": "意见反馈" } },
+    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
+    { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "Lemon 刷题",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F6F7F9",
+    "maxWidth": 750,
+    "rpxCalcMaxDeviceWidth": 750,
+    "rpxCalcBaseDeviceWidth": 375
+  },
+  "tabBar": {
+    "color": "#8A8F99",
+    "selectedColor": "#F5B800",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/favorite/index", "text": "收藏集" },
+      { "pagePath": "pages/wrong/index", "text": "错题集" },
+      { "pagePath": "pages/mine/index", "text": "我的" }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+# 本地开发依赖：MySQL 8 + Redis 7（本机已装 MySQL / Redis 的可以不用）
+# 启动：docker compose up -d
+# 为避免和本机已有服务冲突，映射到 3307 / 6380，后端启动时用环境变量指过去：
+#   DB_URL='jdbc:mysql://localhost:3307/lemon?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai' DB_PASSWORD=lemon123 REDIS_PORT=6380 ./mvnw spring-boot:run
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: lemon-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: lemon123
+      MYSQL_DATABASE: lemon
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - lemon-mysql:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: lemon-redis
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - lemon-redis:/data
+
+volumes:
+  lemon-mysql:
+  lemon-redis:

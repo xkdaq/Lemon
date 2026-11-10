@@ -1,0 +1,14 @@
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.log
+
+# 依赖与构建产物（各子项目也有自己的 .gitignore，这里兜底）
+node_modules/
+dist/
+unpackage/
+target/
+uploads/
+*.local
+.env

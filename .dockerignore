@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/unpackage
+**/target
+**/uploads
+deploy/certs
+deploy/backups
+deploy/.env
+.git
+.idea
+.vscode
+**/.DS_Store

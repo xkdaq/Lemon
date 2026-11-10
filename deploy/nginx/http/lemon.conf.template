@@ -1,0 +1,66 @@
+# 仅用于本地验证或内网测试：与 HTTPS 版路由完全相同，但只监听 80、不加 HSTS
+# 登录 / 注册限流：每个 IP 每分钟 10 次，允许突发 10 次，防暴力破解密码
+limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
+limit_req_status 429;
+
+server {
+    listen 80;
+    server_name www.${DOMAIN};
+    include /etc/nginx/snippets/common.conf;
+    root /usr/share/nginx/www;
+    location /api/app/auth/ {
+        limit_req zone=auth burst=10 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/app/ {
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/ {
+        return 404;
+    }
+    include /etc/nginx/snippets/uploads.conf;
+    include /etc/nginx/snippets/spa.conf;
+}
+
+server {
+    listen 80;
+    server_name admin.${DOMAIN};
+    include /etc/nginx/snippets/common.conf;
+    add_header X-Frame-Options DENY always;
+    root /usr/share/nginx/admin;
+    location /api/admin/auth/login {
+        limit_req zone=auth burst=10 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/admin/ {
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/ {
+        return 404;
+    }
+    include /etc/nginx/snippets/uploads.conf;
+    include /etc/nginx/snippets/spa.conf;
+}
+
+server {
+    listen 80;
+    server_name api.${DOMAIN};
+    include /etc/nginx/snippets/common.conf;
+    location /api/app/auth/ {
+        limit_req zone=auth burst=10 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/app/ {
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    include /etc/nginx/snippets/uploads.conf;
+    location / {
+        return 404;
+    }
+}
+
+# 未匹配的 Host 一律拒绝
+server {
+    listen 80 default_server;
+    return 444;
+}

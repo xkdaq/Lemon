@@ -1,0 +1,17 @@
+{
+  "name": "Lemon 刷题",
+  "appid": "",
+  "description": "考研政治 / 教育学刷题",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "vueVersion": "3",
+  "h5": {
+    "title": "Lemon 刷题",
+    "router": { "mode": "history", "base": "/" }
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": { "urlCheck": false, "es6": true, "minified": true },
+    "usingComponents": true
+  }
+}

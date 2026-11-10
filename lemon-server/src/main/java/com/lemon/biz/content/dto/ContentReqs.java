@@ -1,0 +1,68 @@
+package com.lemon.biz.content.dto;
+
+import com.lemon.common.PageQuery;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * 内容管理（管理端）请求体
+ */
+public final class ContentReqs {
+
+    private ContentReqs() {
+    }
+
+    public record ModuleSave(
+            @NotBlank @Size(max = 32) String name,
+            @Size(max = 255) String icon,
+            Integer sort,
+            @Min(0) @Max(1) Integer status) {
+    }
+
+    public record BankSave(
+            @NotNull Long moduleId,
+            @NotBlank @Size(max = 64) String name,
+            /** 1 科目型 2 试卷型；创建后不可修改 */
+            @NotNull @Min(1) @Max(2) Integer type,
+            @Size(max = 255) String cover,
+            @Size(max = 500) String intro,
+            Integer sort,
+            @Min(0) @Max(1) Integer status) {
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    public static class BankQuery extends PageQuery {
+        private Long moduleId;
+        private Integer type;
+        private String keyword;
+    }
+
+    public record CourseSave(
+            @NotNull Long bankId,
+            @NotBlank @Size(max = 64) String name,
+            Integer sort,
+            @Min(0) @Max(1) Integer status) {
+    }
+
+    public record ChapterSave(
+            @NotNull Long bankId,
+            /** 科目型必填，试卷型必须为空 */
+            Long courseId,
+            @NotBlank @Size(max = 128) String name,
+            Integer sort,
+            @Min(0) @Max(1) Integer status,
+            /** 试卷型：考试时长（分钟） */
+            @Min(1) Integer timeLimit,
+            /** 试卷型：总分 */
+            @Min(1) Integer totalScore) {
+    }
+
+    public record StatusUpdate(@NotNull @Min(0) @Max(1) Integer status) {
+    }
+}

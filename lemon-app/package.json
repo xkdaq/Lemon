@@ -1,0 +1,31 @@
+{
+  "name": "lemon-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lemon 刷题用户端：一期编译 H5 发布 Web，二期编译微信小程序",
+  "scripts": {
+    "dev:h5": "uni",
+    "build:h5": "uni build",
+    "dev:mp-weixin": "uni -p mp-weixin --mode mp",
+    "build:mp-weixin": "uni build -p mp-weixin --mode mp"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5030420261029002",
+    "@dcloudio/uni-components": "3.0.0-5030420261029002",
+    "@dcloudio/uni-h5": "3.0.0-5030420261029002",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5030420261029002",
+    "vue": "3.4.21",
+    "vue-i18n": "^9.1.9"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "3.4.31",
+    "@dcloudio/uni-automator": "3.0.0-5030420261029002",
+    "@dcloudio/uni-cli-shared": "3.0.0-5030420261029002",
+    "@dcloudio/uni-stacktracey": "3.0.0-5030420261029002",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5030420261029002",
+    "@vue/runtime-core": "3.4.21",
+    "sass": "1.77.8",
+    "typescript": "~5.4.5",
+    "vite": "5.2.8"
+  }
+}
