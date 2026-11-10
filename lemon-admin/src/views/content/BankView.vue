@@ -74,6 +74,11 @@ async function save() {
   reloadTree()
 }
 
+/** 进入题库工作台：左侧目录、右侧题目 */
+function enter(row: QuestionBank) {
+  router.push(`/content/banks/${row.id}`)
+}
+
 async function toggleStatus(row: QuestionBank) {
   await api.updateBankStatus(row.id, row.status === 1 ? 0 : 1)
   load()
@@ -108,7 +113,11 @@ async function remove(row: QuestionBank) {
       <el-table-column label="模块" width="100">
         <template #default="{ row }">{{ moduleName(row.moduleId) }}</template>
       </el-table-column>
-      <el-table-column prop="name" label="题库名称" min-width="180" />
+      <el-table-column label="题库名称" min-width="180">
+        <template #default="{ row }">
+          <el-link type="primary" underline="never" @click="enter(row as QuestionBank)">{{ (row as QuestionBank).name }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="类型" width="100">
         <template #default="{ row }">
           <el-tag :type="row.type === BankType.COURSE ? 'primary' : 'warning'">{{ bankTypeLabel[row.type] }}</el-tag>
@@ -123,7 +132,7 @@ async function remove(row: QuestionBank) {
       </el-table-column>
       <el-table-column label="操作" width="240">
         <template #default="{ row }">
-          <el-button link type="primary" @click="router.push(`/content/banks/${row.id}`)">结构</el-button>
+          <el-button link type="primary" @click="enter(row as QuestionBank)">进入</el-button>
           <el-button link type="primary" @click="openDialog(row as QuestionBank)">编辑</el-button>
           <el-button link type="primary" @click="toggleStatus(row as QuestionBank)">{{ row.status === 1 ? '下架' : '上架' }}</el-button>
           <el-button link type="danger" @click="remove(row as QuestionBank)">删除</el-button>

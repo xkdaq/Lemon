@@ -6,6 +6,8 @@ import ChapterCascader from '@/components/ChapterCascader.vue'
 import { useContentTree } from '@/composables/useContentTree'
 import { BankType } from '@/types/content'
 
+/** 在题库工作台内打开时固定为当前题库 */
+const props = defineProps<{ bankId?: number }>()
 const emit = defineEmits<{ imported: [] }>()
 
 const { tree, reload } = useContentTree()
@@ -76,7 +78,7 @@ defineExpose({ open })
   <el-dialog v-model="visible" title="Excel 导入题目" width="640px" :close-on-click-modal="false">
     <el-form label-width="84px">
       <el-form-item label="导入到" required>
-        <el-select v-model="bankId" placeholder="选择题库" filterable style="width: 100%" @change="onBankChange">
+        <el-select v-model="bankId" placeholder="选择题库" filterable :disabled="!!props.bankId" style="width: 100%" @change="onBankChange">
           <el-option v-for="b in tree" :key="b.id" :label="b.label" :value="b.id" />
         </el-select>
       </el-form-item>

@@ -12,6 +12,8 @@ import { htmlToText } from '@/utils/html'
  * 选项在表单里按顺序存放，答案存“选中的下标”，保存时再按顺序生成 A/B/C… 和答案字母，
  * 这样删掉中间某个选项时字母自动顺延，答案也不会错位。
  */
+/** 在题库工作台内打开时，章节只能选本题库 */
+const props = defineProps<{ bankId?: number }>()
 const emit = defineEmits<{ saved: [] }>()
 
 const MAX_OPTIONS = 8
@@ -192,7 +194,7 @@ defineExpose({ open })
   >
     <el-form v-loading="loading" label-width="84px">
       <el-form-item label="所属章节" required>
-        <ChapterCascader v-model="form.chapterId" placeholder="选择 题库 / 科目 / 章节" />
+        <ChapterCascader v-model="form.chapterId" :bank-id="props.bankId" placeholder="选择 题库 / 科目 / 章节" />
       </el-form-item>
       <el-form-item label="题型" required>
         <el-radio-group v-model="form.type" @change="(v) => onTypeChange(Number(v))">

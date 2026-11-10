@@ -33,13 +33,13 @@ export const menuRoutes: RouteRecordRaw[] = [
     path: 'content/banks/:id',
     name: 'bankDetail',
     component: () => import('@/views/content/BankDetailView.vue'),
-    meta: { title: '题库结构', hidden: true },
+    meta: { title: '题库', hidden: true },
   },
   {
     path: 'content/questions',
     name: 'questions',
     component: () => import('@/views/content/QuestionView.vue'),
-    meta: { title: '题目管理', icon: 'Document', group: '内容' },
+    meta: { title: '题目搜索', icon: 'Search', group: '内容' },
   },
   {
     path: 'operation/users',
