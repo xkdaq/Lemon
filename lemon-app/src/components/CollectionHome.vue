@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { getGroups, kindLabel, type Group, type Kind, type Scope } from '@/api/collection'
+import { getGroups, kindLabel, wrongExportUrl, type Group, type Kind, type Scope } from '@/api/collection'
+import { downloadFile } from '@/utils/download'
 import { isLoggedIn } from '@/utils/auth'
 
 /**
@@ -47,6 +48,36 @@ function openList(scope: Scope, title: string) {
 }
 
 const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
+
+/** 题库下的章节：有科目这一层时展开成 科目 → 章节 */
+function sections(bank: Group): { course: Group | null; chapters: Group[] }[] {
+  const kids = bank.children ?? []
+  if (kids.length && kids[0].level === 'course') {
+    return kids.map((c) => ({ course: c, chapters: c.children ?? [] }))
+  }
+  return [{ course: null, chapters: kids }]
+}
+
+let exporting = false
+/** 导出 Word：先选答案解析放哪里 */
+function exportWord(bank: Group) {
+  if (exporting) return
+  uni.showActionSheet({
+    itemList: ['答案解析跟在每题后面', '答案解析集中放在文末（适合打印重做）'],
+    success: async ({ tapIndex }) => {
+      exporting = true
+      uni.showLoading({ title: '正在生成…', mask: true })
+      try {
+        await downloadFile(wrongExportUrl(bank.id, tapIndex === 1 ? 'end' : 'inline'), `${bank.name}-错题.docx`)
+      } catch (e) {
+        uni.showToast({ title: (e as Error).message || '导出失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
+        exporting = false
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -91,17 +122,26 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
       <view v-if="kind === 'wrong'" class="muted hint">错题重练中连续答对达到设定次数，会自动移出错题集</view>
 
       <view v-for="bank in activeModule.children" :key="bank.id" class="card bank">
-        <view class="bank-head" @click="openList({ bankId: bank.id }, bank.name)">
-          <text class="bank-name">{{ bank.name }}</text>
-          <text class="muted">{{ bank.count }} 题 ›</text>
+        <view class="bank-head">
+          <text class="bank-name" @click="openList({ bankId: bank.id }, bank.name)">{{ bank.name }}</text>
+          <text v-if="kind === 'wrong'" class="export-btn" @click="exportWord(bank)">导出 Word</text>
+          <text class="muted" @click="openList({ bankId: bank.id }, bank.name)">{{ bank.count }} 题 ›</text>
         </view>
-        <view v-for="ch in bank.children" :key="ch.id" class="chapter">
-          <view class="chapter-name" @click="openList({ chapterId: ch.id }, ch.name)">
-            <text>{{ ch.name }}</text>
-            <text class="muted count">{{ ch.count }} 题</text>
+        <template v-for="sec in sections(bank)" :key="sec.course?.id ?? 0">
+          <view v-if="sec.course" class="course-head">
+            <text class="course-name" @click="openList({ courseId: sec.course.id }, sec.course.name)">{{ sec.course.name }}</text>
+            <text class="muted count">{{ sec.course.count }} 题</text>
+            <text class="spacer" />
+            <text class="mini-btn" @click="practice({ courseId: sec.course.id })">练习</text>
           </view>
-          <text class="mini-btn" @click="practice({ chapterId: ch.id })">练习</text>
-        </view>
+          <view v-for="ch in sec.chapters" :key="ch.id" class="chapter" :class="{ indented: sec.course }">
+            <view class="chapter-name" @click="openList({ chapterId: ch.id }, ch.name)">
+              <text>{{ ch.name }}</text>
+              <text class="muted count">{{ ch.count }} 题</text>
+            </view>
+            <text class="mini-btn" @click="practice({ chapterId: ch.id })">练习</text>
+          </view>
+        </template>
       </view>
     </template>
   </view>
@@ -187,8 +227,33 @@ const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
   border-bottom: 1px solid $lemon-line;
 }
 .bank-name {
+  flex: 1;
   font-size: 30rpx;
   font-weight: 600;
+}
+.export-btn {
+  margin-right: 20rpx;
+  font-size: 24rpx;
+  color: $lemon-primary;
+  border: 1px solid $lemon-primary;
+  border-radius: 999rpx;
+  padding: 4rpx 18rpx;
+}
+.course-head {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0 8rpx;
+}
+.course-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $lemon-primary;
+}
+.spacer {
+  flex: 1;
+}
+.chapter.indented {
+  padding-left: 24rpx;
 }
 .chapter {
   display: flex;

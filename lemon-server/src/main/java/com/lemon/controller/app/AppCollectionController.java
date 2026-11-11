@@ -14,7 +14,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.List;
+import com.lemon.biz.collection.WrongExportService;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,11 +39,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppCollectionController {
 
     private final CollectionService service;
+    private final WrongExportService exportService;
 
     /** 发起练习：范围 + 可选的起始题目 */
-    public record PracticeReq(Long moduleId, Long bankId, Long chapterId, Long firstQuestionId) {
+    public record PracticeReq(Long moduleId, Long bankId, Long courseId, Long chapterId, Long firstQuestionId) {
         Scope scope() {
-            return new Scope(moduleId, bankId, chapterId);
+            return new Scope(moduleId, bankId, courseId, chapterId);
         }
     }
 
@@ -53,10 +60,10 @@ public class AppCollectionController {
     @GetMapping("/favorites")
     public R<PageResult<CollectedQuestion>> favorites(
             @RequestParam(required = false) Long moduleId, @RequestParam(required = false) Long bankId,
-            @RequestParam(required = false) Long chapterId,
+            @RequestParam(required = false) Long courseId, @RequestParam(required = false) Long chapterId,
             @RequestParam(defaultValue = "1") @Min(1) long pageNum,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) long pageSize) {
-        return R.ok(service.list(StpAppUtil.userId(), Kind.FAVORITE, new Scope(moduleId, bankId, chapterId), pageNum, pageSize));
+        return R.ok(service.list(StpAppUtil.userId(), Kind.FAVORITE, new Scope(moduleId, bankId, courseId, chapterId), pageNum, pageSize));
     }
 
     @Operation(summary = "收藏练习：按范围新建练习会话")
@@ -77,10 +84,21 @@ public class AppCollectionController {
     @GetMapping("/wrongs")
     public R<PageResult<CollectedQuestion>> wrongs(
             @RequestParam(required = false) Long moduleId, @RequestParam(required = false) Long bankId,
-            @RequestParam(required = false) Long chapterId,
+            @RequestParam(required = false) Long courseId, @RequestParam(required = false) Long chapterId,
             @RequestParam(defaultValue = "1") @Min(1) long pageNum,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) long pageSize) {
-        return R.ok(service.list(StpAppUtil.userId(), Kind.WRONG, new Scope(moduleId, bankId, chapterId), pageNum, pageSize));
+        return R.ok(service.list(StpAppUtil.userId(), Kind.WRONG, new Scope(moduleId, bankId, courseId, chapterId), pageNum, pageSize));
+    }
+
+    @Operation(summary = "错题导出 Word（按题库）；answers=end 答案解析放在文末，否则跟在每题后面")
+    @GetMapping("/wrongs/export")
+    public ResponseEntity<byte[]> exportWrongs(@RequestParam Long bankId, @RequestParam(defaultValue = "inline") String answers) {
+        WrongExportService.ExportFile f = exportService.export(StpAppUtil.userId(), bankId, "end".equals(answers));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(f.filename(), StandardCharsets.UTF_8).build().toString())
+                .body(f.content());
     }
 
     @Operation(summary = "手动移出错题集")

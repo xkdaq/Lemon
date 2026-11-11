@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lemon.biz.content.entity.Chapter;
+import com.lemon.biz.content.entity.Course;
 import com.lemon.biz.content.entity.ExamModule;
 import com.lemon.biz.content.entity.Question;
 import com.lemon.biz.content.entity.QuestionBank;
 import com.lemon.biz.content.mapper.ChapterMapper;
+import com.lemon.biz.content.mapper.CourseMapper;
 import com.lemon.biz.content.mapper.ExamModuleMapper;
 import com.lemon.biz.content.mapper.QuestionBankMapper;
 import com.lemon.biz.content.mapper.QuestionMapper;
@@ -64,6 +66,7 @@ public class CollectionService {
     private final ExamModuleMapper moduleMapper;
     private final QuestionBankMapper bankMapper;
     private final ChapterMapper chapterMapper;
+    private final CourseMapper courseMapper;
     private final PracticeService practiceService;
 
     /** 一条收藏 / 错题的公共视图 */
@@ -95,22 +98,51 @@ public class CollectionService {
                     .computeIfAbsent(toLong(r.get("bank_id")), k -> new LinkedHashMap<>())
                     .merge(toLong(r.get("chapter_id")), toLong(r.get("cnt")), Long::sum);
         }
+        Set<Long> courseIds = chapters.values().stream().map(Chapter::getCourseId)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Course> courses = courseIds.isEmpty() ? Map.of() : byId(courseMapper.selectByIds(courseIds), Course::getId);
+
         List<Group> result = new ArrayList<>();
         tree.forEach((moduleId, bankMap) -> {
             List<Group> bankGroups = new ArrayList<>();
             bankMap.forEach((bankId, chapterMap) -> {
                 List<Group> chapterGroups = chapterMap.entrySet().stream()
-                        .map(e -> new Group(e.getKey(), nameOf(chapters.get(e.getKey()), Chapter::getName), e.getValue(), null))
+                        .map(e -> new Group("chapter", e.getKey(), nameOf(chapters.get(e.getKey()), Chapter::getName), e.getValue(), null))
                         .sorted(Comparator.comparing(g -> sortOf(chapters.get(g.id()))))
                         .toList();
-                bankGroups.add(new Group(bankId, nameOf(banks.get(bankId), QuestionBank::getName),
-                        chapterGroups.stream().mapToLong(Group::count).sum(), chapterGroups));
+                bankGroups.add(new Group("bank", bankId, nameOf(banks.get(bankId), QuestionBank::getName),
+                        chapterGroups.stream().mapToLong(Group::count).sum(), withCourses(chapterGroups, chapters, courses)));
             });
-            result.add(new Group(moduleId, nameOf(modules.get(moduleId), ExamModule::getName),
+            result.add(new Group("module", moduleId, nameOf(modules.get(moduleId), ExamModule::getName),
                     bankGroups.stream().mapToLong(Group::count).sum(), bankGroups));
         });
         result.sort(Comparator.comparing(g -> modules.containsKey(g.id()) ? modules.get(g.id()).getSort() : Integer.MAX_VALUE));
         return result;
+    }
+
+    /**
+     * 题库下的章节分属多个科目（如 马原 / 毛中特）时，按科目再分一层；只有一个科目或没有科目时原样返回章节。
+     */
+    private static List<Group> withCourses(List<Group> chapterGroups, Map<Long, Chapter> chapters, Map<Long, Course> courses) {
+        Map<Long, List<Group>> byCourse = new LinkedHashMap<>();
+        for (Group g : chapterGroups) {
+            Chapter c = chapters.get(g.id());
+            byCourse.computeIfAbsent(c == null || c.getCourseId() == null ? 0L : c.getCourseId(), k -> new ArrayList<>()).add(g);
+        }
+        if (byCourse.size() <= 1) {
+            return chapterGroups;
+        }
+        return byCourse.entrySet().stream()
+                .sorted(Comparator.comparing(e -> courses.containsKey(e.getKey()) && courses.get(e.getKey()).getSort() != null
+                        ? courses.get(e.getKey()).getSort() : Integer.MAX_VALUE))
+                .map(e -> new Group("course", e.getKey(), e.getKey() == 0L ? "其他" : nameOf(courses.get(e.getKey()), Course::getName),
+                        e.getValue().stream().mapToLong(Group::count).sum(), e.getValue()))
+                .toList();
+    }
+
+    /** 科目范围：章节属于该科目（错题 / 收藏只冗余了章节） */
+    static String chaptersOfCourse(long courseId) {
+        return "SELECT id FROM chapter WHERE course_id = " + courseId;
     }
 
     private static <T> QueryWrapper<T> groupQuery(QueryWrapper<T> w) {
@@ -129,6 +161,7 @@ public class CollectionService {
                     .inSql(UserFavorite::getQuestionId, EXISTING_QUESTIONS)
                     .eq(scope.moduleId() != null, UserFavorite::getModuleId, scope.moduleId())
                     .eq(scope.bankId() != null, UserFavorite::getBankId, scope.bankId())
+                    .inSql(scope.courseId() != null, UserFavorite::getChapterId, chaptersOfCourse(scope.courseId() == null ? 0 : scope.courseId()))
                     .eq(scope.chapterId() != null, UserFavorite::getChapterId, scope.chapterId())
                     .orderByDesc(UserFavorite::getId));
             page = convert(p, f -> new Item(f.getQuestionId(), f.getModuleId(), f.getBankId(), f.getChapterId(), f.getCreatedAt(), null));
@@ -196,6 +229,7 @@ public class CollectionService {
                         .inSql(UserFavorite::getQuestionId, EXISTING_QUESTIONS)
                         .eq(scope.moduleId() != null, UserFavorite::getModuleId, scope.moduleId())
                         .eq(scope.bankId() != null, UserFavorite::getBankId, scope.bankId())
+                        .inSql(scope.courseId() != null, UserFavorite::getChapterId, chaptersOfCourse(scope.courseId() == null ? 0 : scope.courseId()))
                         .eq(scope.chapterId() != null, UserFavorite::getChapterId, scope.chapterId())
                         .orderByDesc(UserFavorite::getId))
                 .stream().map(UserFavorite::getQuestionId).toList()
@@ -218,13 +252,14 @@ public class CollectionService {
         return practiceService.startScoped(userId, kind == Kind.FAVORITE ? PracticeMode.FAVORITE : PracticeMode.WRONG, ordered);
     }
 
-    private static com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserWrongQuestion> wrongScope(Long userId, Scope scope) {
+    static com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserWrongQuestion> wrongScope(Long userId, Scope scope) {
         return Wrappers.<UserWrongQuestion>lambdaQuery()
                 .eq(UserWrongQuestion::getUserId, userId)
                 .eq(UserWrongQuestion::getStatus, Status.ON)
                 .inSql(UserWrongQuestion::getQuestionId, EXISTING_QUESTIONS)
                 .eq(scope.moduleId() != null, UserWrongQuestion::getModuleId, scope.moduleId())
                 .eq(scope.bankId() != null, UserWrongQuestion::getBankId, scope.bankId())
+                .inSql(scope.courseId() != null, UserWrongQuestion::getChapterId, chaptersOfCourse(scope.courseId() == null ? 0 : scope.courseId()))
                 .eq(scope.chapterId() != null, UserWrongQuestion::getChapterId, scope.chapterId());
     }
 

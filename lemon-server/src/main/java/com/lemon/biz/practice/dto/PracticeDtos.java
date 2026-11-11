@@ -46,8 +46,10 @@ public final class PracticeDtos {
 
     /**
      * 收藏集 / 错题集的范围，都不传表示全部
+     *
+     * @param courseId 科目（科目型题库）：按章节所属科目筛选
      */
-    public record Scope(Long moduleId, Long bankId, Long chapterId) {
+    public record Scope(Long moduleId, Long bankId, Long courseId, Long chapterId) {
     }
 
     // ==================== 响应 ====================
@@ -117,8 +119,12 @@ public final class PracticeDtos {
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm") LocalDateTime time) {
     }
 
-    /** 分组：模块 → 题库 → 章节，count 为题数 */
-    public record Group(Long id, String name, long count, List<Group> children) {
+    /**
+     * 分组：模块 → 题库 →（科目）→ 章节，count 为题数
+     *
+     * @param level module / bank / course / chapter；题库下只有一个科目时省略科目这一层
+     */
+    public record Group(String level, Long id, String name, long count, List<Group> children) {
     }
 
     /** 首页“继续上次练习” */

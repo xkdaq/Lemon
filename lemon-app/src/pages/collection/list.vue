@@ -16,7 +16,7 @@ let pageNum = 1
 onLoad((query) => {
   kind.value = (query?.kind as Kind) ?? 'favorite'
   const num = (v?: string) => (v ? Number(v) : undefined)
-  scope.value = { moduleId: num(query?.moduleId), bankId: num(query?.bankId), chapterId: num(query?.chapterId) }
+  scope.value = { moduleId: num(query?.moduleId), bankId: num(query?.bankId), courseId: num(query?.courseId), chapterId: num(query?.chapterId) }
   uni.setNavigationBarTitle({ title: decodeURIComponent(query?.title ?? (kind.value === 'favorite' ? '收藏' : '错题')) })
 })
 

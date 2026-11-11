@@ -80,7 +80,7 @@ async function init() {
       // 错题重练 / 收藏练习：按范围新建会话，可指定从哪道题开始
       const num = (v?: string) => (v ? Number(v) : undefined)
       s = await startCollectionPractice(query.kind as Kind, {
-        moduleId: num(query.moduleId), bankId: num(query.bankId), chapterId: num(query.chapterId),
+        moduleId: num(query.moduleId), bankId: num(query.bankId), courseId: num(query.courseId), chapterId: num(query.chapterId),
         firstQuestionId: num(query.questionId),
       })
     } else {
