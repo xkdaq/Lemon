@@ -150,6 +150,34 @@ async function goTo(i: number) {
   }
 }
 
+// ==================== 练习 / 背题切换 ====================
+
+/** 章节练习和背题可以互相切换（考试、错题重练、收藏练习、打卡、只读回看不行） */
+const canSwitch = computed(() => !readonly.value && !!session.value?.chapterId
+  && (mode.value === Mode.PRACTICE || mode.value === Mode.RECITE))
+let switching = false
+
+/**
+ * 切到另一种模式：该章节（小节）在那个模式下有未完成的会话就续上，否则新开；停在当前这道题。
+ * 题目详情要重新取（练习模式不提前返回答案）。
+ */
+async function switchMode(target: number) {
+  const s = session.value
+  if (!s || !canSwitch.value || target === s.mode || switching) return
+  switching = true
+  const qid = currentId.value
+  const at = index.value
+  try {
+    const ns = await api.startSession(s.chapterId!, target, false, s.section ?? undefined)
+    Object.keys(questions).forEach((k) => delete questions[Number(k)])
+    session.value = ns
+    const i = ns.questionIds.indexOf(qid)
+    await goTo(i >= 0 ? i : Math.min(at, ns.questionIds.length - 1))
+  } finally {
+    switching = false
+  }
+}
+
 // ==================== 作答 ====================
 
 function onTapOption(key: string) {
@@ -344,7 +372,11 @@ function onTouchEnd(e: TouchEvent) {
   <view v-if="session" class="practice">
     <!-- 顶部信息 -->
     <view class="topbar">
-      <text class="mode-tag" :class="`mode-${session.mode}`">{{ modeLabel[session.mode] }}</text>
+      <view v-if="canSwitch" class="mode-switch">
+        <text class="seg" :class="{ on: mode === Mode.PRACTICE }" @click="switchMode(Mode.PRACTICE)">练习</text>
+        <text class="seg" :class="{ on: mode === Mode.RECITE }" @click="switchMode(Mode.RECITE)">背题</text>
+      </view>
+      <text v-else class="mode-tag" :class="`mode-${session.mode}`">{{ modeLabel[session.mode] }}</text>
       <text v-if="readonly" class="muted">（已结束 · 查看解析）</text>
       <text class="progress">{{ index + 1 }} / {{ ids.length }}</text>
       <text v-if="remaining !== null" class="timer" :class="{ urgent: remaining < 300 }">⏱ {{ formatSeconds(remaining) }}</text>
@@ -490,6 +522,23 @@ function onTouchEnd(e: TouchEvent) {
   background: $lemon-primary-light;
   color: $lemon-primary;
   font-size: 22rpx;
+}
+.mode-switch {
+  display: flex;
+  padding: 4rpx;
+  border-radius: 999rpx;
+  background: $lemon-bg;
+  border: 1px solid $lemon-line;
+}
+.seg {
+  padding: 6rpx 24rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: $lemon-muted;
+}
+.seg.on {
+  background: $lemon-primary;
+  color: #fff;
 }
 .mode-tag.mode-3 {
   background: $lemon-bg;
