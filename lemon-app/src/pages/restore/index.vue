@@ -94,7 +94,8 @@ const goWrong = () => uni.redirectTo({ url: '/pages/wrong/index' })
     </view>
 
     <view class="muted tips">
-      <view>· 激活码一般是 10 位字母和数字；订单号可以在微信支付记录里找到。</view>
+      <view>· 激活码一般是 10 位字母和数字组成，适用于在微店和闲鱼购买的用户。</view>
+      <view>· 订单号只能恢复安卓手机在小程序里支付的订单：打开微信支付账单，找到当时支付的订单详情，复制「商户单号」或「交易单号」。</view>
       <view>· 一个老账号只能恢复到一个账号上，请登录你常用的账号再恢复。</view>
     </view>
   </view>
