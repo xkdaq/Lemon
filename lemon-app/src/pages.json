@@ -13,6 +13,7 @@
     { "path": "pages/punch/detail", "style": { "navigationBarTitleText": "打卡" } },
     { "path": "pages/settings/index", "style": { "navigationBarTitleText": "设置" } },
     { "path": "pages/settings/records", "style": { "navigationBarTitleText": "清除做题记录" } },
+    { "path": "pages/settings/password", "style": { "navigationBarTitleText": "设置密码" } },
     { "path": "pages/restore/index", "style": { "navigationBarTitleText": "恢复错题" } },
     { "path": "pages/feedback/index", "style": { "navigationBarTitleText": "意见反馈" } },
     { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },

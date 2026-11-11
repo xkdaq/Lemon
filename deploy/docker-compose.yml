@@ -60,6 +60,8 @@ services:
       ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD:?请在 .env 设置 ADMIN_INIT_PASSWORD}
       CORS_ALLOWED_ORIGINS: https://www.${DOMAIN},https://admin.${DOMAIN}
       UPLOAD_DIR: /data/uploads
+      SMS_SPUG_URL: ${SMS_SPUG_URL:-}
+      SMS_SPUG_MINUTES: ${SMS_SPUG_MINUTES:-}
       JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError}
     volumes:
       - uploads:/data/uploads

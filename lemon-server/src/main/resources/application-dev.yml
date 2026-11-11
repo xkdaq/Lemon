@@ -5,3 +5,8 @@ logging:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+lemon:
+  sms:
+    # 开发环境没配 SMS_SPUG_URL 时，验证码打印到日志里
+    log-code: true

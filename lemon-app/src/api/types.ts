@@ -83,6 +83,8 @@ export interface AppUser {
   phone: string
   nickname: string
   avatar?: string
+  /** 是否设置过密码 */
+  hasPassword?: boolean
 }
 
 export interface Banner {

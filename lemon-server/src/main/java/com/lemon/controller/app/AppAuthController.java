@@ -6,6 +6,7 @@ import com.lemon.common.R;
 import com.lemon.security.StpAppUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,10 +26,17 @@ public class AppAuthController {
 
     private final AppAuthService appAuthService;
 
-    public record RegisterReq(
+    public record PhoneReq(@NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone) {
+    }
+
+    public record SmsLoginReq(
             @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
-            @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password,
-            @Size(max = 32) String nickname) {
+            @NotBlank @Size(max = 8) String code) {
+    }
+
+    public record SetPasswordReq(
+            @NotBlank @Size(max = 8) String code,
+            @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password) {
     }
 
     public record LoginReq(
@@ -39,13 +47,20 @@ public class AppAuthController {
     public record TokenResp(String token) {
     }
 
-    @Operation(summary = "手机号 + 密码注册（注册后自动登录）")
-    @PostMapping("/api/app/auth/register")
-    public R<TokenResp> register(@Valid @RequestBody RegisterReq req) {
-        return R.ok(new TokenResp(appAuthService.register(req.phone(), req.password(), req.nickname())));
+    @Operation(summary = "发送登录验证码")
+    @PostMapping("/api/app/auth/sms-code")
+    public R<Void> smsCode(@Valid @RequestBody PhoneReq req, HttpServletRequest request) {
+        appAuthService.sendLoginCode(req.phone(), request.getRemoteAddr());
+        return R.ok();
     }
 
-    @Operation(summary = "手机号 + 密码登录")
+    @Operation(summary = "手机号 + 验证码登录（未注册自动注册）")
+    @PostMapping("/api/app/auth/sms-login")
+    public R<AppAuthService.SmsLoginResult> smsLogin(@Valid @RequestBody SmsLoginReq req) {
+        return R.ok(appAuthService.smsLogin(req.phone(), req.code()));
+    }
+
+    @Operation(summary = "手机号 + 密码登录（设置过密码的账号）")
     @PostMapping("/api/app/auth/login")
     public R<TokenResp> login(@Valid @RequestBody LoginReq req) {
         return R.ok(new TokenResp(appAuthService.login(req.phone(), req.password())));
@@ -55,6 +70,20 @@ public class AppAuthController {
     @PostMapping("/api/app/auth/logout")
     public R<Void> logout() {
         StpAppUtil.logout();
+        return R.ok();
+    }
+
+    @Operation(summary = "给当前账号的手机号发验证码（设置密码用）")
+    @PostMapping("/api/app/user/password/code")
+    public R<Void> passwordCode(HttpServletRequest request) {
+        appAuthService.sendSelfCode(request.getRemoteAddr());
+        return R.ok();
+    }
+
+    @Operation(summary = "设置 / 修改密码（验证码验证）")
+    @PostMapping("/api/app/user/password")
+    public R<Void> setPassword(@Valid @RequestBody SetPasswordReq req) {
+        appAuthService.setPassword(req.code(), req.password());
         return R.ok();
     }
 

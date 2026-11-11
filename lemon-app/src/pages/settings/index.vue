@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { isLoggedIn } from '@/utils/auth'
 import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
 
-/** 设置：主题（仅 H5）、做题字号、答对自动下一题、清除做题记录 */
+/** 设置：主题（仅 H5）、做题字号、答对自动下一题、账号密码、清除做题记录 */
 const THEMES: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '跟随系统' },
   { value: 'light', label: '浅色' },
@@ -29,12 +29,9 @@ function toggleAutoNext() {
   setAutoNext(autoNext.value)
 }
 
-function openRecords() {
-  if (!isLoggedIn()) {
-    uni.navigateTo({ url: '/pages/login/index' })
-    return
-  }
-  uni.navigateTo({ url: '/pages/settings/records' })
+/** 需要登录的设置项：没登录先去登录 */
+function openLogged(url: string) {
+  uni.navigateTo({ url: isLoggedIn() ? url : '/pages/login/index' })
 }
 </script>
 
@@ -75,9 +72,20 @@ function openRecords() {
       </view>
     </view>
 
+    <view class="section-label">账号</view>
+    <view class="card list-card">
+      <view class="list-row" @click="openLogged('/pages/settings/password')">
+        <view class="grow">
+          <view>设置 / 修改密码</view>
+          <view class="muted">设置后可以用手机号 + 密码登录</view>
+        </view>
+        <text class="row-arrow">›</text>
+      </view>
+    </view>
+
     <view class="section-label">数据</view>
     <view class="card list-card">
-      <view class="list-row" @click="openRecords">
+      <view class="list-row" @click="openLogged('/pages/settings/records')">
         <view class="grow">
           <view>清除做题记录</view>
           <view class="muted">按题库清除做题进度，可选连同错题一起清除</view>

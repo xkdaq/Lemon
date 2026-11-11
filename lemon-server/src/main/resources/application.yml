@@ -74,6 +74,12 @@ lemon:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
   # 上传文件：开发期存本地目录，由后端 /uploads/** 提供访问；上线后可换对象存储（实现 FileStorage 即可）
+  # 短信验证码（Spug 推送助手）：SMS_SPUG_URL 填控制台「短信验证码」模板的完整调用 URL；
+  # 选的是带有效时长的模板时，SMS_SPUG_MINUTES 填 5（验证码有效 5 分钟）
+  sms:
+    spug-url: ${SMS_SPUG_URL:}
+    minutes: ${SMS_SPUG_MINUTES:}
+    log-code: false
   upload:
     dir: ${UPLOAD_DIR:./uploads}
     url-prefix: ${UPLOAD_URL_PREFIX:/uploads}
