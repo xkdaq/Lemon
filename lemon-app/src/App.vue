@@ -91,6 +91,13 @@ body.theme-light .uni-page-head .uni-btn-icon {
 body.theme-dark .uni-page-head .uni-btn-icon {
   color: #fff !important;
 }
+/* 返回键是 SVG，填充色按系统主题写死在 path 上，单改 color 不够 */
+body.theme-light .uni-page-head svg path {
+  fill: #000 !important;
+}
+body.theme-dark .uni-page-head svg path {
+  fill: #fff !important;
+}
 body.theme-light .uni-tabbar {
   background-color: #fffdf8 !important;
 }
