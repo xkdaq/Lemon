@@ -256,7 +256,7 @@ defineExpose({ open })
       <el-row>
         <el-col :span="8">
           <el-form-item label="分值">
-            <el-input-number v-model="form.score" :min="0" :max="999.9" :step="0.5" :precision="1" controls-position="right" style="width: 120px" />
+            <span class="muted">按模块规则自动计算</span>
           </el-form-item>
         </el-col>
         <el-col :span="8">

@@ -74,7 +74,7 @@ public final class PracticeDtos {
             Long id, Long chapterId, String chapterName, Long bankId, String bankName,
             int mode, String section, int status, List<Long> questionIds, int currentIndex,
             int answeredCount, int correctCount, Integer timeLimit, Long remainingSeconds,
-            BigDecimal score, Integer totalScore,
+            BigDecimal score, Number totalScore,
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startedAt,
             Map<String, Ans> answers,
             /** 模块未激活的试做会话（只有章节前几题），bank 的模块 id 用于引导激活 */
@@ -104,7 +104,7 @@ public final class PracticeDtos {
      */
     public record ResultVO(
             Long sessionId, Long chapterId, String chapterName, int mode, int total, int answered, int correct,
-            int subjectiveCount, BigDecimal score, Integer totalScore, long costSeconds, List<Long> wrongQuestionIds) {
+            int subjectiveCount, BigDecimal score, Number totalScore, long costSeconds, List<Long> wrongQuestionIds) {
     }
 
     /**

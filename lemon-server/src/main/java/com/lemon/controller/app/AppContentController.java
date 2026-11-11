@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.lemon.biz.operation.entity.Banner;
 import com.lemon.biz.operation.entity.Notice;
 import com.lemon.biz.operation.service.BannerService;
+import com.lemon.biz.content.service.ScoreService;
 import com.lemon.biz.operation.service.SysConfigService;
 import com.lemon.common.R;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +46,7 @@ public class AppContentController {
     private final BannerService bannerService;
     private final QuestionMapper questionMapper;
     private final SysConfigService configService;
+    private final ScoreService scoreService;
 
     /** 用户端全局配置：theme 为主题配色（预设名或自定义主色 #RRGGBB） */
     public record AppConfigResp(String theme) {
@@ -108,7 +110,7 @@ public class AppContentController {
      * @param lastScore       试卷最近一次考试得分
      */
     public record ChapterItem(Long id, Long bankId, Long courseId, String name, int questionCount,
-                              Integer timeLimit, Integer totalScore, int doneCount, int correctCount,
+                              Integer timeLimit, Number totalScore, int doneCount, int correctCount,
                               Set<Integer> inProgressModes, BigDecimal lastScore, List<Section> sections) {
     }
 
@@ -136,6 +138,8 @@ public class AppContentController {
         Map<Long, Set<Integer>> inProgress = userId == null ? Map.of() : practiceService.inProgress(userId, ids);
         Map<Long, Set<String>> sectionsInProgress = userId == null ? Map.of() : practiceService.sectionsInProgress(userId, ids);
         Map<Long, BigDecimal> scores = userId == null ? Map.of() : practiceService.lastExamScores(userId, ids);
+        // 试卷满分：选择题分值之和（模拟考试只考选择题）
+        Map<Long, BigDecimal> fullScores = scoreService.objectiveTotals(ids);
         return chapters.stream().map(c -> {
             List<Section> sections = new ArrayList<>();
             for (ChapterSectionStat total : totals.getOrDefault(c.getId(), List.of())) {
@@ -146,7 +150,7 @@ public class AppContentController {
             }
             return new ChapterItem(c.getId(), c.getBankId(), c.getCourseId(), c.getName(),
                     sections.stream().mapToInt(Section::questionCount).sum(),
-                    c.getTimeLimit(), c.getTotalScore(),
+                    c.getTimeLimit(), c.getTimeLimit() == null ? null : ScoreService.display(fullScores.get(c.getId())),
                     sections.stream().mapToInt(Section::doneCount).sum(),
                     sections.stream().mapToInt(Section::correctCount).sum(),
                     inProgress.getOrDefault(c.getId(), Set.of()), scores.get(c.getId()), sections);

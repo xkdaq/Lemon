@@ -2,7 +2,7 @@ import { http, type PageResult } from '@/utils/request'
 import type { BankCategory, Chapter, Course, ExamModule, QuestionBank } from '@/types/content'
 
 // ---- 模块 ----
-export type ModuleSave = Pick<ExamModule, 'name' | 'icon' | 'sort' | 'status' | 'free'>
+export type ModuleSave = Pick<ExamModule, 'name' | 'icon' | 'sort' | 'status' | 'free' | 'singleScore' | 'multiScore'>
 export const listModules = () => http.get<ExamModule[]>('/modules')
 export const createModule = (data: ModuleSave) => http.post<number>('/modules', data)
 export const updateModule = (id: number, data: ModuleSave) => http.put<void>(`/modules/${id}`, data)

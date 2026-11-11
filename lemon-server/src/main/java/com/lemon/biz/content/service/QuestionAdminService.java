@@ -48,6 +48,7 @@ public class QuestionAdminService {
     private final CourseMapper courseMapper;
     private final QuestionBankMapper bankMapper;
     private final QuestionCountService countService;
+    private final ScoreService scoreService;
 
     // ==================== 查询 ====================
 
@@ -169,7 +170,8 @@ public class QuestionAdminService {
         q.setOptions(normalized.options().isEmpty() ? null : JsonUtil.toJson(normalized.options()));
         q.setAnswer(normalized.answer());
         q.setAnalysis(analysis);
-        q.setScore(Objects.requireNonNullElse(req.score(), BigDecimal.ZERO));
+        // 分值按模块规则计算（单选 / 多选每题分值在模块上设置，主观题 0 分），忽略传入的分值
+        q.setScore(scoreService.scoreFor(bank.getModuleId(), req.type()));
         q.setDifficulty(Objects.requireNonNullElse(req.difficulty(), DEFAULT_DIFFICULTY));
         q.setSource(req.source());
         q.setSection(StringUtils.hasText(req.section()) ? req.section().strip() : null);
@@ -208,15 +210,18 @@ public class QuestionAdminService {
 
         // 按原顺序追加到目标章节末尾
         List<Question> questions = questionMapper.selectList(Wrappers.<Question>lambdaQuery()
-                .select(Question::getId)
+                .select(Question::getId, Question::getType)
                 .in(Question::getId, ids)
                 .orderByAsc(Question::getChapterId).orderByAsc(Question::getSort).orderByAsc(Question::getId));
         int sort = nextSort(target.getId());
+        Map<Integer, BigDecimal> scores = new java.util.HashMap<>();
         for (Question q : questions) {
             questionMapper.update(Wrappers.<Question>lambdaUpdate()
                     .set(Question::getChapterId, target.getId())
                     .set(Question::getBankId, bank.getId())
                     .set(Question::getModuleId, bank.getModuleId())
+                    // 移到别的模块时分值规则可能不同
+                    .set(Question::getScore, scores.computeIfAbsent(q.getType(), t -> scoreService.scoreFor(bank.getModuleId(), t)))
                     .set(Question::getSort, sort++)
                     .eq(Question::getId, q.getId()));
         }

@@ -271,7 +271,7 @@ async function onQuestionsChanged() {
         <div class="main-head">
           <span class="main-title">{{ currentTitle }}</span>
           <template v-if="current?.kind === 'chapter' && !isCourseBank">
-            <span class="muted">{{ current.chapter?.timeLimit ?? '-' }} 分钟 · 满分 {{ current.chapter?.totalScore ?? '-' }}</span>
+            <span class="muted">{{ current.chapter?.timeLimit ?? '-' }} 分钟</span>
           </template>
           <el-tag v-if="current?.status === 0" size="small" type="info">已下架</el-tag>
           <span class="spacer" />
@@ -320,9 +320,6 @@ async function onQuestionsChanged() {
         <template v-if="!isCourseBank">
           <el-form-item label="考试时长">
             <el-input-number v-model="chapterForm.timeLimit" :min="1" /> <span style="margin-left: 8px">分钟</span>
-          </el-form-item>
-          <el-form-item label="总分">
-            <el-input-number v-model="chapterForm.totalScore" :min="1" />
           </el-form-item>
         </template>
         <el-form-item label="排序">

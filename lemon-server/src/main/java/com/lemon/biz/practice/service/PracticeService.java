@@ -20,6 +20,7 @@ import com.lemon.biz.practice.dto.PracticeDtos.ResultVO;
 import com.lemon.biz.practice.dto.PracticeDtos.SessionVO;
 import com.lemon.biz.practice.dto.PracticeDtos.StartReq;
 import com.lemon.biz.access.service.AccessService;
+import com.lemon.biz.content.service.ScoreService;
 import com.lemon.biz.practice.entity.PracticeSession;
 import com.lemon.biz.practice.enums.PracticeMode;
 import com.lemon.biz.practice.event.PracticeFinishedEvent;
@@ -134,6 +135,14 @@ public class PracticeService {
                         .orderByAsc(Question::getSort).orderByAsc(Question::getId))
                 .stream().map(Question::getId).toList();
         BizException.throwIf(ids.isEmpty(), section != null ? "该章节暂时没有这类题目" : "该章节暂时没有题目");
+        if (mode == PracticeMode.EXAM) {
+            // 模拟考试只考选择题，主观题不参与
+            ids = questionMapper.selectList(Wrappers.<Question>lambdaQuery()
+                            .select(Question::getId).in(Question::getId, ids).in(Question::getType, ScoreService.OBJECTIVE_TYPES)
+                            .orderByAsc(Question::getSort).orderByAsc(Question::getId))
+                    .stream().map(Question::getId).toList();
+            BizException.throwIf(ids.isEmpty(), "这套试卷没有选择题，不能模拟考试");
+        }
         if (trial) {
             ids = trialIds(chapter.getId(), ids);
             if (ids.isEmpty()) {
@@ -372,12 +381,10 @@ public class PracticeService {
             Ans a = answers.get(id.toString());
             return a != null && Integer.valueOf(0).equals(a.c());
         }).toList();
-        Integer totalScore = null;
-        if (isExam(s)) {
-            totalScore = chapter != null && chapter.getTotalScore() != null ? chapter.getTotalScore()
-                    : questions.values().stream().map(q -> Objects.requireNonNullElse(q.getScore(), BigDecimal.ZERO))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add).intValue();
-        }
+        // 满分 = 本场考试题目（都是选择题）的分值之和
+        Number totalScore = isExam(s) ? ScoreService.display(questions.values().stream()
+                .map(q -> Objects.requireNonNullElse(q.getScore(), BigDecimal.ZERO))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)) : null;
         long cost = s.getStartedAt() == null || s.getFinishedAt() == null ? 0
                 : Duration.between(s.getStartedAt(), s.getFinishedAt()).toSeconds();
         return new ResultVO(s.getId(), s.getChapterId(), chapter == null ? null : chapter.getName(), s.getMode(),
@@ -471,6 +478,15 @@ public class PracticeService {
         return ids.stream().filter(firstN::contains).toList();
     }
 
+    /** 考试满分：本场考试题目（都是选择题）的分值之和 */
+    private Number examTotal(PracticeSession s) {
+        List<Long> ids = questionIds(s);
+        return ids.isEmpty() ? 0 : ScoreService.display(questionMapper.selectList(Wrappers.<Question>lambdaQuery()
+                        .select(Question::getScore).in(Question::getId, ids))
+                .stream().map(q -> Objects.requireNonNullElse(q.getScore(), BigDecimal.ZERO))
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+    }
+
     /** 章节会话继续做题前检查权限：激活到期后，非试做会话不能继续 */
     private void checkAccess(PracticeSession s) {
         if (s.getChapterId() != null && (s.getTrial() == null || s.getTrial() == 0)
@@ -536,7 +552,7 @@ public class PracticeService {
                 s.getAnsweredCount(), s.getCorrectCount(), s.getTimeLimit(),
                 remaining == null ? null : Math.max(0, remaining),
                 exam && !inProgress ? s.getScore() : null,
-                exam && chapter != null ? chapter.getTotalScore() : null,
+                exam ? examTotal(s) : null,
                 s.getStartedAt(), answers,
                 s.getTrial() != null && s.getTrial() == 1, bank == null ? null : bank.getModuleId());
     }

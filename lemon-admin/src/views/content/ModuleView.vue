@@ -26,11 +26,11 @@ onMounted(load)
 const dialogVisible = ref(false)
 const editingId = ref<number | null>(null)
 const formRef = ref<FormInstance>()
-const form = reactive<api.ModuleSave>({ name: '', icon: '', sort: 0, status: 1, free: 0 })
+const form = reactive<api.ModuleSave>({ name: '', icon: '', sort: 0, status: 1, free: 0, singleScore: 2, multiScore: 2 })
 
 function openDialog(row?: ExamModule) {
   editingId.value = row?.id ?? null
-  Object.assign(form, row ? { name: row.name, icon: row.icon, sort: row.sort, status: row.status, free: row.free ?? 0 } : { name: '', icon: '', sort: 0, status: 1, free: 0 })
+  Object.assign(form, row ? { name: row.name, icon: row.icon, sort: row.sort, status: row.status, free: row.free ?? 0, singleScore: Number(row.singleScore ?? 2), multiScore: Number(row.multiScore ?? 2) } : { name: '', icon: '', sort: 0, status: 1, free: 0, singleScore: 2, multiScore: 2 })
   dialogVisible.value = true
 }
 
@@ -71,6 +71,9 @@ async function remove(row: ExamModule) {
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '上架' : '下架' }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="分值（单选 / 多选）" width="150">
+        <template #default="{ row }">{{ Number(row.singleScore) }} / {{ Number(row.multiScore) }}</template>
+      </el-table-column>
       <el-table-column label="收费" width="110">
         <template #default="{ row }">
           <el-tag :type="row.free === 1 ? 'success' : 'warning'">{{ row.free === 1 ? '免费' : '激活码激活' }}</el-tag>
@@ -101,6 +104,13 @@ async function remove(row: ExamModule) {
         <el-form-item label="状态">
           <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上架" inactive-text="下架" />
         </el-form-item>
+        <el-form-item label="分值">
+          <span class="score-label">单选 / 判断</span>
+          <el-input-number v-model="form.singleScore" :min="0" :max="100" :step="0.5" :precision="1" controls-position="right" style="width: 110px" />
+          <span class="score-label">多选</span>
+          <el-input-number v-model="form.multiScore" :min="0" :max="100" :step="0.5" :precision="1" controls-position="right" style="width: 110px" />
+          <div class="form-hint">每题分值；主观题不计分。模拟考试只考选择题，试卷满分 = 选择题分值之和。改了会重算该模块所有题目。</div>
+        </el-form-item>
         <el-form-item label="收费">
           <el-radio-group v-model="form.free">
             <el-radio :value="0">收费（激活码激活）</el-radio>
@@ -120,6 +130,12 @@ async function remove(row: ExamModule) {
 </template>
 
 <style scoped>
+.score-label {
+  margin: 0 8px 0 0;
+}
+.score-label + .el-input-number + .score-label {
+  margin-left: 16px;
+}
 .form-hint {
   width: 100%;
   font-size: 12px;

@@ -30,6 +30,12 @@ public class ExamModule extends BaseEntity {
     /** 1 免费（不需要激活） 0 收费（激活码激活） */
     private Integer free;
 
+    /** 单选题 / 判断题每题分值 */
+    private java.math.BigDecimal singleScore;
+
+    /** 多选题每题分值 */
+    private java.math.BigDecimal multiScore;
+
     /** 1 上架 0 下架 */
     private Integer status;
 

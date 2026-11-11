@@ -1,6 +1,8 @@
 package com.lemon.biz.content.dto;
 
 import com.lemon.common.PageQuery;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +25,11 @@ public final class ContentReqs {
             Integer sort,
             @Min(0) @Max(1) Integer status,
             /** 1 免费 0 收费（激活码激活），不传为收费 */
-            @Min(0) @Max(1) Integer free) {
+            @Min(0) @Max(1) Integer free,
+            /** 单选 / 判断每题分值，不传为 2 */
+            @DecimalMin("0") @DecimalMax("100") java.math.BigDecimal singleScore,
+            /** 多选每题分值，不传为 2 */
+            @DecimalMin("0") @DecimalMax("100") java.math.BigDecimal multiScore) {
     }
 
     public record BankSave(

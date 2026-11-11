@@ -23,12 +23,14 @@ import com.lemon.biz.content.mapper.QuestionMapper;
 import com.lemon.common.BizException;
 import com.lemon.common.PageResult;
 import com.lemon.common.Status;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
@@ -50,6 +52,7 @@ public class ContentAdminService {
     private final QuestionMapper questionMapper;
     private final QuestionCountService countService;
     private final BankCategoryMapper categoryMapper;
+    private final ScoreService scoreService;
 
     // ==================== 目录树 ====================
 
@@ -115,10 +118,18 @@ public class ContentAdminService {
         return m.getId();
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void updateModule(Long id, ModuleSave req) {
         ExamModule m = BizException.notNull(moduleMapper.selectById(id), "模块不存在");
+        BigDecimal oldSingle = m.getSingleScore();
+        BigDecimal oldMulti = m.getMultiScore();
         copy(req, m);
         moduleMapper.updateById(m);
+        // 分值规则变了：重算该模块所有题目的分值
+        if (oldSingle == null || oldMulti == null
+                || oldSingle.compareTo(m.getSingleScore()) != 0 || oldMulti.compareTo(m.getMultiScore()) != 0) {
+            scoreService.applyModule(id);
+        }
     }
 
     public void deleteModule(Long id) {
@@ -134,6 +145,8 @@ public class ContentAdminService {
         m.setSort(Objects.requireNonNullElse(req.sort(), 0));
         m.setStatus(Objects.requireNonNullElse(req.status(), Status.ON));
         m.setFree(Objects.requireNonNullElse(req.free(), 0));
+        m.setSingleScore(Objects.requireNonNullElse(req.singleScore(), BigDecimal.valueOf(2)));
+        m.setMultiScore(Objects.requireNonNullElse(req.multiScore(), BigDecimal.valueOf(2)));
     }
 
     // ==================== 分类 ====================
