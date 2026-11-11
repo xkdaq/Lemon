@@ -1,6 +1,9 @@
 /**
- * 本机设置（存在本地，不同步到服务器）：主题、做题字号
+ * 本机设置（存在本地，不同步到服务器）：主题（浅色 / 深色）、做题字号。
+ * 配色本身由管理后台设定，见 utils/theme.ts
  */
+import { applyTabBar, getAppTheme, injectPalette } from './theme'
+
 export type ThemeMode = 'system' | 'light' | 'dark'
 
 const THEME_KEY = 'lemon_theme'
@@ -23,7 +26,10 @@ export function setTheme(mode: ThemeMode) {
   applyTheme()
 }
 
-/** 应用主题：H5 在 body 上加 theme-light / theme-dark，跟随系统时不加（走 prefers-color-scheme） */
+/**
+ * 应用主题：H5 在 body 上加 theme-light / theme-dark，跟随系统时不加（走 prefers-color-scheme）；
+ * 同时应用后台设定的配色，并按实际的浅色 / 深色设置底部 Tab 颜色
+ */
 export function applyTheme() {
   // #ifdef H5
   const mode = getTheme()
@@ -31,6 +37,19 @@ export function applyTheme() {
   if (mode !== 'system') {
     document.body.classList.add(`theme-${mode}`)
   }
+  const palette = getAppTheme()
+  injectPalette(palette)
+  const dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  applyTabBar(palette, dark)
+  // #endif
+}
+
+/** 跟随系统时，系统切换深浅色也要更新底部 Tab 颜色 */
+export function watchSystemTheme() {
+  // #ifdef H5
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getTheme() === 'system') applyTheme()
+  })
   // #endif
 }
 

@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as api from '@/api/operation'
+import AppThemeCard from './AppThemeCard.vue'
+
+/** 主题配色有专门的选择卡片，不放在下面的通用表格里 */
+const THEME_KEY = 'app.theme'
 
 type Row = api.SysConfig & { draft: string }
 const list = ref<Row[]>([])
 const loading = ref(false)
+const themeValue = computed(() => list.value.find((c) => c.configKey === THEME_KEY)?.configValue ?? 'paper')
+const plainList = computed(() => list.value.filter((c) => c.configKey !== THEME_KEY))
 
 async function load() {
   loading.value = true
@@ -26,7 +32,8 @@ async function save(row: Row) {
 
 <template>
   <div class="page-card">
-    <el-table v-loading="loading" :data="list" border>
+    <AppThemeCard :value="themeValue" @saved="load" />
+    <el-table v-loading="loading" :data="plainList" border>
       <el-table-column prop="remark" label="说明" min-width="260" />
       <el-table-column prop="configKey" label="参数键" width="220" />
       <el-table-column label="值" width="220">

@@ -21,6 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
     private static final String[] APP_PUBLIC = {
             "/api/app/auth/**",
             "/api/app/home",
+            "/api/app/app-config",
             "/api/app/modules/**",
             "/api/app/banks/**",
             "/api/app/punch-camps/**",

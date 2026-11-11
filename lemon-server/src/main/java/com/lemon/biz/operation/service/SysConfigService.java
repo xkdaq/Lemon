@@ -18,12 +18,17 @@ import org.springframework.stereotype.Service;
 public class SysConfigService {
 
     public static final String WRONG_REMOVE_STREAK = "wrong.remove.streak";
+    /** 用户端主题配色：预设名（与用户端 utils/theme.ts 一致）或自定义主色 #RRGGBB */
+    public static final String APP_THEME = "app.theme";
+    public static final String DEFAULT_THEME = "paper";
 
     private record Rule(Predicate<String> check, String hint) {
     }
 
     private static final Map<String, Rule> RULES = Map.of(
-            WRONG_REMOVE_STREAK, new Rule(v -> v.matches("^([1-9]|10)$"), "请输入 1~10 的整数"));
+            WRONG_REMOVE_STREAK, new Rule(v -> v.matches("^([1-9]|10)$"), "请输入 1~10 的整数"),
+            APP_THEME, new Rule(v -> v.matches("^(paper|indigo|teal|amber|rose|violet|coffee|graphite)$|^#[0-9a-fA-F]{6}$"),
+                    "请选择预设主题，或填写 #RRGGBB 格式的主色"));
 
     private final SysConfigMapper mapper;
 
@@ -39,6 +44,11 @@ public class SysConfigService {
         BizException.throwIf(rule != null && !rule.check().test(v), rule == null ? "" : rule.hint());
         config.setConfigValue(v);
         mapper.updateById(config);
+    }
+
+    public String getString(String key, String defaultValue) {
+        SysConfig config = mapper.selectOne(Wrappers.<SysConfig>lambdaQuery().eq(SysConfig::getConfigKey, key));
+        return config == null || config.getConfigValue().isBlank() ? defaultValue : config.getConfigValue();
     }
 
     public int getInt(String key, int defaultValue) {

@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { onLaunch } from '@dcloudio/uni-app'
-import { applyTheme } from '@/utils/settings'
+import { onLaunch, onShow } from '@dcloudio/uni-app'
+import { applyTheme, watchSystemTheme } from '@/utils/settings'
+import { syncAppTheme } from '@/utils/theme'
 
 onLaunch(() => {
+  // 先用本地缓存的配色，再拉取后台最新设定
   applyTheme()
+  watchSystemTheme()
+  syncAppTheme(applyTheme)
 })
+
+// 底部 Tab 在启动时可能还没渲染，回到前台时再设置一次颜色
+onShow(() => applyTheme())
 </script>
 
 <style lang="scss">

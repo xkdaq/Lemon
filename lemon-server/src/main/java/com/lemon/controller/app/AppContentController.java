@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.lemon.biz.operation.entity.Banner;
 import com.lemon.biz.operation.entity.Notice;
 import com.lemon.biz.operation.service.BannerService;
+import com.lemon.biz.operation.service.SysConfigService;
 import com.lemon.common.R;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,6 +44,17 @@ public class AppContentController {
     private final PracticeService practiceService;
     private final BannerService bannerService;
     private final QuestionMapper questionMapper;
+    private final SysConfigService configService;
+
+    /** 用户端全局配置：theme 为主题配色（预设名或自定义主色 #RRGGBB） */
+    public record AppConfigResp(String theme) {
+    }
+
+    @Operation(summary = "用户端全局配置（主题配色），启动时读取，无需登录")
+    @GetMapping("/app-config")
+    public R<AppConfigResp> appConfig() {
+        return R.ok(new AppConfigResp(configService.getString(SysConfigService.APP_THEME, SysConfigService.DEFAULT_THEME)));
+    }
 
     /** lastSession：登录用户最近一次未完成的练习，未登录或没有时为 null */
     public record HomeResp(List<ExamModule> modules, List<Notice> notices, List<Banner> banners, LastSession lastSession) {
