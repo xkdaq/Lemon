@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import * as authApi from '@/api/auth'
-import type { AppUser } from '@/api/types'
 import { isLoggedIn } from '@/utils/auth'
 import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
 
-/** 设置：主题（仅 H5）、做题字号、答对自动下一题、账号（用户名、昵称、密码）、清除做题记录 */
+/**
+ * 设置：外观（主题，仅 H5）、做题（字号、答对自动下一题）、数据（清除做题记录）。
+ * 账号相关（昵称、密码）在「我的 → 个人信息」。
+ */
 const THEMES: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '跟随系统' },
   { value: 'light', label: '浅色' },
@@ -16,31 +16,6 @@ const THEMES: { value: ThemeMode; label: string }[] = [
 const theme = ref<ThemeMode>(getTheme())
 const fontScale = ref(getFontScale())
 const autoNext = ref(getAutoNext())
-const user = ref<AppUser | null>(null)
-
-onShow(async () => {
-  user.value = isLoggedIn() ? await authApi.getMe().catch(() => null) : null
-})
-
-/** 修改昵称：用系统输入框 */
-function editNickname() {
-  if (!user.value) return uni.navigateTo({ url: '/pages/login/index' })
-  uni.showModal({
-    title: '修改昵称',
-    editable: true,
-    placeholderText: '最多 32 个字',
-    content: user.value.nickname ?? '',
-    success: async (r) => {
-      if (!r.confirm) return
-      const name = (r.content ?? '').trim()
-      if (!name) return uni.showToast({ title: '昵称不能为空', icon: 'none' })
-      if (name.length > 32) return uni.showToast({ title: '昵称最多 32 个字', icon: 'none' })
-      await authApi.updateNickname(name)
-      if (user.value) user.value.nickname = name
-      uni.showToast({ title: '已修改', icon: 'success' })
-    },
-  })
-}
 
 function pickTheme(v: ThemeMode) {
   theme.value = v
@@ -57,9 +32,8 @@ function toggleAutoNext() {
   setAutoNext(autoNext.value)
 }
 
-/** 需要登录的设置项：没登录先去登录 */
-function openLogged(url: string) {
-  uni.navigateTo({ url: isLoggedIn() ? url : '/pages/login/index' })
+function openRecords() {
+  uni.navigateTo({ url: isLoggedIn() ? '/pages/settings/records' : '/pages/login/index' })
 }
 </script>
 
@@ -67,67 +41,41 @@ function openLogged(url: string) {
   <view class="page">
     <!-- #ifdef H5 -->
     <view class="section-label">外观</view>
-    <view class="card">
-      <view class="row-title">主题</view>
-      <view class="segs">
-        <text v-for="t in THEMES" :key="t.value" class="seg" :class="{ on: theme === t.value }" @click="pickTheme(t.value)">
-          {{ t.label }}
-        </text>
+    <view class="card list-card">
+      <view class="list-row">
+        <view class="grow label">主题</view>
+        <view class="segs">
+          <text v-for="t in THEMES" :key="t.value" class="seg" :class="{ on: theme === t.value }" @click="pickTheme(t.value)">
+            {{ t.label }}
+          </text>
+        </view>
       </view>
     </view>
     <!-- #endif -->
 
     <view class="section-label">做题</view>
-    <view class="card">
-      <view class="row-title">做题字号</view>
-      <view class="segs">
-        <text v-for="f in FONT_SCALES" :key="f.value" class="seg" :class="{ on: fontScale === f.value }" @click="pickFont(f.value)">
-          {{ f.label }}
-        </text>
-      </view>
-      <view class="preview" :style="{ '--fs': fontScale }">
-        <view class="preview-stem">马克思主义最鲜明的政治立场是</view>
-        <view class="preview-option"><text class="key">A</text>致力于实现以劳动人民为主体的最广大人民的根本利益</view>
-      </view>
-    </view>
     <view class="card list-card">
-      <view class="list-row" @click="toggleAutoNext">
-        <view class="grow">
-          <view>答对自动下一题</view>
-          <view class="muted">练习模式下答对后自动跳到下一题；关闭后停在本题看解析</view>
+      <view class="list-row">
+        <view class="grow label">字号</view>
+        <view class="segs">
+          <text v-for="f in FONT_SCALES" :key="f.value" class="seg" :class="{ on: fontScale === f.value }" @click="pickFont(f.value)">
+            {{ f.label }}
+          </text>
         </view>
+      </view>
+      <view class="list-row" @click="toggleAutoNext">
+        <view class="grow label">答对自动下一题</view>
         <view class="switch" :class="{ on: autoNext }"><view class="knob" /></view>
-      </view>
-    </view>
-
-    <view class="section-label">账号</view>
-    <view class="card list-card">
-      <view v-if="user" class="list-row">
-        <view class="grow">用户名</view>
-        <text class="muted value">{{ user.username }}</text>
-      </view>
-      <view class="list-row" @click="editNickname">
-        <view class="grow">昵称</view>
-        <text class="muted value">{{ user?.nickname ?? '' }}</text>
-        <text class="row-arrow">›</text>
-      </view>
-      <view class="list-row" @click="openLogged('/pages/settings/password')">
-        <view class="grow">{{ user && !user.hasPassword ? '设置密码' : '修改密码' }}</view>
-        <text class="row-arrow">›</text>
       </view>
     </view>
 
     <view class="section-label">数据</view>
     <view class="card list-card">
-      <view class="list-row" @click="openLogged('/pages/settings/records')">
-        <view class="grow">
-          <view>清除做题记录</view>
-          <view class="muted">按题库清除做题进度，可选连同错题一起清除</view>
-        </view>
+      <view class="list-row" @click="openRecords">
+        <view class="grow label">清除做题记录</view>
         <text class="row-arrow">›</text>
       </view>
     </view>
-    <view class="muted foot">主题、字号和自动下一题只保存在这台设备上。</view>
   </view>
 </template>
 
@@ -135,63 +83,37 @@ function openLogged(url: string) {
 .page {
   padding-bottom: 48rpx;
 }
-.row-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  margin-bottom: 20rpx;
+.grow {
+  flex: 1;
+  min-width: 0;
 }
+.label {
+  font-size: 30rpx;
+}
+
+/* 紧凑分段选择器：放在行右侧 */
 .segs {
+  flex-shrink: 0;
   display: flex;
-  padding: 6rpx;
+  padding: 4rpx;
   border-radius: 999rpx;
   background: $lemon-bg;
   border: 1px solid $lemon-line;
 }
 .seg {
-  flex: 1;
-  text-align: center;
-  padding: 14rpx 0;
+  padding: 10rpx 22rpx;
   border-radius: 999rpx;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $lemon-muted;
+  white-space: nowrap;
 }
 .seg.on {
   background: $lemon-primary;
   color: #fff;
 }
-.preview {
-  margin-top: 24rpx;
-  padding: 24rpx;
-  border-radius: 20rpx;
-  background: $lemon-bg;
-}
-.preview-stem {
-  font-size: calc(32rpx * var(--fs, 1));
-  line-height: 1.7;
-  margin-bottom: 16rpx;
-}
-.preview-option {
-  display: flex;
-  gap: 16rpx;
-  font-size: calc(30rpx * var(--fs, 1));
-  line-height: 1.5;
-}
-.key {
-  flex-shrink: 0;
-  color: $lemon-primary;
-  font-weight: 600;
-}
-.grow {
-  flex: 1;
-}
-.value {
-  margin-left: 16rpx;
-  font-size: 26rpx;
-}
-.grow .muted {
-  font-size: 24rpx;
-  margin-top: 4rpx;
-}
+
+
+/* 开关 */
 .switch {
   flex-shrink: 0;
   position: relative;
@@ -218,7 +140,5 @@ function openLogged(url: string) {
 .switch.on .knob {
   transform: translateX(36rpx);
 }
-.foot {
-  padding: 8rpx 40rpx;
-}
+
 </style>

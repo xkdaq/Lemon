@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { confirmModal } from '@/utils/modal'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import * as authApi from '@/api/auth'
 import { getStats, type Stats } from '@/api/mine'
 import type { AppUser } from '@/api/types'
-import { isLoggedIn, removeToken } from '@/utils/auth'
-import { clearAccessCache } from '@/utils/access'
+import { isLoggedIn } from '@/utils/auth'
 
 const user = ref<AppUser | null>(null)
 const stats = ref<Stats | null>(null)
@@ -23,24 +21,15 @@ onShow(async () => {
 })
 
 const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
+const openProfile = () => uni.navigateTo({ url: '/pages/profile/index' })
 /** 设置不需要登录（主题、字号是本机设置） */
 const openSettings = () => uni.navigateTo({ url: '/pages/settings/index' })
 const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
-
-async function logout() {
-  const { confirm } = await confirmModal({ title: '退出登录？' })
-  if (!confirm) return
-  await authApi.logout().catch(() => undefined)
-  removeToken()
-  clearAccessCache()
-  user.value = null
-  stats.value = null
-}
 </script>
 
 <template>
   <view>
-    <view class="card profile" @click="!user && goLogin()">
+    <view class="card profile" @click="user ? openProfile() : goLogin()">
       <view class="avatar">{{ user?.nickname?.slice(0, 1) ?? '柠' }}</view>
       <view>
         <view class="nickname">{{ user?.nickname ?? '点击登录' }}</view>
@@ -50,6 +39,7 @@ async function logout() {
         <text class="streak-num">{{ stats.streakDays }}</text>
         <text class="muted">天连续打卡</text>
       </view>
+      <text v-if="user" class="row-arrow profile-arrow">›</text>
     </view>
 
     <view class="card stats">
@@ -87,7 +77,6 @@ async function logout() {
       </view>
     </view>
 
-    <view v-if="user" class="card logout" @click="logout">退出登录</view>
   </view>
 </template>
 
@@ -114,6 +103,12 @@ async function logout() {
   font-size: 34rpx;
   font-weight: 600;
   margin-bottom: 8rpx;
+}
+.profile-arrow {
+  margin-left: auto;
+}
+.streak + .profile-arrow {
+  margin-left: 8rpx;
 }
 .streak {
   margin-left: auto;
@@ -177,9 +172,5 @@ async function logout() {
 .menu-text {
   flex: 1;
   font-size: 30rpx;
-}
-.logout {
-  text-align: center;
-  color: $lemon-danger;
 }
 </style>

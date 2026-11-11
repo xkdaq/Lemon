@@ -12,6 +12,7 @@
     { "path": "pages/punch/list", "style": { "navigationBarTitleText": "每日打卡", "enablePullDownRefresh": true } },
     { "path": "pages/punch/detail", "style": { "navigationBarTitleText": "打卡" } },
     { "path": "pages/settings/index", "style": { "navigationBarTitleText": "设置" } },
+    { "path": "pages/profile/index", "style": { "navigationBarTitleText": "个人信息" } },
     { "path": "pages/settings/records", "style": { "navigationBarTitleText": "清除做题记录" } },
     { "path": "pages/settings/password", "style": { "navigationBarTitleText": "修改密码" } },
     { "path": "pages/restore/index", "style": { "navigationBarTitleText": "恢复错题" } },
