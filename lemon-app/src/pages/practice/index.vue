@@ -7,7 +7,7 @@ import { Mode, QType, isPracticeLike, modeByName, modeLabel, qTypeLabel, type Qu
 import { startPractice as startCollectionPractice, type Kind } from '@/api/collection'
 import { formatSeconds, renderHtml } from '@/utils/html'
 import { isLoggedIn } from '@/utils/auth'
-import { getFontScale } from '@/utils/settings'
+import { getAutoNext, getFontScale } from '@/utils/settings'
 import { ApiError } from '@/utils/request'
 
 /**
@@ -20,6 +20,7 @@ import { ApiError } from '@/utils/request'
 const CHUNK = 20
 /** 设置里的做题字号（题干、选项、解析按比例放大） */
 const fontScale = getFontScale()
+const autoNext = getAutoNext()
 
 const session = ref<Session>()
 const questions = reactive<Record<number, QuestionItem>>({})
@@ -220,8 +221,8 @@ async function submitPractice(answer: string) {
     s.correctCount = r.correctCount
     q.answer = r.answer ?? undefined
     q.analysis = r.analysis ?? undefined
-    // 答对自动下一题；答错停留看解析
-    if (r.correct && q.type !== QType.SUBJECTIVE && !isLast.value) {
+    // 答对自动下一题（可在设置里关闭）；答错停留看解析
+    if (autoNext && r.correct && q.type !== QType.SUBJECTIVE && !isLast.value) {
       setTimeout(() => {
         if (currentId.value === q.id) goTo(index.value + 1)
       }, 600)

@@ -1,5 +1,5 @@
 /**
- * 本机设置（存在本地，不同步到服务器）：主题（浅色 / 深色）、做题字号。
+ * 本机设置（存在本地，不同步到服务器）：主题（浅色 / 深色）、做题字号、答对自动下一题。
  * 配色本身由管理后台设定，见 utils/theme.ts
  */
 import { applyTabBar, getAppTheme, injectPalette } from './theme'
@@ -8,6 +8,7 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 
 const THEME_KEY = 'lemon_theme'
 const FONT_KEY = 'lemon_font_scale'
+const AUTO_NEXT_KEY = 'lemon_auto_next'
 
 export const FONT_SCALES = [
   { value: 0.9, label: '小' },
@@ -60,4 +61,13 @@ export function getFontScale(): number {
 
 export function setFontScale(v: number) {
   uni.setStorageSync(FONT_KEY, v)
+}
+
+/** 练习模式答对后是否自动跳到下一题，默认开 */
+export function getAutoNext(): boolean {
+  return uni.getStorageSync(AUTO_NEXT_KEY) !== 'off'
+}
+
+export function setAutoNext(on: boolean) {
+  uni.setStorageSync(AUTO_NEXT_KEY, on ? 'on' : 'off')
 }

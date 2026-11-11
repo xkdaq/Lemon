@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { isLoggedIn } from '@/utils/auth'
-import { FONT_SCALES, getFontScale, getTheme, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
+import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
 
-/** 设置：主题（仅 H5）、做题字号、清除做题记录 */
+/** 设置：主题（仅 H5）、做题字号、答对自动下一题、清除做题记录 */
 const THEMES: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '跟随系统' },
   { value: 'light', label: '浅色' },
@@ -12,6 +12,7 @@ const THEMES: { value: ThemeMode; label: string }[] = [
 
 const theme = ref<ThemeMode>(getTheme())
 const fontScale = ref(getFontScale())
+const autoNext = ref(getAutoNext())
 
 function pickTheme(v: ThemeMode) {
   theme.value = v
@@ -21,6 +22,11 @@ function pickTheme(v: ThemeMode) {
 function pickFont(v: number) {
   fontScale.value = v
   setFontScale(v)
+}
+
+function toggleAutoNext() {
+  autoNext.value = !autoNext.value
+  setAutoNext(autoNext.value)
 }
 
 function openRecords() {
@@ -59,6 +65,15 @@ function openRecords() {
         <view class="preview-option"><text class="key">A</text>致力于实现以劳动人民为主体的最广大人民的根本利益</view>
       </view>
     </view>
+    <view class="card list-card">
+      <view class="list-row" @click="toggleAutoNext">
+        <view class="grow">
+          <view>答对自动下一题</view>
+          <view class="muted">练习模式下答对后自动跳到下一题；关闭后停在本题看解析</view>
+        </view>
+        <view class="switch" :class="{ on: autoNext }"><view class="knob" /></view>
+      </view>
+    </view>
 
     <view class="section-label">数据</view>
     <view class="card list-card">
@@ -70,7 +85,7 @@ function openRecords() {
         <text class="row-arrow">›</text>
       </view>
     </view>
-    <view class="muted foot">主题和字号只保存在这台设备上。</view>
+    <view class="muted foot">以上设置只保存在这台设备上。</view>
   </view>
 </template>
 
@@ -130,6 +145,32 @@ function openRecords() {
 .grow .muted {
   font-size: 24rpx;
   margin-top: 4rpx;
+}
+.switch {
+  flex-shrink: 0;
+  position: relative;
+  width: 88rpx;
+  height: 52rpx;
+  border-radius: 999rpx;
+  background: $lemon-line;
+  transition: background 0.2s;
+}
+.switch.on {
+  background: $lemon-primary;
+}
+.knob {
+  position: absolute;
+  top: 6rpx;
+  left: 6rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+.switch.on .knob {
+  transform: translateX(36rpx);
 }
 .foot {
   padding: 8rpx 40rpx;
