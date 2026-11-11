@@ -13,6 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import com.lemon.biz.practice.service.RecordService;
+import com.lemon.biz.practice.service.RecordService.BankRecord;
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +35,23 @@ public class AppMineController {
 
     private final UserStatsService statsService;
     private final FeedbackService feedbackService;
+    private final RecordService recordService;
+
+    public record ClearReq(@NotNull Long bankId, Boolean includeWrong) {
+    }
+
+    @Operation(summary = "有做题记录的题库（做过的题数、错题数）")
+    @GetMapping("/user/records")
+    public R<List<BankRecord>> records() {
+        return R.ok(recordService.banks(StpAppUtil.userId()));
+    }
+
+    @Operation(summary = "清除某个题库的做题记录和进度；includeWrong=true 连同该题库的错题")
+    @PostMapping("/user/records/clear")
+    public R<Void> clearRecords(@Valid @RequestBody ClearReq req) {
+        recordService.clear(StpAppUtil.userId(), req.bankId(), Boolean.TRUE.equals(req.includeWrong()));
+        return R.ok();
+    }
 
     @Operation(summary = "做题统计")
     @GetMapping("/user/stats")

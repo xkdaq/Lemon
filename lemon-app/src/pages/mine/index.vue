@@ -22,6 +22,8 @@ onShow(async () => {
 })
 
 const goLogin = () => uni.navigateTo({ url: '/pages/login/index' })
+/** 设置不需要登录（主题、字号是本机设置） */
+const openSettings = () => uni.navigateTo({ url: '/pages/settings/index' })
 const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
 
 async function logout() {
@@ -71,6 +73,9 @@ async function logout() {
     <view class="card list-card">
       <view class="list-row" @click="go('/pages/restore/index')">
         <text class="menu-text">恢复老系统错题</text><text class="row-arrow">›</text>
+      </view>
+      <view class="list-row" @click="openSettings">
+        <text class="menu-text">设置</text><text class="row-arrow">›</text>
       </view>
       <view class="list-row" @click="go('/pages/feedback/index')">
         <text class="menu-text">意见反馈</text><text class="row-arrow">›</text>

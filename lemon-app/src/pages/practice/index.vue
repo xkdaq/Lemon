@@ -7,6 +7,7 @@ import { Mode, QType, isPracticeLike, modeByName, modeLabel, qTypeLabel, type Qu
 import { startPractice as startCollectionPractice, type Kind } from '@/api/collection'
 import { formatSeconds, renderHtml } from '@/utils/html'
 import { isLoggedIn } from '@/utils/auth'
+import { getFontScale } from '@/utils/settings'
 import { ApiError } from '@/utils/request'
 
 /**
@@ -17,6 +18,8 @@ import { ApiError } from '@/utils/request'
  * 已结束的会话以只读方式打开（结果页“查看解析”进入）。
  */
 const CHUNK = 20
+/** 设置里的做题字号（题干、选项、解析按比例放大） */
+const fontScale = getFontScale()
 
 const session = ref<Session>()
 const questions = reactive<Record<number, QuestionItem>>({})
@@ -369,7 +372,7 @@ function onTouchEnd(e: TouchEvent) {
 </script>
 
 <template>
-  <view v-if="session" class="practice">
+  <view v-if="session" class="practice" :style="{ '--fs': fontScale }">
     <!-- 顶部信息 -->
     <view class="topbar">
       <view v-if="canSwitch" class="mode-switch">
@@ -575,7 +578,7 @@ function onTouchEnd(e: TouchEvent) {
   border-radius: 6rpx;
 }
 .stem {
-  font-size: 32rpx;
+  font-size: calc(32rpx * var(--fs, 1));
   line-height: 1.7;
 }
 .options {
@@ -589,7 +592,7 @@ function onTouchEnd(e: TouchEvent) {
   margin-bottom: 20rpx;
   border: 1px solid $lemon-line;
   border-radius: 16rpx;
-  font-size: 30rpx;
+  font-size: calc(30rpx * var(--fs, 1));
   line-height: 1.5;
 }
 .option-key {
@@ -650,7 +653,7 @@ function onTouchEnd(e: TouchEvent) {
   margin-top: 32rpx;
   padding-top: 24rpx;
   border-top: 1px dashed $lemon-line;
-  font-size: 28rpx;
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.7;
 }
 .answer-line {

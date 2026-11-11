@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app'
+import { applyTheme } from '@/utils/settings'
 
 onLaunch(() => {
-  // TODO M3：恢复登录态、拉取“继续上次练习”
+  applyTheme()
 })
 </script>
 
 <style lang="scss">
 /* 主题色：暖纸色背景 + 赭红强调色，深色模式跟随系统 */
-page {
+@mixin light-vars {
   --bg: #f6f1e8;
   --surface: #fffdf8;
   --text: #2b2520;
@@ -26,6 +27,28 @@ page {
   --g2-soft: #e3f1e8;
   --g0-soft: #fbe6dc;
   --shadow: 0 1px 2px rgba(60, 40, 20, 0.06), 0 4px 16px rgba(60, 40, 20, 0.05);
+}
+
+@mixin dark-vars {
+  --bg: #171412;
+  --surface: #221e1b;
+  --text: #ece5dc;
+  --muted: #9b9086;
+  --line: #36302b;
+  --accent: #e0785f;
+  --accent-soft: #3a2620;
+  --key: #f0a07f;
+  --g0: #f08a5d;
+  --g1: #e0b04d;
+  --g2: #5fbf8a;
+  --done-color: #6b4236;
+  --g2-soft: #1f3328;
+  --g0-soft: #3a2620;
+  --shadow: none;
+}
+
+page {
+  @include light-vars;
 
   background: var(--bg);
   color: var(--text);
@@ -38,23 +61,46 @@ page {
 
 @media (prefers-color-scheme: dark) {
   page {
-    --bg: #171412;
-    --surface: #221e1b;
-    --text: #ece5dc;
-    --muted: #9b9086;
-    --line: #36302b;
-    --accent: #e0785f;
-    --accent-soft: #3a2620;
-    --key: #f0a07f;
-    --g0: #f08a5d;
-    --g1: #e0b04d;
-    --g2: #5fbf8a;
-    --done-color: #6b4236;
-    --g2-soft: #1f3328;
-    --g0-soft: #3a2620;
-    --shadow: none;
+    @include dark-vars;
   }
 }
+
+/* #ifdef H5 */
+/* 设置里手动选了主题：覆盖跟随系统（body 和每页的 uni-page-body 上都有变量） */
+body.theme-light,
+body.theme-light uni-page-body {
+  @include light-vars;
+  background: var(--bg);
+}
+body.theme-dark,
+body.theme-dark uni-page-body {
+  @include dark-vars;
+  background: var(--bg);
+}
+body.theme-light .uni-page-head {
+  background-color: #f6f1e8 !important;
+  color: #000 !important;
+}
+body.theme-dark .uni-page-head {
+  background-color: #171412 !important;
+  color: #fff !important;
+}
+body.theme-light .uni-page-head .uni-btn-icon {
+  color: #000 !important;
+}
+body.theme-dark .uni-page-head .uni-btn-icon {
+  color: #fff !important;
+}
+body.theme-light .uni-tabbar {
+  background-color: #fffdf8 !important;
+}
+body.theme-dark .uni-tabbar {
+  background-color: #221e1b !important;
+}
+body.theme-dark .uni-tabbar-border {
+  background-color: #36302b !important;
+}
+/* #endif */
 
 /* 卡片：浅色描边 + 柔和投影 */
 .card {
