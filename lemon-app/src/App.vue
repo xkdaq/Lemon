@@ -295,6 +295,19 @@ uni-modal .uni-modal__btn_primary {
 uni-modal .uni-modal__btn:active {
   opacity: 0.85;
 }
+/* 可输入的弹窗（如修改昵称） */
+uni-modal .uni-modal__textarea {
+  display: block;
+  width: calc(100% - 40px) !important;
+  margin: 8px 20px 0 !important;
+  box-sizing: border-box;
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px;
+  padding: 10px 12px !important;
+  font-size: 16px !important;
+}
 /* #endif */
 
 .empty {

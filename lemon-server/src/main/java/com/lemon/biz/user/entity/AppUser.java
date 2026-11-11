@@ -18,6 +18,9 @@ import lombok.EqualsAndHashCode;
 @TableName("`app_user`")
 public class AppUser extends BaseEntity {
 
+    /** 用户名，自动分配（lemon + 数字），不可修改，可用于登录 */
+    private String username;
+
     /** 手机号，跨端合并账号的依据 */
     private String phone;
 
@@ -28,6 +31,9 @@ public class AppUser extends BaseEntity {
     /** BCrypt 密码 */
     @JsonIgnore
     private String password;
+
+    /** 1 = 后台重置过密码，登录后提示用户修改 */
+    private Integer mustChangePassword;
 
     /** 小程序 openid（二期） */
     private String openid;

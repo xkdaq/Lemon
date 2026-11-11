@@ -13,8 +13,12 @@ import lombok.EqualsAndHashCode;
 @TableName("`sms_log`")
 public class SmsLog extends BaseEntity {
 
+    /** 验证码登录（已下线，保留历史记录的含义） */
     public static final int SCENE_LOGIN = 1;
+    /** 登录后设置密码（已下线，保留历史记录的含义） */
     public static final int SCENE_PASSWORD = 2;
+    public static final int SCENE_REGISTER = 3;
+    public static final int SCENE_RESET = 4;
 
     public static final int STATUS_FAIL = 0;
     public static final int STATUS_OK = 1;
@@ -23,7 +27,7 @@ public class SmsLog extends BaseEntity {
     /** 接收手机号 */
     private String phone;
 
-    /** 1 登录 2 设置密码 */
+    /** 1 验证码登录（旧） 2 设置密码（旧） 3 注册 4 找回密码 */
     private Integer scene;
 
     /** 1 已提交 0 提交失败 2 未实际发送（开发环境） */

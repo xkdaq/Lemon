@@ -75,6 +75,15 @@ public class AdminOperationController {
         return R.ok();
     }
 
+    public record ResetPasswordResp(String password) {
+    }
+
+    @Operation(summary = "重置用户密码：返回一次性临时密码，用户所有设备下线，登录后提示修改")
+    @PostMapping("/app-users/{id}/reset-password")
+    public R<ResetPasswordResp> resetUserPassword(@PathVariable Long id) {
+        return R.ok(new ResetPasswordResp(userService.resetPassword(id)));
+    }
+
     // -------- 短信记录 --------
 
     @Operation(summary = "短信发送记录")

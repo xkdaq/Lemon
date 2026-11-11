@@ -42,7 +42,7 @@ async function logout() {
       <view class="avatar">{{ user?.nickname?.slice(0, 1) ?? '柠' }}</view>
       <view>
         <view class="nickname">{{ user?.nickname ?? '点击登录' }}</view>
-        <view class="muted">{{ user ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '登录后同步做题记录' }}</view>
+        <view class="muted">{{ user ? `用户名 ${user.username}` : '登录后同步做题记录' }}</view>
       </view>
       <view v-if="stats?.streakDays" class="streak">
         <text class="streak-num">{{ stats.streakDays }}</text>

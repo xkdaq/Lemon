@@ -2,20 +2,20 @@
 import { reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import * as authApi from '@/api/auth'
-import { useCountdown } from '@/utils/useCountdown'
 
-/** 设置 / 修改密码：验证码发到账号绑定的手机号，验证本人后设置新密码 */
-const phone = ref('')
-const hasPassword = ref(false)
-const form = reactive({ code: '', password: '', confirm: '' })
-const sending = ref(false)
+/**
+ * 设置 / 修改密码：已有密码要输入原密码；还没有密码的（如小程序授权登录的用户）直接设置。
+ * 忘了原密码就退出登录，在登录页用「忘记密码」短信找回。
+ */
+const hasPassword = ref(true)
+const mustChange = ref(false)
+const form = reactive({ old: '', password: '', confirm: '' })
 const saving = ref(false)
-const { seconds, start } = useCountdown()
 
 onLoad(async () => {
   const me = await authApi.getMe()
-  phone.value = me.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
   hasPassword.value = !!me.hasPassword
+  mustChange.value = !!me.mustChangePassword
   uni.setNavigationBarTitle({ title: hasPassword.value ? '修改密码' : '设置密码' })
 })
 
@@ -23,27 +23,18 @@ function toast(title: string) {
   uni.showToast({ title, icon: 'none' })
 }
 
-async function sendCode() {
-  if (seconds.value > 0 || sending.value) return
-  sending.value = true
-  try {
-    await authApi.sendPasswordCode()
-    start()
-    toast('验证码已发送')
-  } finally {
-    sending.value = false
-  }
-}
-
 async function save() {
-  if (!/^\d{4,6}$/.test(form.code)) return toast('请输入验证码')
-  if (form.password.length < 6) return toast('密码至少 6 位')
+  if (hasPassword.value && !form.old) return toast(mustChange.value ? '请输入管理员给你的临时密码' : '请输入原密码')
+  if (form.password.length < 6) return toast('新密码至少 6 位')
   if (form.password !== form.confirm) return toast('两次输入的密码不一致')
   saving.value = true
   try {
-    await authApi.setPassword({ code: form.code, password: form.password })
+    await authApi.changePassword({ oldPassword: hasPassword.value ? form.old : undefined, password: form.password })
     uni.showToast({ title: '密码已保存', icon: 'success' })
-    setTimeout(() => uni.navigateBack(), 800)
+    setTimeout(() => {
+      if (getCurrentPages().length > 1) uni.navigateBack()
+      else uni.switchTab({ url: '/pages/index/index' })
+    }, 800)
   } finally {
     saving.value = false
   }
@@ -52,12 +43,17 @@ async function save() {
 
 <template>
   <view class="page">
-    <view class="muted desc">验证码将发送到 {{ phone }}，设置后可以用手机号 + 密码登录。</view>
-    <view class="field code-field">
-      <input v-model="form.code" type="number" maxlength="6" placeholder="验证码" class="grow" />
-      <text class="get-code" :class="{ off: seconds > 0 || sending }" @click="sendCode">
-        {{ seconds > 0 ? `${seconds} 秒后重发` : sending ? '发送中…' : '获取验证码' }}
-      </text>
+    <view class="muted desc">
+      {{
+        mustChange
+          ? '你的密码已由管理员重置，请输入临时密码，再设置一个自己的新密码。'
+          : hasPassword
+            ? '修改后其他设备上的登录会退出。忘了原密码可以退出登录，在登录页点「忘记密码」用短信找回。'
+            : '设置后可以在网页上用手机号或用户名 + 密码登录。'
+      }}
+    </view>
+    <view v-if="hasPassword" class="field">
+      <input v-model="form.old" password maxlength="32" :placeholder="mustChange ? '临时密码' : '原密码'" />
     </view>
     <view class="field">
       <input v-model="form.password" password maxlength="32" placeholder="新密码（至少 6 位）" />
@@ -76,6 +72,7 @@ async function save() {
 .desc {
   margin-bottom: 32rpx;
   font-size: 26rpx;
+  line-height: 1.6;
 }
 .field {
   background: $lemon-surface;
@@ -83,22 +80,6 @@ async function save() {
   border-radius: 16rpx;
   padding: 24rpx 28rpx;
   margin-bottom: 24rpx;
-}
-.code-field {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-}
-.grow {
-  flex: 1;
-}
-.get-code {
-  flex-shrink: 0;
-  font-size: 26rpx;
-  color: $lemon-primary;
-}
-.get-code.off {
-  color: $lemon-muted;
 }
 .submit {
   margin-top: 40rpx;

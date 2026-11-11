@@ -14,6 +14,7 @@ export const getDashboard = () => http.get<Dashboard>('/dashboard')
 // ---- 用户端用户 ----
 export interface AppUser {
   id: number
+  username: string | null
   phone: string | null
   nickname: string | null
   avatar: string | null
@@ -25,12 +26,14 @@ export interface AppUser {
 export const pageAppUsers = (params: { pageNum: number; pageSize: number; keyword?: string; status?: number }) =>
   http.get<PageResult<AppUser>>('/app-users', params)
 export const updateAppUserStatus = (id: number, status: number) => http.put<void>(`/app-users/${id}/status`, { status })
+/** 重置密码：返回一次性临时密码 */
+export const resetAppUserPassword = (id: number) => http.post<{ password: string }>(`/app-users/${id}/reset-password`)
 
 // ---- 短信记录 ----
 export interface SmsLog {
   id: number
   phone: string
-  /** 1 登录 2 设置密码 */
+  /** 1 验证码登录（旧） 2 设置密码（旧） 3 注册 4 找回密码 */
   scene: number
   /** 1 已提交 0 提交失败 2 未实际发送（开发环境） */
   status: number

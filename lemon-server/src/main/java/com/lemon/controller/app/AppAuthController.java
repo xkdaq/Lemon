@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,44 +27,66 @@ public class AppAuthController {
 
     private final AppAuthService appAuthService;
 
-    public record PhoneReq(@NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone) {
-    }
-
-    public record SmsLoginReq(
+    public record CodeReq(
             @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
-            @NotBlank @Size(max = 8) String code) {
+            /** register 注册 / reset 找回密码 */
+            @NotBlank @Pattern(regexp = "^(register|reset)$", message = "不正确") String purpose) {
     }
 
-    public record SetPasswordReq(
+    public record RegisterReq(
+            @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
+            @NotBlank @Size(max = 8) String code,
+            @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password,
+            @Size(max = 32) String nickname) {
+    }
+
+    public record ResetReq(
+            @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
             @NotBlank @Size(max = 8) String code,
             @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password) {
     }
 
     public record LoginReq(
-            @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
+            /** 手机号或用户名 */
+            @NotBlank @Size(max = 32) String account,
             @NotBlank String password) {
+    }
+
+    public record ChangePasswordReq(
+            /** 原密码；还没设置过密码的账号不用传 */
+            String oldPassword,
+            @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password) {
+    }
+
+    public record NicknameReq(@NotBlank @Size(max = 32, message = "最多 32 个字") String nickname) {
     }
 
     public record TokenResp(String token) {
     }
 
-    @Operation(summary = "发送登录验证码")
+    @Operation(summary = "发送短信验证码（注册 / 找回密码）")
     @PostMapping("/api/app/auth/sms-code")
-    public R<Void> smsCode(@Valid @RequestBody PhoneReq req, HttpServletRequest request) {
-        appAuthService.sendLoginCode(req.phone(), request.getRemoteAddr());
+    public R<Void> smsCode(@Valid @RequestBody CodeReq req, HttpServletRequest request) {
+        appAuthService.sendCode(req.phone(), req.purpose(), request.getRemoteAddr());
         return R.ok();
     }
 
-    @Operation(summary = "手机号 + 验证码登录（未注册自动注册）")
-    @PostMapping("/api/app/auth/sms-login")
-    public R<AppAuthService.SmsLoginResult> smsLogin(@Valid @RequestBody SmsLoginReq req) {
-        return R.ok(appAuthService.smsLogin(req.phone(), req.code()));
+    @Operation(summary = "注册：手机号 + 验证码 + 密码（注册后自动登录）")
+    @PostMapping("/api/app/auth/register")
+    public R<TokenResp> register(@Valid @RequestBody RegisterReq req) {
+        return R.ok(new TokenResp(appAuthService.register(req.phone(), req.code(), req.password(), req.nickname())));
     }
 
-    @Operation(summary = "手机号 + 密码登录（设置过密码的账号）")
+    @Operation(summary = "找回密码：手机号 + 验证码 + 新密码（重置后自动登录，其他设备下线）")
+    @PostMapping("/api/app/auth/reset-password")
+    public R<TokenResp> resetPassword(@Valid @RequestBody ResetReq req) {
+        return R.ok(new TokenResp(appAuthService.resetPassword(req.phone(), req.code(), req.password())));
+    }
+
+    @Operation(summary = "账号密码登录（账号 = 手机号或用户名）")
     @PostMapping("/api/app/auth/login")
     public R<TokenResp> login(@Valid @RequestBody LoginReq req) {
-        return R.ok(new TokenResp(appAuthService.login(req.phone(), req.password())));
+        return R.ok(new TokenResp(appAuthService.login(req.account(), req.password())));
     }
 
     @Operation(summary = "退出登录")
@@ -73,17 +96,17 @@ public class AppAuthController {
         return R.ok();
     }
 
-    @Operation(summary = "给当前账号的手机号发验证码（设置密码用）")
-    @PostMapping("/api/app/user/password/code")
-    public R<Void> passwordCode(HttpServletRequest request) {
-        appAuthService.sendSelfCode(request.getRemoteAddr());
+    @Operation(summary = "设置 / 修改密码（已有密码需验证原密码）")
+    @PostMapping("/api/app/user/password")
+    public R<Void> changePassword(@Valid @RequestBody ChangePasswordReq req) {
+        appAuthService.changePassword(req.oldPassword(), req.password());
         return R.ok();
     }
 
-    @Operation(summary = "设置 / 修改密码（验证码验证）")
-    @PostMapping("/api/app/user/password")
-    public R<Void> setPassword(@Valid @RequestBody SetPasswordReq req) {
-        appAuthService.setPassword(req.code(), req.password());
+    @Operation(summary = "修改昵称")
+    @PutMapping("/api/app/user/nickname")
+    public R<Void> nickname(@Valid @RequestBody NicknameReq req) {
+        appAuthService.updateNickname(req.nickname());
         return R.ok();
     }
 

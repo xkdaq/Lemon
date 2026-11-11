@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import * as authApi from '@/api/auth'
+import type { AppUser } from '@/api/types'
 import { isLoggedIn } from '@/utils/auth'
 import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
 
-/** 设置：主题（仅 H5）、做题字号、答对自动下一题、账号密码、清除做题记录 */
+/** 设置：主题（仅 H5）、做题字号、答对自动下一题、账号（用户名、昵称、密码）、清除做题记录 */
 const THEMES: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '跟随系统' },
   { value: 'light', label: '浅色' },
@@ -13,6 +16,31 @@ const THEMES: { value: ThemeMode; label: string }[] = [
 const theme = ref<ThemeMode>(getTheme())
 const fontScale = ref(getFontScale())
 const autoNext = ref(getAutoNext())
+const user = ref<AppUser | null>(null)
+
+onShow(async () => {
+  user.value = isLoggedIn() ? await authApi.getMe().catch(() => null) : null
+})
+
+/** 修改昵称：用系统输入框 */
+function editNickname() {
+  if (!user.value) return uni.navigateTo({ url: '/pages/login/index' })
+  uni.showModal({
+    title: '修改昵称',
+    editable: true,
+    placeholderText: '最多 32 个字',
+    content: user.value.nickname ?? '',
+    success: async (r) => {
+      if (!r.confirm) return
+      const name = (r.content ?? '').trim()
+      if (!name) return uni.showToast({ title: '昵称不能为空', icon: 'none' })
+      if (name.length > 32) return uni.showToast({ title: '昵称最多 32 个字', icon: 'none' })
+      await authApi.updateNickname(name)
+      if (user.value) user.value.nickname = name
+      uni.showToast({ title: '已修改', icon: 'success' })
+    },
+  })
+}
 
 function pickTheme(v: ThemeMode) {
   theme.value = v
@@ -74,11 +102,17 @@ function openLogged(url: string) {
 
     <view class="section-label">账号</view>
     <view class="card list-card">
+      <view v-if="user" class="list-row">
+        <view class="grow">用户名</view>
+        <text class="muted value">{{ user.username }}</text>
+      </view>
+      <view class="list-row" @click="editNickname">
+        <view class="grow">昵称</view>
+        <text class="muted value">{{ user?.nickname ?? '' }}</text>
+        <text class="row-arrow">›</text>
+      </view>
       <view class="list-row" @click="openLogged('/pages/settings/password')">
-        <view class="grow">
-          <view>设置 / 修改密码</view>
-          <view class="muted">设置后可以用手机号 + 密码登录</view>
-        </view>
+        <view class="grow">{{ user && !user.hasPassword ? '设置密码' : '修改密码' }}</view>
         <text class="row-arrow">›</text>
       </view>
     </view>
@@ -93,7 +127,7 @@ function openLogged(url: string) {
         <text class="row-arrow">›</text>
       </view>
     </view>
-    <view class="muted foot">以上设置只保存在这台设备上。</view>
+    <view class="muted foot">主题、字号和自动下一题只保存在这台设备上。</view>
   </view>
 </template>
 
@@ -149,6 +183,10 @@ function openLogged(url: string) {
 }
 .grow {
   flex: 1;
+}
+.value {
+  margin-left: 16rpx;
+  font-size: 26rpx;
 }
 .grow .muted {
   font-size: 24rpx;

@@ -80,11 +80,15 @@ export interface LastSession {
 
 export interface AppUser {
   id: number
+  /** 用户名，自动分配，不可修改 */
+  username: string
   phone: string
   nickname: string
   avatar?: string
   /** 是否设置过密码 */
   hasPassword?: boolean
+  /** 1 = 后台重置过密码，需要提示修改 */
+  mustChangePassword?: number
 }
 
 export interface Banner {

@@ -55,7 +55,7 @@ const STATUS: Record<number, { label: string; type: 'success' | 'danger' | 'info
   0: { label: '提交失败', type: 'danger' },
   2: { label: '未实际发送', type: 'info' },
 }
-const SCENE: Record<number, string> = { 1: '登录', 2: '设置密码' }
+const SCENE: Record<number, string> = { 3: '注册', 4: '找回密码', 1: '验证码登录（旧）', 2: '设置密码（旧）' }
 
 const rate = (c?: api.SmsDayCount) => (c && c.ok + c.fail > 0 ? `${Math.round((c.ok / (c.ok + c.fail)) * 100)}%` : '—')
 
@@ -127,7 +127,7 @@ function pickDay(day: string) {
         <el-select v-model="query.status" placeholder="全部状态" clearable style="width: 130px" @change="search">
           <el-option v-for="(s, k) in STATUS" :key="k" :label="s.label" :value="Number(k)" />
         </el-select>
-        <el-select v-model="query.scene" placeholder="全部用途" clearable style="width: 120px" @change="search">
+        <el-select v-model="query.scene" placeholder="全部用途" clearable style="width: 150px" @change="search">
           <el-option v-for="(s, k) in SCENE" :key="k" :label="s" :value="Number(k)" />
         </el-select>
         <el-date-picker
