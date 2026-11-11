@@ -6,6 +6,7 @@ import * as authApi from '@/api/auth'
 import { getStats, type Stats } from '@/api/mine'
 import type { AppUser } from '@/api/types'
 import { isLoggedIn, removeToken } from '@/utils/auth'
+import { clearAccessCache } from '@/utils/access'
 
 const user = ref<AppUser | null>(null)
 const stats = ref<Stats | null>(null)
@@ -31,6 +32,7 @@ async function logout() {
   if (!confirm) return
   await authApi.logout().catch(() => undefined)
   removeToken()
+  clearAccessCache()
   user.value = null
   stats.value = null
 }
@@ -71,6 +73,9 @@ async function logout() {
     </view>
 
     <view class="card list-card">
+      <view class="list-row" @click="go('/pages/activate/index')">
+        <text class="menu-text">激活码</text><text class="row-arrow">›</text>
+      </view>
       <view class="list-row" @click="go('/pages/restore/index')">
         <text class="menu-text">恢复老系统错题</text><text class="row-arrow">›</text>
       </view>

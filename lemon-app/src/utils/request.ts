@@ -16,6 +16,9 @@ interface R<T> {
 
 const BASE = import.meta.env.VITE_API_BASE
 
+/** 后端业务码：模块未激活（data = { moduleId, moduleName }） */
+export const NEED_ACTIVATION = 1010
+
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
 /**
@@ -44,6 +47,18 @@ export function request<T>(method: Method, url: string, data?: object): Promise<
         if (body?.code === 401) {
           removeToken()
           uni.navigateTo({ url: '/pages/login/index' })
+        } else if (body?.code === NEED_ACTIVATION) {
+          // 模块未激活：引导去激活（没登录先登录）
+          const moduleId = (body.data as { moduleId?: number } | null)?.moduleId
+          uni.showModal({
+            title: '需要激活',
+            content: `${body.msg}。可以在「我的 → 激活码」里输入激活码。`,
+            confirmText: '去激活',
+            success: (r) => {
+              if (!r.confirm) return
+              uni.navigateTo({ url: getToken() ? `/pages/activate/index${moduleId ? `?moduleId=${moduleId}` : ''}` : '/pages/login/index' })
+            },
+          })
         } else {
           uni.showToast({ title: body?.msg || '请求失败', icon: 'none' })
         }

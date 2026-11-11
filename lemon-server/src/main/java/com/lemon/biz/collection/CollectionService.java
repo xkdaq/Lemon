@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lemon.biz.content.entity.Chapter;
 import com.lemon.biz.content.entity.Course;
+import com.lemon.biz.access.service.AccessService;
 import com.lemon.biz.content.entity.ExamModule;
 import com.lemon.biz.content.entity.Question;
 import com.lemon.biz.content.entity.QuestionBank;
@@ -64,6 +65,7 @@ public class CollectionService {
     private final UserWrongQuestionMapper wrongMapper;
     private final QuestionMapper questionMapper;
     private final ExamModuleMapper moduleMapper;
+    private final AccessService accessService;
     private final QuestionBankMapper bankMapper;
     private final ChapterMapper chapterMapper;
     private final CourseMapper courseMapper;
@@ -238,10 +240,16 @@ public class CollectionService {
                         .orderByDesc(UserWrongQuestion::getLastWrongAt))
                 .stream().map(UserWrongQuestion::getQuestionId).toList();
 
-        Set<Long> available = ids.isEmpty() ? Set.of() : questionMapper.selectList(Wrappers.<Question>lambdaQuery()
-                        .select(Question::getId).in(Question::getId, ids).eq(Question::getStatus, Status.ON))
-                .stream().map(Question::getId).collect(Collectors.toSet());
-        List<Long> ordered = new ArrayList<>(ids.stream().filter(available::contains).toList());
+        // 只练已激活模块里的题；全都没激活就引导去激活
+        Map<Long, Long> moduleOf = ids.isEmpty() ? Map.of() : questionMapper.selectList(Wrappers.<Question>lambdaQuery()
+                        .select(Question::getId, Question::getModuleId).in(Question::getId, ids).eq(Question::getStatus, Status.ON))
+                .stream().collect(Collectors.toMap(Question::getId, Question::getModuleId, (a, b) -> a));
+        Set<Long> activeModules = accessService.activeModules(userId).keySet();
+        List<Long> ordered = new ArrayList<>(ids.stream()
+                .filter(id -> moduleOf.containsKey(id) && activeModules.contains(moduleOf.get(id))).toList());
+        if (ordered.isEmpty() && !moduleOf.isEmpty()) {
+            throw accessService.needActivation(moduleOf.get(ids.stream().filter(moduleOf::containsKey).findFirst().orElseThrow()));
+        }
         if (firstQuestionId != null && ordered.remove(firstQuestionId)) {
             ordered.add(0, firstQuestionId);
         }

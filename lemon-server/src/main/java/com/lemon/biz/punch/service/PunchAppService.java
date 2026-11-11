@@ -1,6 +1,9 @@
 package com.lemon.biz.punch.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.lemon.biz.access.service.AccessService;
+import com.lemon.biz.paper.entity.PaperRule;
+import com.lemon.biz.paper.mapper.PaperRuleMapper;
 import com.lemon.biz.paper.service.PaperRuleService;
 import com.lemon.biz.practice.dto.PracticeDtos.SessionVO;
 import com.lemon.biz.practice.enums.PracticeMode;
@@ -59,6 +62,8 @@ public class PunchAppService {
     private final PunchMemberMapper memberMapper;
     private final PunchRecordMapper recordMapper;
     private final PaperRuleService ruleService;
+    private final PaperRuleMapper paperRuleMapper;
+    private final AccessService accessService;
     private final PracticeService practiceService;
     private final AppUserMapper userMapper;
 
@@ -215,7 +220,11 @@ public class PunchAppService {
             BizException.throwIf(updated == 0, "补卡次数已用完");
         }
 
-        List<Long> questionIds = ruleService.pick(ruleFor(camp, day), PunchDays.seed(campId, day));
+        Long ruleId = ruleFor(camp, day);
+        // 打卡题目来自组卷规则所在题库的模块，需要激活该模块
+        PaperRule rule = BizException.notNull(paperRuleMapper.selectById(ruleId), "打卡规则不存在");
+        accessService.requireAccess(userId, accessService.moduleOfBank(rule.getBankId()));
+        List<Long> questionIds = ruleService.pick(ruleId, PunchDays.seed(campId, day));
         SessionVO session = practiceService.startPunch(userId, questionIds);
         PunchRecord r = new PunchRecord();
         r.setCampId(campId);

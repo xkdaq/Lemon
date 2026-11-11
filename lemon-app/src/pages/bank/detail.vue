@@ -6,6 +6,7 @@ import { BankType, type Chapter, type Course, type QuestionBank } from '@/api/ty
 import { goPractice } from '@/utils/nav'
 import ProgressBar from '@/components/ProgressBar.vue'
 import ChapterSections from '@/components/ChapterSections.vue'
+import AccessBanner from '@/components/AccessBanner.vue'
 
 /**
  * 题库详情：
@@ -30,7 +31,7 @@ onShow(async () => {
   // 科目型题库只有一个科目（如“章节1000题”）：直接进章节列表，省一次点击
   if (res.bank.type === BankType.COURSE && res.courses.length === 1) {
     const c = res.courses[0]
-    uni.redirectTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&name=${encodeURIComponent(res.bank.name)}` })
+    uni.redirectTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&moduleId=${res.bank.moduleId}&name=${encodeURIComponent(res.bank.name)}` })
     return
   }
   uni.setNavigationBarTitle({ title: res.bank.name })
@@ -42,13 +43,14 @@ const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCoun
 const accuracy = computed(() => (total.value.done ? Math.round((total.value.correct / total.value.done) * 100) : 0))
 
 function openCourse(c: Course) {
-  uni.navigateTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&name=${encodeURIComponent(c.name)}` })
+  uni.navigateTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&moduleId=${bank.value?.moduleId ?? ''}&name=${encodeURIComponent(c.name)}` })
 }
 
 </script>
 
 <template>
   <view v-if="bank">
+    <AccessBanner :module-id="bank.moduleId" />
     <template v-if="bank.type === BankType.COURSE">
       <view class="section-label">选择科目</view>
       <view v-if="courses.length" class="card list-card">

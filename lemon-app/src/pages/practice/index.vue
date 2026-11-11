@@ -8,7 +8,8 @@ import { startPractice as startCollectionPractice, type Kind } from '@/api/colle
 import { formatSeconds, renderHtml } from '@/utils/html'
 import { isLoggedIn } from '@/utils/auth'
 import { getAutoNext, getFontScale } from '@/utils/settings'
-import { ApiError } from '@/utils/request'
+import { ApiError, NEED_ACTIVATION } from '@/utils/request'
+import { goActivate } from '@/utils/access'
 
 /**
  * 做题页。三种模式共用：
@@ -110,7 +111,10 @@ async function init() {
     startTimer()
   } catch (e) {
     // 未登录时请求层已跳转登录页，这里不能再返回，否则会把登录页关掉
-    if (!(e instanceof ApiError && e.code === 401)) {
+    if (e instanceof ApiError && e.code === NEED_ACTIVATION) {
+      // 请求层已弹出「需要激活」，直接回到上一页
+      uni.navigateBack()
+    } else if (!(e instanceof ApiError && e.code === 401)) {
       setTimeout(() => uni.navigateBack(), 1200)
     }
   } finally {
@@ -384,6 +388,12 @@ function onTouchEnd(e: TouchEvent) {
       <text v-if="readonly" class="muted">（已结束 · 查看解析）</text>
       <text class="progress">{{ index + 1 }} / {{ ids.length }}</text>
       <text v-if="remaining !== null" class="timer" :class="{ urgent: remaining < 300 }">⏱ {{ formatSeconds(remaining) }}</text>
+    </view>
+
+    <!-- 未激活的试做 -->
+    <view v-if="session.trial" class="trial-tip" @click="goActivate(session.moduleId)">
+      <text>试做本章前 {{ ids.length }} 题，激活后可刷全部题目</text>
+      <text class="trial-link">去激活 ›</text>
     </view>
 
     <!-- 题目 -->
@@ -822,5 +832,21 @@ function onTouchEnd(e: TouchEvent) {
 .dot.is-answered {
   background: $lemon-primary;
   color: #fff;
+}
+.trial-tip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+  margin: 0 32rpx 16rpx;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  background: var(--accent-soft);
+  font-size: 24rpx;
+  color: $lemon-text;
+}
+.trial-link {
+  flex-shrink: 0;
+  color: $lemon-primary;
 }
 </style>

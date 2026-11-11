@@ -19,6 +19,7 @@ import com.lemon.biz.practice.dto.PracticeDtos.QuestionItem;
 import com.lemon.biz.practice.dto.PracticeDtos.ResultVO;
 import com.lemon.biz.practice.dto.PracticeDtos.SessionVO;
 import com.lemon.biz.practice.dto.PracticeDtos.StartReq;
+import com.lemon.biz.access.service.AccessService;
 import com.lemon.biz.practice.entity.PracticeSession;
 import com.lemon.biz.practice.enums.PracticeMode;
 import com.lemon.biz.practice.event.PracticeFinishedEvent;
@@ -79,6 +80,7 @@ public class PracticeService {
     private final AnswerRecorder recorder;
     private final FavoriteService favoriteService;
     private final ApplicationEventPublisher events;
+    private final AccessService accessService;
 
     // ==================== 开始 / 查询 ====================
 
@@ -93,6 +95,11 @@ public class PracticeService {
                 "只有模拟卷可以考试");
         String section = org.springframework.util.StringUtils.hasText(req.section()) ? req.section().strip() : null;
         BizException.throwIf(mode == PracticeMode.EXAM && section != null, "考试需要做整套试卷");
+        // 模块没激活：考试不能做；练习 / 背题只能试做章节前 N 题
+        boolean trial = !accessService.hasAccess(userId, bank.getModuleId());
+        if (trial && (mode == PracticeMode.EXAM || accessService.trialQuestions() == 0)) {
+            throw accessService.needActivation(bank.getModuleId());
+        }
 
         PracticeSession existing = sessionMapper.selectOne(Wrappers.<PracticeSession>lambdaQuery()
                 .eq(PracticeSession::getUserId, userId)
@@ -102,6 +109,12 @@ public class PracticeService {
                 .isNull(section == null, PracticeSession::getSection)
                 .eq(PracticeSession::getStatus, IN_PROGRESS)
                 .orderByDesc(PracticeSession::getId).last("LIMIT 1"));
+        // 激活状态变了（试做后激活了，或者激活到期了），旧会话的题目范围不对，重新开始
+        if (existing != null && (existing.getTrial() != null && existing.getTrial() == 1) != trial) {
+            existing.setStatus(ABANDONED);
+            sessionMapper.updateById(existing);
+            existing = null;
+        }
         if (existing != null) {
             if (Boolean.TRUE.equals(req.restart())) {
                 existing.setStatus(ABANDONED);
@@ -121,12 +134,19 @@ public class PracticeService {
                         .orderByAsc(Question::getSort).orderByAsc(Question::getId))
                 .stream().map(Question::getId).toList();
         BizException.throwIf(ids.isEmpty(), section != null ? "该章节暂时没有这类题目" : "该章节暂时没有题目");
+        if (trial) {
+            ids = trialIds(chapter.getId(), ids);
+            if (ids.isEmpty()) {
+                throw accessService.needActivation(bank.getModuleId());
+            }
+        }
 
         PracticeSession s = new PracticeSession();
         s.setUserId(userId);
         s.setChapterId(chapter.getId());
         s.setMode(mode.getCode());
         s.setSection(section);
+        s.setTrial(trial ? 1 : 0);
         s.setStatus(IN_PROGRESS);
         s.setQuestionIds(JsonUtil.toJson(ids));
         s.setAnswers("{}");
@@ -192,6 +212,7 @@ public class PracticeService {
     public List<QuestionItem> questions(Long userId, Long sessionId, List<Long> ids) {
         BizException.throwIf(ids.size() > MAX_FETCH, "一次最多获取 " + MAX_FETCH + " 题");
         PracticeSession s = owned(userId, sessionId, false);
+        checkAccess(s);
         Set<Long> inSession = new HashSet<>(questionIds(s));
         BizException.throwIf(!inSession.containsAll(ids), "题目不属于本次练习");
         if (ids.isEmpty()) {
@@ -228,6 +249,7 @@ public class PracticeService {
     @Transactional
     public AnswerResult answer(Long userId, Long sessionId, AnswerReq req) {
         PracticeSession s = owned(userId, sessionId, true);
+        checkAccess(s);
         PracticeMode mode = PracticeMode.of(s.getMode());
         BizException.throwIf(mode == PracticeMode.RECITE, "背题模式无需作答");
         if (isExam(s) && examExpired(s)) {
@@ -435,6 +457,31 @@ public class PracticeService {
 
     // ==================== 工具 ====================
 
+    /**
+     * 试做范围：整章（不分小节）按顺序的前 N 题；按小节练习时取这 N 题里属于该小节的
+     */
+    private List<Long> trialIds(Long chapterId, List<Long> ids) {
+        Set<Long> firstN = questionMapper.selectList(Wrappers.<Question>lambdaQuery()
+                        .select(Question::getId)
+                        .eq(Question::getChapterId, chapterId)
+                        .eq(Question::getStatus, Status.ON)
+                        .orderByAsc(Question::getSort).orderByAsc(Question::getId)
+                        .last("LIMIT " + accessService.trialQuestions()))
+                .stream().map(Question::getId).collect(Collectors.toSet());
+        return ids.stream().filter(firstN::contains).toList();
+    }
+
+    /** 章节会话继续做题前检查权限：激活到期后，非试做会话不能继续 */
+    private void checkAccess(PracticeSession s) {
+        if (s.getChapterId() != null && (s.getTrial() == null || s.getTrial() == 0)
+                && s.getStatus() == IN_PROGRESS) {
+            Long moduleId = accessService.moduleOfChapter(s.getChapterId());
+            if (moduleId != null && !accessService.hasAccess(s.getUserId(), moduleId)) {
+                throw accessService.needActivation(moduleId);
+            }
+        }
+    }
+
     private PracticeSession owned(Long userId, Long sessionId, boolean lock) {
         PracticeSession s = lock ? sessionMapper.selectForUpdate(sessionId) : sessionMapper.selectById(sessionId);
         if (s == null || !Objects.equals(s.getUserId(), userId)) {
@@ -490,6 +537,7 @@ public class PracticeService {
                 remaining == null ? null : Math.max(0, remaining),
                 exam && !inProgress ? s.getScore() : null,
                 exam && chapter != null ? chapter.getTotalScore() : null,
-                s.getStartedAt(), answers);
+                s.getStartedAt(), answers,
+                s.getTrial() != null && s.getTrial() == 1, bank == null ? null : bank.getModuleId());
     }
 }

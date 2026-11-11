@@ -43,6 +43,9 @@ export interface Session {
   totalScore?: number
   startedAt: string
   answers: Record<string, Ans>
+  /** 模块未激活的试做会话（只有章节前几题） */
+  trial?: boolean
+  moduleId?: number | null
 }
 
 export interface QuestionItem {

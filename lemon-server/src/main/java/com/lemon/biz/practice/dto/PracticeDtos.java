@@ -76,7 +76,9 @@ public final class PracticeDtos {
             int answeredCount, int correctCount, Integer timeLimit, Long remainingSeconds,
             BigDecimal score, Integer totalScore,
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startedAt,
-            Map<String, Ans> answers) {
+            Map<String, Ans> answers,
+            /** 模块未激活的试做会话（只有章节前几题），bank 的模块 id 用于引导激活 */
+            boolean trial, Long moduleId) {
     }
 
     /**

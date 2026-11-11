@@ -6,15 +6,18 @@ import type { Chapter } from '@/api/types'
 import { goPractice } from '@/utils/nav'
 import ProgressBar from '@/components/ProgressBar.vue'
 import ChapterSections from '@/components/ChapterSections.vue'
+import AccessBanner from '@/components/AccessBanner.vue'
 
 const chapters = ref<Chapter[]>([])
 const loaded = ref(false)
 let bankId = 0
+const moduleId = ref<number>()
 let courseId = 0
 
 onLoad((query) => {
   uni.setNavigationBarTitle({ title: decodeURIComponent(query?.name ?? '章节') })
   bankId = Number(query?.bankId)
+  moduleId.value = Number(query?.moduleId) || undefined
   courseId = Number(query?.courseId)
 })
 
@@ -32,6 +35,7 @@ const accuracy = computed(() => (total.value.done ? Math.round((total.value.corr
 
 <template>
   <view>
+    <AccessBanner :module-id="moduleId" />
     <view v-if="chapters.length" class="hero">
       <view class="hero-label">本科目 · {{ chapters.length }} 章</view>
       <view><text class="hero-num">{{ total.done }}</text><text class="hero-unit">/ {{ total.total }} 题</text></view>

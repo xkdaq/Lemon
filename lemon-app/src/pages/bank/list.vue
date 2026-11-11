@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getBanks, getCategories } from '@/api/content'
+import AccessBanner from '@/components/AccessBanner.vue'
 import { BankType, type BankCategory, type QuestionBank } from '@/api/types'
 
 const allBanks = ref<QuestionBank[]>([])
@@ -24,8 +25,10 @@ const banks = computed(() =>
 
 let storeKey = ''
 
+const moduleIdRef = ref<number>()
 onLoad(async (query) => {
   const moduleId = Number(query?.moduleId)
+  moduleIdRef.value = moduleId
   storeKey = `bank-category-${moduleId}`
   uni.setNavigationBarTitle({ title: decodeURIComponent(query?.name ?? '题库') })
   ;[allBanks.value, categories.value] = await Promise.all([getBanks(moduleId), getCategories(moduleId)])
@@ -48,6 +51,7 @@ function openBank(b: QuestionBank) {
 
 <template>
   <view>
+    <AccessBanner :module-id="moduleIdRef" />
     <scroll-view v-if="tabs.length" scroll-x class="tabs" :show-scrollbar="false">
       <view
         v-for="t in tabs"

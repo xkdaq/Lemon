@@ -28,6 +28,9 @@ public class PracticeSession extends BaseEntity {
     /** 按小节练习时的小节名（如 论述题、材料分析题），null 为整章 */
     private String section;
 
+    /** 1 = 模块未激活时的试做会话（只有章节前 N 题） */
+    private Integer trial;
+
     /** 0 进行中 1 已完成 2 已放弃（重新开始时） */
     private Integer status;
 

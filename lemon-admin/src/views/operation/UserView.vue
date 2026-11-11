@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as api from '@/api/operation'
+import UserAccessDrawer from './UserAccessDrawer.vue'
 
 const query = reactive({ pageNum: 1, pageSize: 20, keyword: '', status: undefined as number | undefined })
 const list = ref<api.AppUser[]>([])
@@ -27,6 +28,9 @@ function search() {
 onMounted(load)
 
 const fromLabel: Record<number, string> = { 1: 'Web', 2: '小程序' }
+
+/** 模块权限抽屉 */
+const accessUserId = ref<number | null>(null)
 
 /** 重置密码：拿到一次性临时密码后弹窗展示，管理员复制转告用户 */
 const resetResult = ref<{ user: api.AppUser; password: string } | null>(null)
@@ -90,8 +94,9 @@ async function toggle(u: api.AppUser) {
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150">
+      <el-table-column label="操作" width="210">
         <template #default="{ row }">
+          <el-button link type="primary" @click="accessUserId = (row as api.AppUser).id">模块权限</el-button>
           <el-button link type="primary" @click="resetPassword(row as api.AppUser)">重置密码</el-button>
           <el-button link :type="(row as api.AppUser).status === 1 ? 'danger' : 'primary'" @click="toggle(row as api.AppUser)">
             {{ (row as api.AppUser).status === 1 ? '禁用' : '启用' }}
@@ -99,6 +104,8 @@ async function toggle(u: api.AppUser) {
         </template>
       </el-table-column>
     </el-table>
+
+    <UserAccessDrawer :user-id="accessUserId" @close="accessUserId = null" />
 
     <el-dialog :model-value="!!resetResult" title="密码已重置" width="420px" @close="resetResult = null">
       <template v-if="resetResult">

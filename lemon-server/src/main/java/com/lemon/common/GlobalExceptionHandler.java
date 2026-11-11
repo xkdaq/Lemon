@@ -21,8 +21,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BizException.class)
-    public R<Void> handleBiz(BizException e) {
-        return R.fail(e.getCode(), e.getMessage());
+    public R<Object> handleBiz(BizException e) {
+        R<Object> r = R.fail(e.getCode(), e.getMessage());
+        r.setData(e.getData());
+        return r;
     }
 
     @ExceptionHandler(NotLoginException.class)

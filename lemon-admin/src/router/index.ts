@@ -66,6 +66,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '用户管理', icon: 'User', group: '运营', roles: SUPER },
   },
   {
+    path: 'operation/activation-codes',
+    name: 'activationCodes',
+    component: () => import('@/views/operation/ActivationCodeView.vue'),
+    meta: { title: '激活码', icon: 'Key', group: '运营', roles: SUPER },
+  },
+  {
     path: 'operation/sms-logs',
     name: 'smsLogs',
     component: () => import('@/views/operation/SmsLogView.vue'),

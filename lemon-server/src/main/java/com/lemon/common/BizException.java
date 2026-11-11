@@ -10,6 +10,9 @@ public class BizException extends RuntimeException {
 
     private final int code;
 
+    /** 附带给前端的数据（如需要激活的模块），一般为空 */
+    private final transient Object data;
+
     public BizException(String msg) {
         this(ErrorCode.BIZ_ERROR.getCode(), msg);
     }
@@ -19,8 +22,13 @@ public class BizException extends RuntimeException {
     }
 
     public BizException(int code, String msg) {
+        this(code, msg, null);
+    }
+
+    public BizException(int code, String msg, Object data) {
         super(msg);
         this.code = code;
+        this.data = data;
     }
 
     public static void throwIf(boolean condition, String msg) {

@@ -1,6 +1,7 @@
 package com.lemon.biz.collection;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.lemon.biz.access.service.AccessService;
 import com.lemon.biz.content.dto.QuestionReqs.OptionItem;
 import com.lemon.biz.content.entity.Chapter;
 import com.lemon.biz.content.entity.Course;
@@ -51,6 +52,7 @@ public class WrongExportService {
     private static final TypeReference<List<OptionItem>> OPTIONS_TYPE = new TypeReference<>() {
     };
 
+    private final AccessService accessService;
     private final UserWrongQuestionMapper wrongMapper;
     private final QuestionMapper questionMapper;
     private final QuestionBankMapper bankMapper;
@@ -66,6 +68,7 @@ public class WrongExportService {
      */
     public ExportFile export(Long userId, Long bankId, boolean answersAtEnd) {
         QuestionBank bank = BizException.notNull(bankMapper.selectById(bankId), "题库不存在");
+        accessService.requireAccess(userId, bank.getModuleId());
         List<UserWrongQuestion> wrongs = wrongMapper.selectList(
                 CollectionService.wrongScope(userId, new Scope(null, bankId, null, null)));
         BizException.throwIf(wrongs.isEmpty(), "这个题库里没有错题");

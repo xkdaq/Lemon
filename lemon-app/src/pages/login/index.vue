@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import * as authApi from '@/api/auth'
 import { setToken } from '@/utils/auth'
+import { clearAccessCache } from '@/utils/access'
 import { useCountdown } from '@/utils/useCountdown'
 
 /**
@@ -72,6 +73,7 @@ async function submit() {
           ? await authApi.register({ phone: form.phone, code: form.code, password: form.password, nickname: form.nickname.trim() || undefined })
           : await authApi.resetPassword({ phone: form.phone, code: form.code, password: form.password })
     setToken(res.token)
+    clearAccessCache()
     await afterLogin()
   } finally {
     loading.value = false
