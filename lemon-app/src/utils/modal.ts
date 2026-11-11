@@ -6,5 +6,6 @@ const CONFIRM_COLOR = '#b4432f'
 const CANCEL_COLOR = '#8a7f73'
 
 export function confirmModal(options: UniApp.ShowModalOptions) {
-  return uni.showModal({ confirmColor: CONFIRM_COLOR, cancelColor: CANCEL_COLOR, ...options })
+  // H5 的默认按钮文字是英文（Cancel / OK），统一给中文
+  return uni.showModal({ confirmText: '确定', cancelText: '取消', confirmColor: CONFIRM_COLOR, cancelColor: CANCEL_COLOR, ...options })
 }
