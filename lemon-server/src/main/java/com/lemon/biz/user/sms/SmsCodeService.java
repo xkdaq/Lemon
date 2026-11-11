@@ -1,5 +1,6 @@
 package com.lemon.biz.user.sms;
 
+import com.lemon.biz.user.mapper.SmsLogMapper;
 import com.lemon.common.BizException;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -27,8 +28,13 @@ public class SmsCodeService {
 
     private final StringRedisTemplate redis;
     private final SpugSmsSender sender;
+    private final SmsLogMapper logMapper;
 
-    public void send(String phone, String ip) {
+    /**
+     * @param scene SmsLog.SCENE_*，记录用
+     */
+    public void send(String phone, int scene, String ip) {
+        sender.checkAvailable();
         Boolean first = redis.opsForValue().setIfAbsent("sms:cool:" + phone, "1", COOLDOWN);
         BizException.throwIf(!Boolean.TRUE.equals(first), "验证码已发送，请 60 秒后再试");
         if (count("sms:day:" + phone, Duration.ofDays(1)) > PHONE_DAILY_LIMIT) {
@@ -38,11 +44,11 @@ public class SmsCodeService {
             throw new BizException("获取验证码过于频繁，请稍后再试");
         }
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
-        try {
-            sender.send(phone, code);
-        } catch (RuntimeException e) {
+        SpugSmsSender.Result r = sender.send(phone, code);
+        writeLog(phone, scene, ip, r);
+        if (r.status() == SmsLog.STATUS_FAIL) {
             redis.delete("sms:cool:" + phone); // 没发出去不占冷却时间
-            throw e;
+            throw new BizException("短信发送失败，请稍后再试");
         }
         redis.opsForValue().set("sms:code:" + phone, code, CODE_TTL);
         redis.delete("sms:try:" + phone);
@@ -63,6 +69,17 @@ public class SmsCodeService {
         }
         redis.delete(key);
         redis.delete("sms:try:" + phone);
+    }
+
+    private void writeLog(String phone, int scene, String ip, SpugSmsSender.Result r) {
+        SmsLog row = new SmsLog();
+        row.setPhone(phone);
+        row.setScene(scene);
+        row.setStatus(r.status());
+        row.setRequestId(r.requestId());
+        row.setError(r.error() == null ? null : r.error().substring(0, Math.min(255, r.error().length())));
+        row.setIp(ip);
+        logMapper.insert(row);
     }
 
     /** 计数 +1，首次计数时设置过期时间 */

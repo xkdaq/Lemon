@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.lemon.biz.user.entity.AppUser;
 import com.lemon.biz.user.mapper.AppUserMapper;
 import com.lemon.biz.user.sms.SmsCodeService;
+import com.lemon.biz.user.sms.SmsLog;
 import com.lemon.common.BizException;
 import com.lemon.common.Status;
 import com.lemon.security.StpAppUtil;
@@ -41,7 +42,7 @@ public class AppAuthService {
     }
 
     public void sendLoginCode(String phone, String ip) {
-        smsCodeService.send(phone, ip);
+        smsCodeService.send(phone, SmsLog.SCENE_LOGIN, ip);
     }
 
     /** 手机号 + 验证码登录，没注册过自动注册 */
@@ -83,7 +84,7 @@ public class AppAuthService {
 
     /** 给当前账号发验证码（设置 / 修改密码用），发到账号绑定的手机号 */
     public void sendSelfCode(String ip) {
-        smsCodeService.send(current().getPhone(), ip);
+        smsCodeService.send(current().getPhone(), SmsLog.SCENE_PASSWORD, ip);
     }
 
     /** 设置 / 修改密码：验证码验证本人手机号，同时也算完成了手机号验证 */

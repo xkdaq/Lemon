@@ -49,7 +49,7 @@ public class WebConfig implements WebMvcConfigurer {
             // 账号与角色、用户端用户、公告、系统参数、模块增删改：仅超级管理员
             SaRouter.match("/api/admin/admins/**", "/api/admin/roles/**",
                             "/api/admin/app-users/**", "/api/admin/notices/**", "/api/admin/configs/**",
-                            "/api/admin/banners/**")
+                            "/api/admin/banners/**", "/api/admin/sms-logs/**")
                     .check(r -> StpAdminUtil.LOGIC.checkRole(AdminRole.SUPER_ADMIN));
             SaRouter.match(SaHttpMethod.POST, SaHttpMethod.PUT, SaHttpMethod.DELETE)
                     .match("/api/admin/modules/**")

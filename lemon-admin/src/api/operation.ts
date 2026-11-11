@@ -26,6 +26,43 @@ export const pageAppUsers = (params: { pageNum: number; pageSize: number; keywor
   http.get<PageResult<AppUser>>('/app-users', params)
 export const updateAppUserStatus = (id: number, status: number) => http.put<void>(`/app-users/${id}/status`, { status })
 
+// ---- 短信记录 ----
+export interface SmsLog {
+  id: number
+  phone: string
+  /** 1 登录 2 设置密码 */
+  scene: number
+  /** 1 已提交 0 提交失败 2 未实际发送（开发环境） */
+  status: number
+  requestId: string | null
+  error: string | null
+  ip: string | null
+  createdAt: string
+}
+export interface SmsDayCount {
+  day: string
+  total: number
+  ok: number
+  fail: number
+}
+export interface SmsStats {
+  today: SmsDayCount
+  last7: SmsDayCount
+  last30: SmsDayCount
+  /** 最近 30 天每天，按日期升序 */
+  days: SmsDayCount[]
+}
+export const pageSmsLogs = (params: {
+  pageNum: number
+  pageSize: number
+  phone?: string
+  status?: number
+  scene?: number
+  startDate?: string
+  endDate?: string
+}) => http.get<PageResult<SmsLog>>('/sms-logs', params)
+export const getSmsStats = () => http.get<SmsStats>('/sms-logs/stats')
+
 // ---- 公告 ----
 export interface Notice {
   id: number

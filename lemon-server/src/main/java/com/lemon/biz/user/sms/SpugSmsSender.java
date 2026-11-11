@@ -35,11 +35,19 @@ public class SpugSmsSender {
         this.logCode = logCode;
     }
 
-    public void send(String phone, String code) {
+    /** 发送结果：status 见 SmsLog.STATUS_*；error 是给运营看的失败原因 */
+    public record Result(int status, String requestId, String error) {
+    }
+
+    /** 没配置短信服务时（生产环境）直接报错，不算一次发送 */
+    public void checkAvailable() {
+        BizException.throwIf(url.isEmpty() && !logCode, "短信服务暂未开通，请使用密码登录");
+    }
+
+    public Result send(String phone, String code) {
         if (url.isEmpty()) {
-            BizException.throwIf(!logCode, "短信服务暂未开通，请使用密码登录");
             log.info("[开发环境] 短信验证码 {} -> {}", phone, code);
-            return;
+            return new Result(SmsLog.STATUS_MOCK, null, null);
         }
         Map<String, String> body = new LinkedHashMap<>();
         body.put("to", phone);
@@ -53,14 +61,18 @@ public class SpugSmsSender {
                     .retrieve().body(Map.class);
         } catch (Exception e) {
             log.error("短信发送失败（请求异常）phone={}", mask(phone), e);
-            throw new BizException("短信发送失败，请稍后再试");
+            return new Result(SmsLog.STATUS_FAIL, null, "请求短信服务异常：" + e.getClass().getSimpleName());
         }
         Object rc = resp == null ? null : resp.get("code");
+        Object requestId = resp == null ? null : resp.get("request_id");
         if (rc == null || !"200".equals(String.valueOf(rc))) {
             log.error("短信发送失败 phone={} resp={}", mask(phone), resp);
-            throw new BizException("短信发送失败，请稍后再试");
+            Object msg = resp == null ? null : resp.get("msg");
+            return new Result(SmsLog.STATUS_FAIL, requestId == null ? null : String.valueOf(requestId),
+                    "code=" + rc + (msg == null ? "" : "，" + msg));
         }
-        log.info("短信已发送 phone={} requestId={}", mask(phone), resp.get("request_id"));
+        log.info("短信已发送 phone={} requestId={}", mask(phone), requestId);
+        return new Result(SmsLog.STATUS_OK, requestId == null ? null : String.valueOf(requestId), null);
     }
 
     private static String mask(String phone) {

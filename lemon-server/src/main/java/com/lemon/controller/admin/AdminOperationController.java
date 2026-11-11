@@ -14,6 +14,8 @@ import com.lemon.biz.operation.service.NoticeService;
 import com.lemon.biz.operation.service.NoticeService.NoticeSave;
 import com.lemon.biz.operation.service.SysConfigService;
 import com.lemon.biz.user.entity.AppUser;
+import com.lemon.biz.user.sms.SmsLog;
+import com.lemon.biz.user.sms.SmsLogAdminService;
 import com.lemon.biz.user.service.AppUserAdminService;
 import com.lemon.biz.user.service.AppUserAdminService.UserQuery;
 import com.lemon.common.PageQuery;
@@ -36,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 工作台、用户端用户、公告、Banner、系统参数、反馈。工作台和反馈两种角色都可用，其余仅超级管理员（WebConfig 路由鉴权）。
+ * 工作台、用户端用户、短信记录、公告、Banner、系统参数、反馈。工作台和反馈两种角色都可用，其余仅超级管理员（WebConfig 路由鉴权）。
  */
 @Tag(name = "管理端-运营")
 @RestController
@@ -50,6 +52,7 @@ public class AdminOperationController {
     private final SysConfigService configService;
     private final FeedbackService feedbackService;
     private final BannerService bannerService;
+    private final SmsLogAdminService smsLogService;
 
     @Operation(summary = "工作台统计")
     @GetMapping("/dashboard")
@@ -70,6 +73,20 @@ public class AdminOperationController {
     public R<Void> userStatus(@PathVariable Long id, @Valid @RequestBody StatusUpdate req) {
         userService.updateStatus(id, req.status());
         return R.ok();
+    }
+
+    // -------- 短信记录 --------
+
+    @Operation(summary = "短信发送记录")
+    @GetMapping("/sms-logs")
+    public R<PageResult<SmsLog>> smsLogs(@Valid SmsLogAdminService.LogQuery query) {
+        return R.ok(smsLogService.page(query));
+    }
+
+    @Operation(summary = "短信发送统计（今天 / 近 7 天 / 近 30 天及每天）")
+    @GetMapping("/sms-logs/stats")
+    public R<SmsLogAdminService.Stats> smsStats() {
+        return R.ok(smsLogService.stats());
     }
 
     // -------- 公告 --------

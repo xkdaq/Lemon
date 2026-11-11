@@ -66,6 +66,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '用户管理', icon: 'User', group: '运营', roles: SUPER },
   },
   {
+    path: 'operation/sms-logs',
+    name: 'smsLogs',
+    component: () => import('@/views/operation/SmsLogView.vue'),
+    meta: { title: '短信记录', icon: 'Message', group: '运营', roles: SUPER },
+  },
+  {
     path: 'operation/feedback',
     name: 'feedback',
     component: () => import('@/views/operation/FeedbackView.vue'),
