@@ -6,6 +6,8 @@ export interface ModuleAccess {
   /** 到期时间；没激活过为 null */
   expireAt: string | null
   active: boolean
+  /** 免费模块，不需要激活 */
+  free: boolean
 }
 
 export interface AccessInfo {

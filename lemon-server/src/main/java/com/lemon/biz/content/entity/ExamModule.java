@@ -27,6 +27,9 @@ public class ExamModule extends BaseEntity {
     /** 排序，越小越靠前 */
     private Integer sort;
 
+    /** 1 免费（不需要激活） 0 收费（激活码激活） */
+    private Integer free;
+
     /** 1 上架 0 下架 */
     private Integer status;
 

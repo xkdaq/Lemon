@@ -244,7 +244,7 @@ public class CollectionService {
         Map<Long, Long> moduleOf = ids.isEmpty() ? Map.of() : questionMapper.selectList(Wrappers.<Question>lambdaQuery()
                         .select(Question::getId, Question::getModuleId).in(Question::getId, ids).eq(Question::getStatus, Status.ON))
                 .stream().collect(Collectors.toMap(Question::getId, Question::getModuleId, (a, b) -> a));
-        Set<Long> activeModules = accessService.activeModules(userId).keySet();
+        Set<Long> activeModules = accessService.accessibleModules(userId);
         List<Long> ordered = new ArrayList<>(ids.stream()
                 .filter(id -> moduleOf.containsKey(id) && activeModules.contains(moduleOf.get(id))).toList());
         if (ordered.isEmpty() && !moduleOf.isEmpty()) {

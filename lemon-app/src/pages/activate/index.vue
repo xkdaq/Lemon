@@ -69,7 +69,8 @@ async function submit() {
     <view v-if="info" class="card list-card">
       <view v-for="m in info.modules" :key="m.moduleId" class="list-row" :class="{ focus: m.moduleId === focusModule && !m.active }">
         <view class="grow">{{ m.name }}</view>
-        <text v-if="m.active" class="state on">已激活 · 至 {{ day(m.expireAt) }}</text>
+        <text v-if="m.free" class="state on">免费</text>
+        <text v-else-if="m.active" class="state on">已激活 · 至 {{ day(m.expireAt) }}</text>
         <text v-else-if="m.expireAt" class="state">已过期（{{ day(m.expireAt) }}）</text>
         <text v-else class="state">未激活</text>
       </view>

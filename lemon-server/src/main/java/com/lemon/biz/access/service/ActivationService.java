@@ -109,7 +109,8 @@ public class ActivationService {
     @Transactional(rollbackFor = Exception.class)
     public List<String> generate(Long adminId, Long moduleId, int count, int validityType, Integer validDays,
                                  LocalDate expireDate, String batchName) {
-        BizException.notNull(moduleMapper.selectById(moduleId), "模块不存在");
+        ExamModule module = BizException.notNull(moduleMapper.selectById(moduleId), "模块不存在");
+        BizException.throwIf(module.getFree() != null && module.getFree() == 1, "「" + module.getName() + "」是免费模块，不需要激活码");
         BizException.throwIf(count < 1 || count > 1000, "一次最多生成 1000 个");
         LocalDateTime expireAt = null;
         if (validityType == ActivationCode.TYPE_DAYS) {
@@ -188,6 +189,36 @@ public class ActivationService {
         LocalDateTime before = access.getExpireAt();
         saveAccess(access, userId, moduleId, now);
         log(userId, moduleId, ModuleAccessLog.SOURCE_ADMIN_REVOKE, null, adminId, before, now, remark);
+    }
+
+    // ==================== 恢复老系统错题赠送 ====================
+
+    /** 恢复老系统错题的用户赠送的模块和到期时间（老系统的班级有效期到 2027-01-01） */
+    public static final List<String> LEGACY_MODULES = List.of("政治", "教育学");
+    public static final LocalDateTime LEGACY_UNTIL = LocalDateTime.of(2027, 1, 1, 23, 59, 59);
+
+    /**
+     * 恢复老系统错题后赠送「政治」「教育学」到 2027-01-01 当天结束；已有更晚的到期时间不变。
+     *
+     * @return 这次开通 / 延长了的模块名
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public List<String> grantLegacy(Long userId) {
+        List<String> granted = new ArrayList<>();
+        if (!LEGACY_UNTIL.isAfter(LocalDateTime.now())) {
+            return granted;
+        }
+        for (ExamModule m : moduleMapper.selectList(Wrappers.<ExamModule>lambdaQuery().in(ExamModule::getName, LEGACY_MODULES))) {
+            UserModuleAccess access = lockAccess(userId, m.getId());
+            LocalDateTime current = access == null ? null : access.getExpireAt();
+            if (current != null && !current.isBefore(LEGACY_UNTIL)) {
+                continue;
+            }
+            saveAccess(access, userId, m.getId(), LEGACY_UNTIL);
+            log(userId, m.getId(), ModuleAccessLog.SOURCE_LEGACY, null, null, current, LEGACY_UNTIL, "恢复老系统错题赠送");
+            granted.add(m.getName());
+        }
+        return granted;
     }
 
     // ==================== 工具 ====================

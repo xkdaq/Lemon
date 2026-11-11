@@ -21,7 +21,9 @@ public final class ContentReqs {
             @NotBlank @Size(max = 32) String name,
             @Size(max = 255) String icon,
             Integer sort,
-            @Min(0) @Max(1) Integer status) {
+            @Min(0) @Max(1) Integer status,
+            /** 1 免费 0 收费（激活码激活），不传为收费 */
+            @Min(0) @Max(1) Integer free) {
     }
 
     public record BankSave(

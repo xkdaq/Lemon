@@ -18,6 +18,8 @@ export interface ExamModule extends Base {
   icon?: string
   sort: number
   status: number
+  /** 1 免费（不需要激活） 0 收费（激活码激活） */
+  free: number
 }
 
 export interface BankCategory extends Base {

@@ -13,7 +13,9 @@ import com.lemon.biz.operation.service.SysConfigService;
 import com.lemon.common.BizException;
 import com.lemon.common.ErrorCode;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 /**
  * 模块权限判断：题库按模块收费，激活某个模块后，模块下所有题库都能刷。
  * 没激活的模块可以浏览目录，每个章节免费试做前 N 题（系统参数 app.trial_questions）。
+ * 设为免费的模块（module.free = 1）不需要激活。
  */
 @Service
 @RequiredArgsConstructor
@@ -52,7 +55,31 @@ public class AccessService {
                 .stream().collect(Collectors.toMap(UserModuleAccess::getModuleId, UserModuleAccess::getExpireAt));
     }
 
+    /** 免费模块的 id */
+    public Set<Long> freeModules() {
+        return moduleMapper.selectList(Wrappers.<ExamModule>lambdaQuery().select(ExamModule::getId).eq(ExamModule::getFree, 1))
+                .stream().map(ExamModule::getId).collect(Collectors.toSet());
+    }
+
+    /** 用户能用的模块：已激活且没到期的 + 免费的 */
+    public Set<Long> accessibleModules(Long userId) {
+        Set<Long> ids = new HashSet<>(freeModules());
+        if (userId != null) {
+            ids.addAll(activeModules(userId).keySet());
+        }
+        return ids;
+    }
+
+    public boolean isFree(Long moduleId) {
+        ExamModule m = moduleId == null ? null : moduleMapper.selectById(moduleId);
+        return m != null && m.getFree() != null && m.getFree() == 1;
+    }
+
+    /** 免费模块谁都能用；收费模块要激活且没到期 */
     public boolean hasAccess(Long userId, Long moduleId) {
+        if (isFree(moduleId)) {
+            return true;
+        }
         return userId != null && moduleId != null && accessMapper.exists(Wrappers.<UserModuleAccess>lambdaQuery()
                 .eq(UserModuleAccess::getUserId, userId)
                 .eq(UserModuleAccess::getModuleId, moduleId)

@@ -133,6 +133,7 @@ public class ContentAdminService {
         m.setIcon(req.icon());
         m.setSort(Objects.requireNonNullElse(req.sort(), 0));
         m.setStatus(Objects.requireNonNullElse(req.status(), Status.ON));
+        m.setFree(Objects.requireNonNullElse(req.free(), 0));
     }
 
     // ==================== 分类 ====================

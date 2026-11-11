@@ -75,7 +75,8 @@ public class AccessAdminService {
 
     /** 用户某个模块的权限 */
     public record ModuleAccessVO(Long moduleId, String moduleName,
-                                 @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime expireAt, boolean active) {
+                                 @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime expireAt, boolean active,
+                                 boolean free) {
     }
 
     public record LogVO(Long id, String moduleName, Integer source, String code, String adminName,
@@ -136,7 +137,8 @@ public class AccessAdminService {
                 .stream().map(m -> {
                     UserModuleAccess a = access.get(m.getId());
                     LocalDateTime exp = a == null ? null : a.getExpireAt();
-                    return new ModuleAccessVO(m.getId(), m.getName(), exp, exp != null && exp.isAfter(now));
+                    boolean free = m.getFree() != null && m.getFree() == 1;
+                    return new ModuleAccessVO(m.getId(), m.getName(), exp, free || (exp != null && exp.isAfter(now)), free);
                 }).toList();
 
         List<ModuleAccessLog> logs = logMapper.selectList(Wrappers.<ModuleAccessLog>lambdaQuery()

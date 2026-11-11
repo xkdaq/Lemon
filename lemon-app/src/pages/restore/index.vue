@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { claimLegacy, lookupLegacy, type LegacyPreview } from '@/api/legacy'
+import { clearAccessCache } from '@/utils/access'
 import { confirmModal } from '@/utils/modal'
 
 /**
@@ -9,7 +10,7 @@ import { confirmModal } from '@/utils/modal'
 const code = ref('')
 const preview = ref<LegacyPreview | null>(null)
 const busy = ref(false)
-const done = ref<{ restored: number } | null>(null)
+const done = ref<{ restored: number; grantedModules: string[]; grantedUntil: string | null } | null>(null)
 
 const unmatched = computed(() => (preview.value ? preview.value.wrongTotal - preview.value.restorable : 0))
 
@@ -34,13 +35,14 @@ async function claim() {
   if (!p || busy.value) return
   const { confirm } = await confirmModal({
     title: '恢复错题',
-    content: `将 ${p.restorable} 道错题恢复到当前账号的错题集。每个老账号只能恢复一次，确定吗？`,
-    confirmText: '恢复',
+    content: `${p.restorable ? `将 ${p.restorable} 道错题恢复到当前账号的错题集，` : ''}同时为当前账号开通「政治」「教育学」到 2027-01-01。每个老账号只能用一次，确定吗？`,
+    confirmText: '确定',
   })
   if (!confirm) return
   busy.value = true
   try {
     done.value = await claimLegacy(code.value)
+    clearAccessCache()
     preview.value = { ...p, state: 'mine' }
   } finally {
     busy.value = false
@@ -79,12 +81,17 @@ const goWrong = () => uni.redirectTo({ url: '/pages/wrong/index' })
       </view>
 
       <template v-if="done">
-        <view class="success">已恢复 {{ done.restored }} 道错题</view>
+        <view class="success">
+          <view v-if="done.restored">已恢复 {{ done.restored }} 道错题</view>
+          <view v-if="done.grantedModules.length">
+            已开通「{{ done.grantedModules.join('」「') }}」，有效期至 {{ done.grantedUntil?.slice(0, 10) }}
+          </view>
+        </view>
         <view class="btn btn-primary btn-block" @click="goWrong">去错题集</view>
       </template>
       <view v-else-if="preview.state === 'available'" class="btn btn-primary btn-block action"
-        :class="{ disabled: busy || !preview.restorable }" @click="preview.restorable && claim()">
-        {{ preview.restorable ? `恢复 ${preview.restorable} 道错题` : '没有可恢复的错题' }}
+        :class="{ disabled: busy }" @click="claim()">
+        {{ preview.restorable ? `恢复 ${preview.restorable} 道错题并开通模块` : '没有可恢复的错题，开通模块' }}
       </view>
       <template v-else-if="preview.state === 'mine'">
         <view class="muted note">这个账号的错题已经恢复到你的错题集了。</view>
@@ -96,6 +103,7 @@ const goWrong = () => uni.redirectTo({ url: '/pages/wrong/index' })
     <view class="muted tips">
       <view>· 激活码一般是 10 位字母和数字组成，适用于在微店和闲鱼购买的用户。</view>
       <view>· 订单号只能恢复安卓手机在小程序里支付的订单：打开微信支付账单，找到当时支付的订单详情，复制「商户单号」或「交易单号」。</view>
+      <view>· 老系统的用户恢复后，会同时开通「政治」「教育学」两个模块，有效期到 2027 年 1 月 1 日。</view>
       <view>· 一个老账号只能恢复到一个账号上，请登录你常用的账号再恢复。</view>
     </view>
   </view>

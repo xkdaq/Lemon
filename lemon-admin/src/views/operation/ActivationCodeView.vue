@@ -101,7 +101,7 @@ const generating = ref(false)
 const generated = ref<{ codes: string[]; moduleName: string; validity: string; batchName: string } | null>(null)
 
 function openGenerate() {
-  genForm.moduleId = query.moduleId ?? modules.value[0]?.id
+  genForm.moduleId = query.moduleId ?? modules.value.find((m) => m.free !== 1)?.id
   genVisible.value = true
 }
 
@@ -225,7 +225,7 @@ const queryBatch = (q: string, cb: (items: { value: string }[]) => void) =>
       <el-form ref="genFormRef" :model="genForm" :rules="genRules" label-width="90px">
         <el-form-item label="模块" prop="moduleId">
           <el-select v-model="genForm.moduleId" placeholder="选择模块" style="width: 100%">
-            <el-option v-for="m in modules" :key="m.id" :label="m.name" :value="m.id" />
+            <el-option v-for="m in modules" :key="m.id" :label="m.free === 1 ? `${m.name}（免费，不需要激活码）` : m.name" :value="m.id" :disabled="m.free === 1" />
           </el-select>
         </el-form-item>
         <el-form-item label="数量" prop="count">

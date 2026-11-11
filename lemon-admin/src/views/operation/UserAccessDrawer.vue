@@ -29,7 +29,7 @@ watch(
   { immediate: true },
 )
 
-const SOURCE: Record<number, string> = { 1: '激活码', 2: '后台开通 / 延长', 3: '后台取消' }
+const SOURCE: Record<number, string> = { 1: '激活码', 2: '后台开通 / 延长', 3: '后台取消', 4: '恢复老系统错题赠送' }
 
 // ---------- 开通 / 延长 ----------
 const grantTarget = ref<api.ModuleAccess | null>(null)
@@ -92,7 +92,8 @@ async function revoke(m: api.ModuleAccess) {
           <el-table-column prop="moduleName" label="模块" />
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
-              <el-tag v-if="(row as api.ModuleAccess).active" type="success" size="small">已激活</el-tag>
+              <el-tag v-if="(row as api.ModuleAccess).free" type="success" size="small">免费</el-tag>
+              <el-tag v-else-if="(row as api.ModuleAccess).active" type="success" size="small">已激活</el-tag>
               <el-tag v-else-if="(row as api.ModuleAccess).expireAt" type="info" size="small">已过期</el-tag>
               <el-tag v-else type="info" size="small">未激活</el-tag>
             </template>
@@ -100,10 +101,11 @@ async function revoke(m: api.ModuleAccess) {
           <el-table-column prop="expireAt" label="到期时间" width="170" />
           <el-table-column label="操作" width="150">
             <template #default="{ row }">
-              <el-button link type="primary" @click="openGrant(row as api.ModuleAccess)">
+              <span v-if="(row as api.ModuleAccess).free" class="sub">不需要激活</span>
+              <el-button v-else link type="primary" @click="openGrant(row as api.ModuleAccess)">
                 {{ (row as api.ModuleAccess).active ? '延长' : '开通' }}
               </el-button>
-              <el-button v-if="(row as api.ModuleAccess).active" link type="danger" @click="revoke(row as api.ModuleAccess)">取消</el-button>
+              <el-button v-if="(row as api.ModuleAccess).active && !(row as api.ModuleAccess).free" link type="danger" @click="revoke(row as api.ModuleAccess)">取消</el-button>
             </template>
           </el-table-column>
         </el-table>

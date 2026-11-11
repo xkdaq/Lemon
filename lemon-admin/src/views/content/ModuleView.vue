@@ -26,11 +26,11 @@ onMounted(load)
 const dialogVisible = ref(false)
 const editingId = ref<number | null>(null)
 const formRef = ref<FormInstance>()
-const form = reactive<api.ModuleSave>({ name: '', icon: '', sort: 0, status: 1 })
+const form = reactive<api.ModuleSave>({ name: '', icon: '', sort: 0, status: 1, free: 0 })
 
 function openDialog(row?: ExamModule) {
   editingId.value = row?.id ?? null
-  Object.assign(form, row ? { name: row.name, icon: row.icon, sort: row.sort, status: row.status } : { name: '', icon: '', sort: 0, status: 1 })
+  Object.assign(form, row ? { name: row.name, icon: row.icon, sort: row.sort, status: row.status, free: row.free ?? 0 } : { name: '', icon: '', sort: 0, status: 1, free: 0 })
   dialogVisible.value = true
 }
 
@@ -71,6 +71,11 @@ async function remove(row: ExamModule) {
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '上架' : '下架' }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="收费" width="110">
+        <template #default="{ row }">
+          <el-tag :type="row.free === 1 ? 'success' : 'warning'">{{ row.free === 1 ? '免费' : '激活码激活' }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
           <el-button link type="primary" @click="categoryDrawer?.open(row as ExamModule)">分类</el-button>
@@ -96,6 +101,13 @@ async function remove(row: ExamModule) {
         <el-form-item label="状态">
           <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上架" inactive-text="下架" />
         </el-form-item>
+        <el-form-item label="收费">
+          <el-radio-group v-model="form.free">
+            <el-radio :value="0">收费（激活码激活）</el-radio>
+            <el-radio :value="1">免费</el-radio>
+          </el-radio-group>
+          <div class="form-hint">免费模块所有用户都能直接刷；收费模块没激活时每章只能试做几题。</div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -106,3 +118,11 @@ async function remove(row: ExamModule) {
     <CategoryDrawer ref="categoryDrawer" />
   </div>
 </template>
+
+<style scoped>
+.form-hint {
+  width: 100%;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+</style>

@@ -34,8 +34,10 @@ public class AppAccessController {
     private final ActivationService activationService;
     private final ExamModuleMapper moduleMapper;
 
+    /** free：免费模块，不需要激活（active 恒为 true，expireAt 为空） */
     public record ModuleAccess(Long moduleId, String name,
-                               @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime expireAt, boolean active) {
+                               @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime expireAt, boolean active,
+                               boolean free) {
     }
 
     /** trialQuestions：未激活模块每章可试做的题数；没登录时 modules 全部未激活 */
@@ -52,7 +54,11 @@ public class AppAccessController {
         Map<Long, LocalDateTime> active = userId == null ? Map.of() : accessService.activeModules(userId);
         List<ModuleAccess> modules = moduleMapper.selectList(Wrappers.<ExamModule>lambdaQuery()
                         .eq(ExamModule::getStatus, Status.ON).orderByAsc(ExamModule::getSort).orderByAsc(ExamModule::getId))
-                .stream().map(m -> new ModuleAccess(m.getId(), m.getName(), active.get(m.getId()), active.containsKey(m.getId())))
+                .stream().map(m -> {
+                    boolean free = m.getFree() != null && m.getFree() == 1;
+                    return new ModuleAccess(m.getId(), m.getName(), free ? null : active.get(m.getId()),
+                            free || active.containsKey(m.getId()), free);
+                })
                 .toList();
         return R.ok(new AccessResp(accessService.trialQuestions(), modules));
     }

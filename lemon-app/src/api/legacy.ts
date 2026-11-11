@@ -13,4 +13,6 @@ export interface LegacyPreview {
 
 /** 激活码 / 订单号放在请求体里 */
 export const lookupLegacy = (code: string) => http.post<LegacyPreview>('/legacy/lookup', { code })
-export const claimLegacy = (code: string) => http.post<{ restored: number; wrongTotal: number }>('/legacy/claim', { code })
+/** grantedModules：同时赠送开通的模块（政治、教育学），grantedUntil：到期时间 */
+export const claimLegacy = (code: string) =>
+  http.post<{ restored: number; wrongTotal: number; grantedModules: string[]; grantedUntil: string | null }>('/legacy/claim', { code })

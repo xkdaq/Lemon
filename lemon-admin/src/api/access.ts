@@ -56,11 +56,13 @@ export interface ModuleAccess {
   moduleName: string
   expireAt: string | null
   active: boolean
+  /** 免费模块，不需要激活 */
+  free: boolean
 }
 export interface AccessLog {
   id: number
   moduleName: string | null
-  /** 1 激活码 2 后台开通 / 延长 3 后台取消 */
+  /** 1 激活码 2 后台开通 / 延长 3 后台取消 4 恢复老系统错题赠送 */
   source: number
   code: string | null
   adminName: string | null
