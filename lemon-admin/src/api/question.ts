@@ -21,7 +21,7 @@ export interface QuestionSave {
   options?: Partial<QuestionOption>[]
   /** 客观题答案，如 A / ABD；判断题可填 对/错 */
   answer?: string
-  /** 解析；主观题即参考答案（必填） */
+  /** 解析；主观题即参考答案，不填为背诵题（题干即背诵内容） */
   analysis?: string
   score?: number
   difficulty?: number

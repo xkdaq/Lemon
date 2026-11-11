@@ -69,6 +69,9 @@ async function logout() {
     </view>
 
     <view class="card list-card">
+      <view class="list-row" @click="go('/pages/restore/index')">
+        <text class="menu-text">恢复老系统错题</text><text class="row-arrow">›</text>
+      </view>
       <view class="list-row" @click="go('/pages/feedback/index')">
         <text class="menu-text">意见反馈</text><text class="row-arrow">›</text>
       </view>

@@ -35,7 +35,7 @@ public final class QuestionReqs {
             @Size(max = 10) List<@Valid OptionItem> options,
             /** 客观题答案，如 A / ABD / “A,B,D”；判断题还可填 对/错/√/× */
             @Size(max = 500) String answer,
-            /** 解析；主观题即参考答案（必填） */
+            /** 解析；主观题即参考答案，不填为背诵题（题干即背诵内容） */
             @Size(max = 20000) String analysis,
             @DecimalMin("0") @DecimalMax("999.9") BigDecimal score,
             @Min(1) @Max(3) Integer difficulty,

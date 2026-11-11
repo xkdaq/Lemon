@@ -1,0 +1,7 @@
+# 备案期间用 IP + 端口访问（配合 .env 里 NGINX_MODE=ip、HTTP_PORT=8090）：
+#   cp docker-compose.ip.yml docker-compose.override.yml
+# 用户端走 HTTP_PORT，管理后台走 ADMIN_HTTP_PORT（默认 8091）。备案通过、改回 NGINX_MODE=https 后删除 docker-compose.override.yml
+services:
+  web:
+    ports:
+      - "${ADMIN_HTTP_PORT:-8091}:81"

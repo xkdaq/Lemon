@@ -128,7 +128,6 @@ function validate(): string | null {
     if (form.type === QuestionType.MULTIPLE && !form.multiple.length) return '请至少选择一个正确答案'
   }
   if (form.type === QuestionType.JUDGE && form.single < 0) return '请选择正确答案'
-  if (isSubjective.value && !htmlToText(form.analysis) && !form.analysis.includes('<img')) return '主观题请填写参考答案'
   return null
 }
 
@@ -246,10 +245,10 @@ defineExpose({ open })
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item :label="isSubjective ? '参考答案' : '解析'" :required="isSubjective">
+      <el-form-item :label="isSubjective ? '参考答案' : '解析'">
         <RichEditor
           v-model="form.analysis"
-          :placeholder="isSubjective ? '主观题的参考答案 / 得分要点' : '选填：答案解析'"
+          :placeholder="isSubjective ? '参考答案 / 得分要点；不填则作为背诵题（题干即背诵内容）' : '选填：答案解析'"
           :min-height="80"
         />
       </el-form-item>

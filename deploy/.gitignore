@@ -3,3 +3,4 @@ certs/*
 !certs/.gitkeep
 certbot-www/
 backups/
+docker-compose.override.yml

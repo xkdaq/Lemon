@@ -119,9 +119,11 @@ class QuestionNormalizerTest {
     }
 
     @Test
-    void subjective_requiresAnalysis() {
-        assertThatThrownBy(() -> QuestionNormalizer.normalize(SUBJECTIVE, null, null, " "))
-                .isInstanceOf(BizException.class).hasMessageContaining("参考答案");
+    void subjective_withoutAnalysis_isRecitationCard() {
+        // 背诵题：题干就是要背的内容，没有参考答案
+        var r = QuestionNormalizer.normalize(SUBJECTIVE, null, null, " ");
+        assertThat(r.options()).isEmpty();
+        assertThat(r.answer()).isNull();
     }
 
     @Test

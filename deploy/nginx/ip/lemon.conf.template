@@ -1,0 +1,42 @@
+# 备案期间用 IP + 端口访问（仅限安全组放行的 IP）：容器 80 = 用户端，81 = 管理后台；不按域名区分
+limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
+limit_req_status 429;
+
+server {
+    listen 80 default_server;
+    server_name _;
+    include /etc/nginx/snippets/common.conf;
+    root /usr/share/nginx/www;
+    location /api/app/auth/ {
+        limit_req zone=auth burst=10 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/app/ {
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/ {
+        return 404;
+    }
+    include /etc/nginx/snippets/uploads.conf;
+    include /etc/nginx/snippets/spa.conf;
+}
+
+server {
+    listen 81 default_server;
+    server_name _;
+    include /etc/nginx/snippets/common.conf;
+    add_header X-Frame-Options DENY always;
+    root /usr/share/nginx/admin;
+    location /api/admin/auth/login {
+        limit_req zone=auth burst=10 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/admin/ {
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /api/ {
+        return 404;
+    }
+    include /etc/nginx/snippets/uploads.conf;
+    include /etc/nginx/snippets/spa.conf;
+}

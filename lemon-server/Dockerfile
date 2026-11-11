@@ -1,5 +1,6 @@
 # ---------- 构建 ----------
-FROM eclipse-temurin:17-jdk AS build
+# 构建阶段用构建机自己的平台（jar 与 CPU 架构无关），在 Mac(arm64) 上给 x86 服务器构建时不必走 QEMU 模拟
+FROM --platform=$BUILDPLATFORM eclipse-temurin:17-jdk AS build
 WORKDIR /src
 # 先只复制依赖描述，利用镜像层缓存：pom 不变时不重复下载依赖
 COPY mvnw pom.xml ./

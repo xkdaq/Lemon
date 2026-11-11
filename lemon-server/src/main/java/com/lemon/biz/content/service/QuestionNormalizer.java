@@ -17,7 +17,7 @@ import java.util.TreeSet;
  *   <li>单选：2~8 个选项，答案恰好 1 个且在选项内</li>
  *   <li>多选：2~8 个选项，答案至少 1 个，规范成去重升序，如 "ABD"</li>
  *   <li>判断：选项可不填，默认 A 正确 / B 错误；答案可填 A/B、对/错、正确/错误、√/×、T/F</li>
- *   <li>主观：不能有选项，答案置空，解析（参考答案）必填</li>
+ *   <li>主观：不能有选项，答案置空；解析即参考答案，可以不填（背诵题：题干本身就是要背的内容）</li>
  * </ul>
  */
 public final class QuestionNormalizer {
@@ -47,7 +47,7 @@ public final class QuestionNormalizer {
             case SINGLE -> choice(rawOptions, rawAnswer, false);
             case MULTIPLE -> choice(rawOptions, rawAnswer, true);
             case JUDGE -> judge(rawOptions, rawAnswer);
-            case SUBJECTIVE -> subjective(rawOptions, analysis);
+            case SUBJECTIVE -> subjective(rawOptions);
         };
     }
 
@@ -74,9 +74,8 @@ public final class QuestionNormalizer {
         return new Result(options, answer);
     }
 
-    private static Result subjective(List<OptionItem> rawOptions, String analysis) {
+    private static Result subjective(List<OptionItem> rawOptions) {
         BizException.throwIf(rawOptions != null && !rawOptions.isEmpty(), "主观题不能有选项");
-        BizException.throwIf(analysis == null || analysis.isBlank(), "主观题请在解析中填写参考答案");
         return new Result(List.of(), null);
     }
 

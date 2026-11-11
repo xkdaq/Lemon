@@ -27,6 +27,12 @@ onShow(async () => {
   bank.value = res.bank
   courses.value = res.courses
   papers.value = res.chapters
+  // 科目型题库只有一个科目（如“章节1000题”）：直接进章节列表，省一次点击
+  if (res.bank.type === BankType.COURSE && res.courses.length === 1) {
+    const c = res.courses[0]
+    uni.redirectTo({ url: `/pages/chapter/list?bankId=${c.bankId}&courseId=${c.id}&name=${encodeURIComponent(res.bank.name)}` })
+    return
+  }
   uni.setNavigationBarTitle({ title: res.bank.name })
 })
 

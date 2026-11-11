@@ -38,9 +38,13 @@ const ids = computed(() => session.value?.questionIds ?? [])
 const currentId = computed(() => ids.value[index.value])
 const current = computed<QuestionItem | undefined>(() => questions[currentId.value])
 const myAnswer = computed(() => session.value?.answers[String(currentId.value)])
+/** 背诵题：主观题没有参考答案，题干本身就是要背的内容（考试未交卷时拿不到解析，不按背诵题处理） */
+const isCard = computed(() => current.value?.type === QType.SUBJECTIVE && !current.value.analysis
+  && !(mode.value === Mode.EXAM && !readonly.value))
 /** 是否显示答案和解析 */
-const revealed = computed(() => !!current.value?.answer || (current.value?.type === QType.SUBJECTIVE && !!current.value?.analysis
-  && (mode.value === Mode.RECITE || readonly.value || !!myAnswer.value || showReference.value)))
+const revealed = computed(() => !!current.value?.answer || isCard.value
+  || (current.value?.type === QType.SUBJECTIVE && !!current.value?.analysis
+    && (mode.value === Mode.RECITE || readonly.value || !!myAnswer.value || showReference.value)))
 const isLast = computed(() => index.value >= ids.value.length - 1)
 
 // ==================== 加载 ====================
@@ -382,7 +386,7 @@ function onTouchEnd(e: TouchEvent) {
         <view v-if="current.type === QType.SUBJECTIVE" class="subjective">
           <view v-if="mode === Mode.EXAM && !readonly" class="tip">主观题不计分，请在纸上作答，交卷后可查看参考答案。</view>
           <button
-            v-else-if="isPracticeLike(mode) && !readonly && !myAnswer && !showReference"
+            v-else-if="isPracticeLike(mode) && !readonly && !myAnswer && !showReference && !isCard"
             class="primary-btn ghost"
             @click="showReference = true"
           >查看参考答案</button>
@@ -397,13 +401,16 @@ function onTouchEnd(e: TouchEvent) {
               <text :class="myAnswer.c === 1 ? 'right' : myAnswer.c === 0 ? 'wrong' : ''">{{ answerText(current, myAnswer.a) }}</text>
             </template>
           </view>
-          <view class="analysis-title">{{ current.type === QType.SUBJECTIVE ? '参考答案' : '解析' }}</view>
-          <rich-text v-if="current.analysis" :nodes="renderHtml(current.analysis)" />
-          <text v-else class="muted">暂无解析</text>
+          <text v-if="isCard" class="muted">背诵题：熟读上面的内容，背下来后自评</text>
+          <template v-else>
+            <view class="analysis-title">{{ current.type === QType.SUBJECTIVE ? '参考答案' : '解析' }}</view>
+            <rich-text v-if="current.analysis" :nodes="renderHtml(current.analysis)" />
+            <text v-else class="muted">暂无解析</text>
+          </template>
 
           <!-- 主观题自评 -->
           <view v-if="current.type === QType.SUBJECTIVE && isPracticeLike(mode) && !readonly && !myAnswer" class="self-assess">
-            <text class="muted">对照参考答案，你掌握了吗？</text>
+            <text class="muted">{{ isCard ? '背下来了吗？' : '对照参考答案，你掌握了吗？' }}</text>
             <view class="self-btns">
               <button class="assess-btn wrong" :disabled="submitting" @click="submitPractice('0')">没掌握</button>
               <button class="assess-btn right" :disabled="submitting" @click="submitPractice('1')">掌握了</button>
