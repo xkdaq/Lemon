@@ -58,25 +58,24 @@ function sections(bank: Group): { course: Group | null; chapters: Group[] }[] {
   return [{ course: null, chapters: kids }]
 }
 
-let exporting = false
-/** 导出 Word：先选答案解析放哪里 */
-function exportWord(bank: Group) {
-  if (exporting) return
-  uni.showActionSheet({
-    itemList: ['答案解析跟在每题后面', '答案解析集中放在文末（适合打印重做）'],
-    success: async ({ tapIndex }) => {
-      exporting = true
-      uni.showLoading({ title: '正在生成…', mask: true })
-      try {
-        await downloadFile(wrongExportUrl(bank.id, tapIndex === 1 ? 'end' : 'inline'), `${bank.name}-错题.docx`)
-      } catch (e) {
-        uni.showToast({ title: (e as Error).message || '导出失败', icon: 'none' })
-      } finally {
-        uni.hideLoading()
-        exporting = false
-      }
-    },
-  })
+/** 导出 Word：底部面板选择答案解析放在哪里 */
+const exportBank = ref<Group | null>(null)
+const exporting = ref(false)
+
+async function doExport(answers: 'inline' | 'end') {
+  const bank = exportBank.value
+  if (!bank || exporting.value) return
+  exporting.value = true
+  uni.showLoading({ title: '正在生成…', mask: true })
+  try {
+    await downloadFile(wrongExportUrl(bank.id, answers), `${bank.name}-错题.docx`)
+    exportBank.value = null
+  } catch (e) {
+    uni.showToast({ title: (e as Error).message || '导出失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+    exporting.value = false
+  }
 }
 </script>
 
@@ -124,7 +123,7 @@ function exportWord(bank: Group) {
       <view v-for="bank in activeModule.children" :key="bank.id" class="card bank">
         <view class="bank-head">
           <text class="bank-name" @click="openList({ bankId: bank.id }, bank.name)">{{ bank.name }}</text>
-          <text v-if="kind === 'wrong'" class="export-btn" @click="exportWord(bank)">导出 Word</text>
+          <text v-if="kind === 'wrong'" class="export-btn" @click="exportBank = bank">导出 Word</text>
           <text class="muted" @click="openList({ bankId: bank.id }, bank.name)">{{ bank.count }} 题 ›</text>
         </view>
         <template v-for="sec in sections(bank)" :key="sec.course?.id ?? 0">
@@ -144,6 +143,22 @@ function exportWord(bank: Group) {
         </template>
       </view>
     </template>
+    <!-- 导出 Word 选项 -->
+    <view v-if="exportBank" class="sheet-mask" @click="exportBank = null">
+      <view class="sheet" @click.stop>
+        <view class="sheet-title">导出 Word</view>
+        <view class="muted sheet-sub">{{ exportBank.name }} · {{ exportBank.count }} 道错题</view>
+        <view class="sheet-option" @click="doExport('inline')">
+          <view class="option-title">答案跟在题后</view>
+          <view class="muted">每道题下面直接是答案和解析，适合复习浏览</view>
+        </view>
+        <view class="sheet-option" @click="doExport('end')">
+          <view class="option-title">答案放在文末</view>
+          <view class="muted">题目在前、答案集中在最后，适合打印出来重做</view>
+        </view>
+        <view class="sheet-cancel" @click="exportBank = null">取消</view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -279,5 +294,53 @@ function exportWord(bank: Group) {
   border-radius: 999rpx;
   background: $lemon-primary-light;
   color: $lemon-primary;
+}
+.sheet-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet {
+  width: 100%;
+  max-width: 750px;
+  box-sizing: border-box;
+  background: $lemon-bg;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 36rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+}
+.sheet-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  text-align: center;
+}
+.sheet-sub {
+  text-align: center;
+  margin: 8rpx 0 28rpx;
+}
+.sheet-option {
+  background: $lemon-surface;
+  border: 1px solid $lemon-line;
+  border-radius: $lemon-radius;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+}
+.sheet-option:active {
+  border-color: $lemon-primary;
+}
+.option-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+.sheet-cancel {
+  margin-top: 8rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  color: $lemon-muted;
+  font-size: 30rpx;
 }
 </style>
