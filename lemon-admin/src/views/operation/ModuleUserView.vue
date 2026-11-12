@@ -4,7 +4,7 @@ import * as api from '@/api/access'
 import UserAccessDrawer from './UserAccessDrawer.vue'
 
 /**
- * 模块用户：每个模块开通了哪些用户、怎么开通的（激活码 / 后台开通 / 老系统赠送）、激活时间、到期时间。
+ * 模块用户：每个模块开通了哪些用户、怎么开通的（激活码 / 后台开通 / 老系统赠送 / 注册赠送）、激活时间、到期时间。
  * 点「详情」打开用户的模块权限，可以看全部变更记录、延长或取消。
  */
 const stats = ref<api.ModuleStat[]>([])
@@ -28,7 +28,7 @@ const STATUS = [
   { value: 2, label: '7 天内到期' },
   { value: 3, label: '已过期' },
 ]
-const SOURCE: Record<number, string> = { 1: '激活码', 2: '后台开通', 4: '老系统赠送' }
+const SOURCE: Record<number, string> = { 1: '激活码', 2: '后台开通', 4: '老系统赠送', 5: '注册赠送' }
 
 const moduleId = computed(() => (tab.value === 'all' ? undefined : Number(tab.value)))
 const current = computed(() => {

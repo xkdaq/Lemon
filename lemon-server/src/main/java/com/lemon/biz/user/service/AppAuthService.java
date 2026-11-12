@@ -1,6 +1,7 @@
 package com.lemon.biz.user.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.lemon.biz.access.service.ActivationService;
 import com.lemon.biz.user.entity.AppUser;
 import com.lemon.biz.user.mapper.AppUserMapper;
 import com.lemon.biz.user.sms.SmsCodeService;
@@ -42,6 +43,7 @@ public class AppAuthService {
     private final AppUserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final SmsCodeService smsCodeService;
+    private final ActivationService activationService;
 
     /** 发验证码。register：注册（手机号不能已注册）；reset：找回密码（手机号必须已注册） */
     public void sendCode(String phone, String purpose, String ip) {
@@ -55,7 +57,7 @@ public class AppAuthService {
         }
     }
 
-    /** 注册：手机号 + 验证码 + 密码，注册后自动登录 */
+    /** 注册：手机号 + 验证码 + 密码，注册后自动登录；赠送「政治」「教育学」（系统参数 app.register_gift_days，默认 365 天） */
     @Transactional(rollbackFor = Exception.class)
     public String register(String phone, String code, String password, String nickname) {
         BizException.throwIf(findByPhone(phone) != null, "该手机号已注册，请直接登录");
@@ -69,6 +71,7 @@ public class AppAuthService {
         user.setStatus(Status.ON);
         user.setLastLoginAt(LocalDateTime.now());
         insertWithUsername(user);
+        activationService.grantRegister(user.getId());
         StpAppUtil.login(user.getId());
         return StpAppUtil.token();
     }

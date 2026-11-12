@@ -29,7 +29,7 @@ watch(
   { immediate: true },
 )
 
-const SOURCE: Record<number, string> = { 1: '激活码', 2: '后台开通 / 延长', 3: '后台取消', 4: '恢复老系统错题赠送' }
+const SOURCE: Record<number, string> = { 1: '激活码', 2: '后台开通 / 延长', 3: '后台取消', 4: '恢复老系统错题赠送', 5: '新用户注册赠送' }
 
 // ---------- 开通 / 延长 ----------
 const grantTarget = ref<api.ModuleAccess | null>(null)

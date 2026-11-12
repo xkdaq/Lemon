@@ -62,7 +62,7 @@ export interface ModuleAccess {
 export interface AccessLog {
   id: number
   moduleName: string | null
-  /** 1 激活码 2 后台开通 / 延长 3 后台取消 4 恢复老系统错题赠送 */
+  /** 1 激活码 2 后台开通 / 延长 3 后台取消 4 恢复老系统错题赠送 5 新用户注册赠送 */
   source: number
   code: string | null
   adminName: string | null
@@ -92,7 +92,7 @@ export interface ModuleUser {
   nickname: string | null
   moduleId: number
   moduleName: string | null
-  /** 最近一次开通方式：1 激活码 2 后台开通 / 延长 4 恢复老系统错题赠送 */
+  /** 最近一次开通方式：1 激活码 2 后台开通 / 延长 4 恢复老系统错题赠送 5 新用户注册赠送 */
   source: number | null
   code: string | null
   adminName: string | null

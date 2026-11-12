@@ -28,6 +28,7 @@ public class SysConfigService {
     private static final Map<String, Rule> RULES = Map.of(
             WRONG_REMOVE_STREAK, new Rule(v -> v.matches("^([1-9]|10)$"), "请输入 1~10 的整数"),
             "app.trial_questions", new Rule(v -> v.matches("^([0-9]|[1-9][0-9]|100)$"), "请输入 0~100 的整数"),
+            "app.register_gift_days", new Rule(v -> v.matches("^\\d{1,4}$") && Integer.parseInt(v) <= 3650, "请输入 0~3650 的整数"),
             APP_THEME, new Rule(v -> v.matches("^(paper|indigo|teal|amber|rose|violet|coffee|graphite)$|^#[0-9a-fA-F]{6}$"),
                     "请选择预设主题，或填写 #RRGGBB 格式的主色"));
 

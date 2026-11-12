@@ -19,12 +19,13 @@ public class ModuleAccessLog extends BaseEntity {
     public static final int SOURCE_ADMIN_GRANT = 2;
     public static final int SOURCE_ADMIN_REVOKE = 3;
     public static final int SOURCE_LEGACY = 4;
+    public static final int SOURCE_REGISTER = 5;
 
     private Long userId;
 
     private Long moduleId;
 
-    /** 1 激活码 2 后台开通 / 延长 3 后台取消 4 恢复老系统错题赠送 */
+    /** 1 激活码 2 后台开通 / 延长 3 后台取消 4 恢复老系统错题赠送 5 新用户注册赠送 */
     private Integer source;
 
     private Long codeId;

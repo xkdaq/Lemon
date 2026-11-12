@@ -56,7 +56,7 @@ public class ModuleUserAdminService {
         private Long moduleId;
         /** 1 有效 2 7 天内到期 3 已过期 */
         private Integer status;
-        /** 最近一次开通方式：1 激活码 2 后台开通 4 老系统赠送 */
+        /** 最近一次开通方式：1 激活码 2 后台开通 4 老系统赠送 5 注册赠送 */
         private Integer source;
         /** 最近一次激活时间范围 */
         private LocalDate activatedFrom;
@@ -215,6 +215,7 @@ public class ModuleUserAdminService {
             case 1 -> "激活码";
             case 2 -> "后台开通";
             case 4 -> "老系统赠送";
+            case 5 -> "注册赠送";
             default -> "";
         };
     }

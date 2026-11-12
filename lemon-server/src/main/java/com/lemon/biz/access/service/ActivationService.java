@@ -10,6 +10,7 @@ import com.lemon.biz.access.mapper.ModuleAccessLogMapper;
 import com.lemon.biz.access.mapper.UserModuleAccessMapper;
 import com.lemon.biz.content.entity.ExamModule;
 import com.lemon.biz.content.mapper.ExamModuleMapper;
+import com.lemon.biz.operation.service.SysConfigService;
 import com.lemon.common.BizException;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -50,6 +51,7 @@ public class ActivationService {
     private final ModuleAccessLogMapper logMapper;
     private final ExamModuleMapper moduleMapper;
     private final StringRedisTemplate redis;
+    private final SysConfigService configService;
 
     /** 激活结果 */
     public record Activated(Long moduleId, String moduleName,
@@ -219,6 +221,31 @@ public class ActivationService {
             granted.add(m.getName());
         }
         return granted;
+    }
+
+    // ==================== 新用户注册赠送 ====================
+
+    /** 新用户注册赠送天数（系统参数，0 = 不赠送）；赠送的模块和老系统赠送相同（政治、教育学） */
+    public static final String REGISTER_GIFT_DAYS = "app.register_gift_days";
+    private static final int DEFAULT_REGISTER_GIFT_DAYS = 365;
+
+    /** 新用户注册后赠送「政治」「教育学」N 天；已有更晚的到期时间不变 */
+    @Transactional(rollbackFor = Exception.class)
+    public void grantRegister(Long userId) {
+        int days = configService.getInt(REGISTER_GIFT_DAYS, DEFAULT_REGISTER_GIFT_DAYS);
+        if (days <= 0) {
+            return;
+        }
+        LocalDateTime until = LocalDateTime.now().withNano(0).plusDays(days);
+        for (ExamModule m : moduleMapper.selectList(Wrappers.<ExamModule>lambdaQuery().in(ExamModule::getName, LEGACY_MODULES))) {
+            UserModuleAccess access = lockAccess(userId, m.getId());
+            LocalDateTime current = access == null ? null : access.getExpireAt();
+            if (current != null && !current.isBefore(until)) {
+                continue;
+            }
+            saveAccess(access, userId, m.getId(), until);
+            log(userId, m.getId(), ModuleAccessLog.SOURCE_REGISTER, null, null, current, until, "新用户注册赠送");
+        }
     }
 
     // ==================== 工具 ====================
