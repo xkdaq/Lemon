@@ -10,7 +10,8 @@ import { isLoggedIn } from '@/utils/auth'
 import { getAutoNext, getFontScale } from '@/utils/settings'
 import { ApiError, NEED_ACTIVATION } from '@/utils/request'
 import { goActivate } from '@/utils/access'
-import { NOTE_SAVED, type NoteSavedEvent } from '@/api/note'
+import { NOTE_SAVED, type Note, type NoteSavedEvent } from '@/api/note'
+import NoteSheet from '@/components/NoteSheet.vue'
 import { assetUrl } from '@/utils/html'
 
 /**
@@ -182,8 +183,18 @@ async function goTo(i: number) {
 
 // ==================== 笔记 ====================
 
+/** 正在编辑笔记的题目（底部弹框） */
+const noteQid = ref<number | null>(null)
 function openNote() {
-  if (current.value) uni.navigateTo({ url: `/pages/note/edit?questionId=${current.value.id}` })
+  if (current.value) noteQid.value = current.value.id
+}
+function onNoteSheetSaved(note: Note | null) {
+  const id = noteQid.value
+  noteQid.value = null
+  if (id == null) return
+  if (questions[id]) questions[id].note = note
+  // 通知「我的笔记」列表刷新
+  uni.$emit(NOTE_SAVED, { questionId: id, note } as NoteSavedEvent)
 }
 
 function onNoteSaved(e: NoteSavedEvent) {
@@ -595,6 +606,7 @@ function onTouchEnd(e: TouchEvent) {
         </button>
       </view>
     </view>
+    <NoteSheet :question-id="noteQid" :note="noteQid != null ? questions[noteQid]?.note : null" @close="noteQid = null" @saved="onNoteSheetSaved" />
   </view>
 </template>
 

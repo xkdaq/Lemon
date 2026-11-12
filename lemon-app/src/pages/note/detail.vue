@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
-import { NOTE_SAVED, getNote, type NoteDetail, type NoteSavedEvent } from '@/api/note'
+import { NOTE_SAVED, getNote, type Note, type NoteDetail, type NoteSavedEvent } from '@/api/note'
+import NoteSheet from '@/components/NoteSheet.vue'
 import { QType, qTypeLabel } from '@/api/practice'
 import { assetUrl, renderHtml } from '@/utils/html'
 
@@ -34,8 +35,14 @@ const optionKey = (type: number, key: string) => (type === QType.JUDGE ? (key ==
 const answerText = (x: NoteDetail) =>
   x.type === QType.JUDGE ? (x.answer === 'A' ? '正确' : '错误') : (x.answer ?? '')
 
+const editing = ref<number | null>(null)
 function edit() {
-  uni.navigateTo({ url: `/pages/note/edit?questionId=${questionId}` })
+  editing.value = questionId
+}
+function onSheetSaved(note: Note | null) {
+  editing.value = null
+  // 通知列表刷新；删掉了就回到列表
+  uni.$emit(NOTE_SAVED, { questionId, note } as NoteSavedEvent)
 }
 
 function preview(i: number) {
@@ -80,6 +87,7 @@ function preview(i: number) {
         <view class="muted note-time">{{ d.note.updatedAt }}</view>
       </template>
     </view>
+    <NoteSheet :question-id="editing" :note="d.note" @close="editing = null" @saved="onSheetSaved" />
   </view>
 </template>
 
