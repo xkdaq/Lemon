@@ -29,6 +29,8 @@ public class LegacyRestoreService {
 
     private static final int MAX_FAILS = 10;
     private static final Duration FAIL_WINDOW = Duration.ofHours(1);
+    /** 暂时放开「失败 10 次锁 1 小时」的拦截；恢复时改回 true */
+    private static final boolean FAIL_LIMIT_ENABLED = false;
 
     private final LegacyMapper mapper;
     private final ActivationService activationService;
@@ -75,7 +77,7 @@ public class LegacyRestoreService {
     private LegacyUser find(Long userId, String rawCode) {
         String failKey = "legacy:fail:" + userId;
         String fails = redis.opsForValue().get(failKey);
-        BizException.throwIf(fails != null && Integer.parseInt(fails) >= MAX_FAILS, "尝试次数过多，请 1 小时后再试");
+        BizException.throwIf(FAIL_LIMIT_ENABLED && fails != null && Integer.parseInt(fails) >= MAX_FAILS, "尝试次数过多，请 1 小时后再试");
         String code = normalize(rawCode);
         BizException.throwIf(code.length() < 6, "请输入完整的激活码或订单号");
         LegacyUser u = mapper.findByKey(code);
