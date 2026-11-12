@@ -77,9 +77,6 @@ const openService = () => uni.navigateTo({ url: '/pages/service/index' })
       <view class="list-row" @click="openSettings">
         <text class="menu-text">设置</text><text class="row-arrow">›</text>
       </view>
-      <view class="list-row" @click="go('/pages/feedback/index')">
-        <text class="menu-text">意见反馈</text><text class="row-arrow">›</text>
-      </view>
       <view class="list-row" @click="openService">
         <text class="menu-text">联系客服</text><text class="row-arrow">›</text>
       </view>
