@@ -459,20 +459,24 @@ public class PracticeService {
                         Collectors.mapping(PracticeSession::getSection, Collectors.toSet())));
     }
 
-    /** 这些试卷最近一次考试成绩：章节 id → 分数 */
-    public Map<Long, BigDecimal> lastExamScores(Long userId, List<Long> chapterIds) {
+    /** 试卷最近一次考试：会话 id（可回看成绩和解析）和得分 */
+    public record LastExam(Long sessionId, BigDecimal score) {
+    }
+
+    /** 这些试卷最近一次交卷的考试：章节 id → 会话和分数 */
+    public Map<Long, LastExam> lastExams(Long userId, List<Long> chapterIds) {
         if (chapterIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, BigDecimal> result = new LinkedHashMap<>();
+        Map<Long, LastExam> result = new LinkedHashMap<>();
         sessionMapper.selectList(Wrappers.<PracticeSession>lambdaQuery()
-                        .select(PracticeSession::getChapterId, PracticeSession::getScore)
+                        .select(PracticeSession::getId, PracticeSession::getChapterId, PracticeSession::getScore)
                         .eq(PracticeSession::getUserId, userId)
                         .eq(PracticeSession::getMode, PracticeMode.EXAM.getCode())
                         .eq(PracticeSession::getStatus, FINISHED)
                         .in(PracticeSession::getChapterId, chapterIds)
                         .orderByDesc(PracticeSession::getFinishedAt))
-                .forEach(s -> result.putIfAbsent(s.getChapterId(), s.getScore()));
+                .forEach(s -> result.putIfAbsent(s.getChapterId(), new LastExam(s.getId(), s.getScore())));
         return result;
     }
 

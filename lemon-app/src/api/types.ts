@@ -52,6 +52,8 @@ export interface Chapter {
   inProgressModes: number[]
   /** 试卷最近一次考试得分 */
   lastScore?: number | null
+  /** 最近一次交卷的考试会话，可回看成绩和解析 */
+  lastExamId?: number | null
   /** 章节下的“节”：按小节分组（如 单选题 / 论述题 / 材料分析题） */
   sections: ChapterSection[]
 }

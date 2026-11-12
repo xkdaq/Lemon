@@ -130,10 +130,11 @@ public class AppContentController {
      * @param correctCount    最近一次作答正确的题数
      * @param inProgressModes 未完成的会话模式（1 练习 2 背题 3 考试），用于显示“继续”
      * @param lastScore       试卷最近一次考试得分
+     * @param lastExamId      试卷最近一次交卷的考试会话（可回看成绩和解析）
      */
     public record ChapterItem(Long id, Long bankId, Long courseId, String name, int questionCount,
                               Integer timeLimit, Number totalScore, int doneCount, int correctCount,
-                              Set<Integer> inProgressModes, BigDecimal lastScore, List<Section> sections) {
+                              Set<Integer> inProgressModes, BigDecimal lastScore, Long lastExamId, List<Section> sections) {
     }
 
     /**
@@ -159,7 +160,7 @@ public class AppContentController {
                 .collect(Collectors.toMap(s -> s.getChapterId() + "-" + s.getSectionName(), Function.identity()));
         Map<Long, Set<Integer>> inProgress = userId == null ? Map.of() : practiceService.inProgress(userId, ids);
         Map<Long, Set<String>> sectionsInProgress = userId == null ? Map.of() : practiceService.sectionsInProgress(userId, ids);
-        Map<Long, BigDecimal> scores = userId == null ? Map.of() : practiceService.lastExamScores(userId, ids);
+        Map<Long, PracticeService.LastExam> exams = userId == null ? Map.of() : practiceService.lastExams(userId, ids);
         // 试卷满分：选择题分值之和（模拟考试只考选择题）
         Map<Long, BigDecimal> fullScores = scoreService.objectiveTotals(ids);
         return chapters.stream().map(c -> {
@@ -175,7 +176,9 @@ public class AppContentController {
                     c.getTimeLimit(), c.getTimeLimit() == null ? null : ScoreService.display(fullScores.get(c.getId())),
                     sections.stream().mapToInt(Section::doneCount).sum(),
                     sections.stream().mapToInt(Section::correctCount).sum(),
-                    inProgress.getOrDefault(c.getId(), Set.of()), scores.get(c.getId()), sections);
+                    inProgress.getOrDefault(c.getId(), Set.of()),
+                    exams.get(c.getId()) == null ? null : exams.get(c.getId()).score(),
+                    exams.get(c.getId()) == null ? null : exams.get(c.getId()).sessionId(), sections);
         }).toList();
     }
 }

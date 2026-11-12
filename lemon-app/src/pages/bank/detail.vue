@@ -37,6 +37,11 @@ onShow(async () => {
   uni.setNavigationBarTitle({ title: res.bank.name })
 })
 
+/** 回看最近一次考试：成绩页，可继续「查看解析」看每题的作答 */
+function openLastExam(p: Chapter) {
+  if (p.lastExamId) uni.navigateTo({ url: `/pages/practice/result?sessionId=${p.lastExamId}` })
+}
+
 /** 整个题库的总进度（试卷型） */
 const sum = (k: 'questionCount' | 'doneCount' | 'correctCount') => papers.value.reduce((n, p) => n + p[k], 0)
 const total = computed(() => ({ total: sum('questionCount'), done: sum('doneCount'), correct: sum('correctCount') }))
@@ -75,7 +80,7 @@ function openCourse(c: Course) {
       <view v-for="p in papers" :key="p.id" class="card">
         <view class="paper-head">
           <view class="name">{{ p.name }}</view>
-          <text v-if="p.lastScore != null" class="tag">上次 {{ p.lastScore }} 分</text>
+          <text v-if="p.lastScore != null" class="tag last-exam" @click="openLastExam(p)">上次 {{ p.lastScore }} 分 · 查看 ›</text>
         </view>
         <view class="muted">
           {{ p.questionCount }} 题<text v-if="p.timeLimit"> · {{ p.timeLimit }} 分钟</text><text v-if="p.totalScore"> · 满分 {{ p.totalScore }}</text>
@@ -98,6 +103,11 @@ function openCourse(c: Course) {
 </template>
 
 <style lang="scss" scoped>
+/* 可点：回看最近一次考试 */
+.last-exam {
+  padding: 6rpx 18rpx;
+  font-size: 24rpx;
+}
 .name {
   font-size: 32rpx;
   font-weight: 600;
