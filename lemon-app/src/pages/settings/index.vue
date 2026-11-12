@@ -5,7 +5,7 @@ import { openDocument, type DocKey } from '@/api/site'
 import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
 
 /**
- * 设置：外观（主题，仅 H5）、做题（字号、答对自动下一题）、数据（清除做题记录）、关于（意见反馈、用户协议、隐私政策）。
+ * 设置：外观（主题，仅 H5）、做题（字号、答对自动下一题）、数据（清除做题记录）、关于（意见反馈、联系客服、用户协议、隐私政策）。
  * 账号相关（昵称、密码）在「我的 → 个人信息」。
  */
 const THEMES: { value: ThemeMode; label: string }[] = [
@@ -35,6 +35,11 @@ function toggleAutoNext() {
 
 function openDoc(key: DocKey) {
   openDocument(key)
+}
+
+/** 联系客服不需要登录 */
+function openService() {
+  uni.navigateTo({ url: '/pages/service/index' })
 }
 
 function openFeedback() {
@@ -90,6 +95,10 @@ function openRecords() {
     <view class="card list-card">
       <view class="list-row" @click="openFeedback">
         <view class="grow label">意见反馈</view>
+        <text class="row-arrow">›</text>
+      </view>
+      <view class="list-row" @click="openService">
+        <view class="grow label">联系客服</view>
         <text class="row-arrow">›</text>
       </view>
       <view class="list-row" @click="openDoc('agreement')">

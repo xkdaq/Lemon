@@ -25,8 +25,6 @@ const openProfile = () => uni.navigateTo({ url: '/pages/profile/index' })
 /** 设置不需要登录（主题、字号是本机设置） */
 const openSettings = () => uni.navigateTo({ url: '/pages/settings/index' })
 const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
-/** 联系客服不需要登录 */
-const openService = () => uni.navigateTo({ url: '/pages/service/index' })
 </script>
 
 <template>
@@ -76,9 +74,6 @@ const openService = () => uni.navigateTo({ url: '/pages/service/index' })
       </view>
       <view class="list-row" @click="openSettings">
         <text class="menu-text">设置</text><text class="row-arrow">›</text>
-      </view>
-      <view class="list-row" @click="openService">
-        <text class="menu-text">联系客服</text><text class="row-arrow">›</text>
       </view>
     </view>
 
