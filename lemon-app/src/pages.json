@@ -35,6 +35,8 @@
     "selectedColor": "@tabSelectedColor",
     "backgroundColor": "@tabBgColor",
     "borderStyle": "@tabBorderStyle",
+    "fontSize": "16px",
+    "height": "56px",
     "list": [
       { "pagePath": "pages/index/index", "text": "首页" },
       { "pagePath": "pages/mine/index", "text": "我的" }
