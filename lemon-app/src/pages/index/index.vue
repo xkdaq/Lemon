@@ -214,7 +214,17 @@ function openModule(m: ExamModule) {
 .notice {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 14rpx;
+  /* 细横幅：比普通卡片矮 */
+  padding: 14rpx 24rpx;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  box-shadow: none;
+}
+.notice .tag {
+  font-size: 20rpx;
+  padding: 0 12rpx;
 }
 .notice-box {
   flex: 1;
