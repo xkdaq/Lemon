@@ -33,6 +33,12 @@ public class FileService {
     private int maxSizeMb;
 
     public String uploadImage(MultipartFile file) {
+        return uploadImage(file, "images");
+    }
+
+    /** @param dir 存放目录（images：后台上传；notes：用户笔记图片） */
+    public String uploadImage(MultipartFile file, String dir) {
+        BizException.throwIf(!dir.matches("^[a-z]+$"), "非法目录");
         BizException.throwIf(file == null || file.isEmpty(), "请选择文件");
         BizException.throwIf(file.getSize() > maxSizeMb * 1024L * 1024L, "图片不能超过 " + maxSizeMb + "MB");
         byte[] bytes;
@@ -45,7 +51,7 @@ public class FileService {
         BizException.throwIf(ext == null, "只支持 PNG / JPG / GIF / WEBP 图片");
 
         LocalDate today = LocalDate.now();
-        String path = String.format(Locale.ROOT, "images/%d/%02d/%s.%s",
+        String path = String.format(Locale.ROOT, "%s/%d/%02d/%s.%s", dir,
                 today.getYear(), today.getMonthValue(), UUID.randomUUID().toString().replace("-", ""), ext);
         return storage.save(path, new ByteArrayInputStream(bytes), bytes.length);
     }

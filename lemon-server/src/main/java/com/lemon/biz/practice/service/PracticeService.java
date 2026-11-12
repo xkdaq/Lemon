@@ -11,6 +11,7 @@ import com.lemon.biz.content.mapper.ChapterMapper;
 import com.lemon.biz.content.mapper.QuestionBankMapper;
 import com.lemon.biz.content.mapper.QuestionMapper;
 import com.lemon.biz.favorite.service.FavoriteService;
+import com.lemon.biz.note.service.NoteService;
 import com.lemon.biz.practice.dto.PracticeDtos.Ans;
 import com.lemon.biz.practice.dto.PracticeDtos.AnswerReq;
 import com.lemon.biz.practice.dto.PracticeDtos.AnswerResult;
@@ -80,6 +81,7 @@ public class PracticeService {
     private final QuestionBankMapper bankMapper;
     private final AnswerRecorder recorder;
     private final FavoriteService favoriteService;
+    private final NoteService noteService;
     private final ApplicationEventPublisher events;
     private final AccessService accessService;
 
@@ -233,12 +235,13 @@ public class PracticeService {
         Map<Long, Question> questions = questionMapper.selectByIds(ids).stream()
                 .collect(Collectors.toMap(Question::getId, Function.identity()));
         Set<Long> favorited = favoriteService.favoritedIn(userId, ids);
+        Map<Long, NoteService.NoteVO> notes = noteService.notesIn(userId, ids);
 
         List<QuestionItem> items = new ArrayList<>();
         for (Long id : ids) {
             Question q = questions.get(id);
             if (q == null) {
-                items.add(new QuestionItem(id, null, null, null, null, null, null, false, true));
+                items.add(new QuestionItem(id, null, null, null, null, null, null, false, true, null));
                 continue;
             }
             // 练习模式：作答后公布；主观题没有可“泄露”的标准答案，先看参考答案再自评，所以直接给
@@ -248,7 +251,7 @@ public class PracticeService {
             List<OptionItem> options = JsonUtil.parse(q.getOptions(), OPTIONS_TYPE);
             items.add(new QuestionItem(q.getId(), q.getType(), q.getStem(), options == null ? List.of() : options,
                     q.getScore(), reveal ? q.getAnswer() : null, reveal ? q.getAnalysis() : null,
-                    favorited.contains(id), null));
+                    favorited.contains(id), null, notes.get(id)));
         }
         return items;
     }

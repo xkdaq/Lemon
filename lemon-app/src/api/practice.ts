@@ -1,3 +1,4 @@
+import type { Note } from './note'
 import { http } from '@/utils/request'
 
 /** 1 练习 2 背题 3 考试 4 错题重练 5 收藏练习 6 每日打卡 */
@@ -58,6 +59,8 @@ export interface QuestionItem {
   analysis?: string
   favorited: boolean
   deleted?: boolean
+  /** 自己的笔记 */
+  note?: Note | null
 }
 
 export interface AnswerResult {

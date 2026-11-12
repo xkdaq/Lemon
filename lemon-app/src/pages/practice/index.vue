@@ -10,6 +10,8 @@ import { isLoggedIn } from '@/utils/auth'
 import { getAutoNext, getFontScale } from '@/utils/settings'
 import { ApiError, NEED_ACTIVATION } from '@/utils/request'
 import { goActivate } from '@/utils/access'
+import { NOTE_SAVED, type NoteSavedEvent } from '@/api/note'
+import { assetUrl } from '@/utils/html'
 
 /**
  * 做题页。三种模式共用：
@@ -60,6 +62,7 @@ let loading = false
 
 onLoad((query) => {
   pageQuery = (query ?? {}) as Query
+  uni.$on(NOTE_SAVED, onNoteSaved)
   init()
 })
 
@@ -141,6 +144,7 @@ async function restart() {
 }
 
 onUnload(() => {
+  uni.$off(NOTE_SAVED, onNoteSaved)
   clearInterval(timer)
   clearTimeout(progressTimer)
 })
@@ -174,6 +178,22 @@ async function goTo(i: number) {
     clearTimeout(progressTimer)
     progressTimer = setTimeout(() => session.value && api.saveProgress(session.value.id, i), 800)
   }
+}
+
+// ==================== 笔记 ====================
+
+function openNote() {
+  if (current.value) uni.navigateTo({ url: `/pages/note/edit?questionId=${current.value.id}` })
+}
+
+function onNoteSaved(e: NoteSavedEvent) {
+  const q = questions[e.questionId]
+  if (q) q.note = e.note
+}
+
+function previewNote(i: number) {
+  const n = current.value?.note
+  if (n) uni.previewImage({ urls: n.images.map(assetUrl), current: i })
 }
 
 // ==================== 练习 / 背题切换 ====================
@@ -487,6 +507,19 @@ function onTouchEnd(e: TouchEvent) {
         </view>
       </view>
       <view v-else class="card muted loading">加载中…</view>
+      <!-- 笔记（只有自己看得到）：看到答案解析后才显示，考试中不显示 -->
+      <view v-if="current && !current.deleted && revealed" class="card note-card" @click="openNote">
+        <view class="note-head">
+          <text class="note-title">笔记</text>
+          <text class="note-action">{{ current.note ? '编辑' : '写笔记' }} ›</text>
+        </view>
+        <template v-if="current.note">
+          <view v-if="current.note.content" class="note-text">{{ current.note.content }}</view>
+          <view v-if="current.note.images.length" class="note-imgs">
+            <image v-for="(u, i) in current.note.images" :key="u" class="note-img" :src="assetUrl(u)" mode="aspectFill" @click.stop="previewNote(i)" />
+          </view>
+        </template>
+      </view>
     </view>
 
     <!-- 底部操作 -->
@@ -702,6 +735,40 @@ function onTouchEnd(e: TouchEvent) {
 }
 .gap {
   margin-left: 32rpx;
+}
+.note-card {
+  margin-top: 0;
+}
+.note-head {
+  display: flex;
+  align-items: center;
+}
+.note-title {
+  font-weight: 600;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+.note-action {
+  margin-left: auto;
+  color: $lemon-primary;
+  font-size: 26rpx;
+}
+.note-text {
+  margin-top: 12rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.note-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+.note-img {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 10rpx;
 }
 .analysis-title {
   font-weight: 600;

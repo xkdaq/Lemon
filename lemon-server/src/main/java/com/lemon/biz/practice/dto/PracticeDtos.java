@@ -89,7 +89,9 @@ public final class PracticeDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record QuestionItem(
             Long id, Integer type, String stem, List<OptionItem> options, BigDecimal score,
-            String answer, String analysis, boolean favorited, Boolean deleted) {
+            String answer, String analysis, boolean favorited, Boolean deleted,
+            /** 自己的笔记，没有为 null */
+            com.lemon.biz.note.service.NoteService.NoteVO note) {
     }
 
     /** 练习模式提交一题的结果 */

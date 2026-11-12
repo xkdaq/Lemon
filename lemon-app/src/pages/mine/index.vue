@@ -66,6 +66,9 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
       <view class="list-row" @click="go('/pages/activate/index')">
         <text class="menu-text">我的模块</text><text class="row-arrow">›</text>
       </view>
+      <view class="list-row" @click="go('/pages/note/list')">
+        <text class="menu-text">我的笔记</text><text class="row-arrow">›</text>
+      </view>
       <view class="list-row" @click="go('/pages/restore/index')">
         <text class="menu-text">恢复老系统错题</text><text class="row-arrow">›</text>
       </view>

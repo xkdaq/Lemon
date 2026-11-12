@@ -52,7 +52,7 @@ export function request<T>(method: Method, url: string, data?: object): Promise<
           const moduleId = (body.data as { moduleId?: number } | null)?.moduleId
           uni.showModal({
             title: '需要激活',
-            content: `${body.msg}。可以在「我的 → 激活码」里输入激活码。`,
+            content: `${body.msg}。可以在「我的 → 我的模块」里输入激活码。`,
             confirmText: '去激活',
             success: (r) => {
               if (!r.confirm) return
