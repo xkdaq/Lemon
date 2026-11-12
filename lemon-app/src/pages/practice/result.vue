@@ -87,13 +87,13 @@ function back() {
 <style lang="scss" scoped>
 .hero {
   text-align: center;
-  padding: 48rpx 28rpx;
+  padding: 40rpx 28rpx;
 }
 .big {
   margin-top: 20rpx;
 }
 .num {
-  font-size: 96rpx;
+  font-size: 80rpx;
   font-weight: 700;
   color: $lemon-primary;
   font-variant-numeric: tabular-nums;
@@ -113,7 +113,7 @@ function back() {
   text-align: center;
 }
 .v {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 600;
   margin-bottom: 6rpx;
   font-variant-numeric: tabular-nums;

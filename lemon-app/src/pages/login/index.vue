@@ -177,10 +177,10 @@ function goBack() {
 
 <style lang="scss" scoped>
 .login {
-  padding: 80rpx 56rpx;
+  padding: 64rpx 40rpx;
 }
 .title {
-  font-size: 48rpx;
+  font-size: 44rpx;
   font-weight: 700;
 }
 .sub {

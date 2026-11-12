@@ -196,7 +196,7 @@ function openModule(m: ExamModule) {
 
 <style lang="scss" scoped>
 .brand {
-  font-size: 64rpx;
+  font-size: 52rpx;
   font-weight: 700;
   line-height: 1.3;
   color: $lemon-primary;
@@ -272,7 +272,7 @@ function openModule(m: ExamModule) {
   flex: 1;
 }
 .module-name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 .punch-label {

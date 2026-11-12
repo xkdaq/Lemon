@@ -80,7 +80,7 @@ async function doClear(includeWrong: boolean) {
   padding-bottom: 48rpx;
 }
 .intro {
-  padding: 24rpx 40rpx 0;
+  padding: 24rpx 32rpx 0;
   line-height: 1.6;
 }
 .grow {
@@ -115,7 +115,7 @@ async function doClear(includeWrong: boolean) {
   padding: 36rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
 }
 .sheet-title {
-  font-size: 34rpx;
+  font-size: 30rpx;
   font-weight: 700;
   text-align: center;
 }

@@ -41,7 +41,7 @@ function copy() {
 }
 .wechat {
   flex: 1;
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 600;
   letter-spacing: 1rpx;
 }

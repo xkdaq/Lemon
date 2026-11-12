@@ -67,7 +67,7 @@ async function save() {
 
 <style lang="scss" scoped>
 .page {
-  padding: 40rpx 40rpx;
+  padding: 32rpx;
 }
 .desc {
   margin-bottom: 32rpx;

@@ -109,7 +109,7 @@ function openBank(b: QuestionBank) {
   min-width: 0;
 }
 .bank-name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 </style>

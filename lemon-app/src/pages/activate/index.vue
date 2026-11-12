@@ -126,12 +126,12 @@ async function submit() {
   background: var(--accent-soft);
 }
 .code-link {
-  padding: 32rpx 40rpx;
+  padding: 32rpx;
   font-size: 26rpx;
   color: $lemon-primary;
 }
 .foot {
-  padding: 8rpx 40rpx;
+  padding: 8rpx 32rpx;
   font-size: 24rpx;
 }
 </style>

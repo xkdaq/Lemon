@@ -96,11 +96,11 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 44rpx;
+  font-size: 40rpx;
   flex-shrink: 0;
 }
 .nickname {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 600;
   margin-bottom: 8rpx;
 }
@@ -117,7 +117,7 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
   align-items: center;
 }
 .streak-num {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: $lemon-primary;
   line-height: 1.1;
@@ -130,7 +130,7 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
   text-align: center;
 }
 .num {
-  font-size: 38rpx;
+  font-size: 36rpx;
   font-weight: 700;
   margin-bottom: 8rpx;
   font-variant-numeric: tabular-nums;
@@ -153,7 +153,7 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
   font-weight: 600;
 }
 .collection-count {
-  font-size: 64rpx;
+  font-size: 52rpx;
   font-weight: 700;
   line-height: 1.2;
   margin: 12rpx 0 4rpx;

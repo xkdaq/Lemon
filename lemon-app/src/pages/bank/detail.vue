@@ -111,7 +111,7 @@ function openCourse(c: Course) {
   font-size: 24rpx;
 }
 .name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 .paper-head {

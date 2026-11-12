@@ -119,7 +119,7 @@ async function logout() {
 }
 .head-name {
   margin-top: 20rpx;
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 600;
 }
 .grow {

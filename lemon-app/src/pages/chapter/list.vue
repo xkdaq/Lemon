@@ -64,7 +64,7 @@ const accuracy = computed(() => (total.value.done ? Math.round((total.value.corr
 
 <style lang="scss" scoped>
 .name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 .progress {

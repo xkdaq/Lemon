@@ -114,7 +114,7 @@ const goWrong = () => uni.redirectTo({ url: '/pages/wrong/index' })
   padding-bottom: 48rpx;
 }
 .title {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 700;
   margin-bottom: 12rpx;
 }
@@ -164,7 +164,7 @@ const goWrong = () => uni.redirectTo({ url: '/pages/wrong/index' })
   line-height: 1.6;
 }
 .tips {
-  padding: 8rpx 40rpx;
+  padding: 8rpx 32rpx;
   line-height: 1.8;
 }
 </style>

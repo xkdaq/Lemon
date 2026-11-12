@@ -4,6 +4,16 @@ import { applyTheme, watchSystemTheme } from '@/utils/settings'
 import { syncAppTheme } from '@/utils/theme'
 
 onLaunch(() => {
+  // #ifdef H5
+  // 微信内置浏览器自带标题栏：隐藏页面自己的标题栏（见样式 html.in-wechat），并固定字号不随微信字体设置放大
+  if (/MicroMessenger/i.test(navigator.userAgent)) {
+    document.documentElement.classList.add('in-wechat')
+    const lock = () => (window as unknown as { WeixinJSBridge?: { invoke: (...a: unknown[]) => void } })
+      .WeixinJSBridge?.invoke('setFontSizeCallback', { fontSize: 0 })
+    lock()
+    document.addEventListener('WeixinJSBridgeReady', lock, false)
+  }
+  // #endif
   // 先用本地缓存的配色，再拉取后台最新设定
   applyTheme()
   watchSystemTheme()
@@ -64,6 +74,9 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* 不随系统 / 微信的字体设置自动放大文字（否则文字变大、留白不变，比例失调） */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -73,6 +86,19 @@ page {
 }
 
 /* #ifdef H5 */
+/* 微信里已有原生标题栏：隐藏页面自带的标题栏，页面整体上移 */
+html.in-wechat {
+  --window-top: 0px !important;
+}
+html.in-wechat uni-page-head {
+  display: none !important;
+}
+html,
+body {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}
+
 /* 设置里手动选了主题：覆盖跟随系统（body 和每页的 uni-page-body 上都有变量） */
 body.theme-light,
 body.theme-light uni-page-body {
@@ -116,14 +142,20 @@ body.theme-dark .uni-tabbar-border {
 }
 /* #endif */
 
+/*
+ * 排版规范（750rpx 设计宽度，手机上 1rpx ≈ 0.5px）
+ * - 页面左右留白 32rpx：卡片外边缘、页面大数字区、卡片外小标题都从这里开始
+ * - 卡片内边距 28rpx，卡片之间 20rpx
+ * - 字号：正文 30 / 列表标题 30 / 次要 26 / 辅助 24 / 小标签 22
+ */
 /* 卡片：浅色描边 + 柔和投影 */
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: $lemon-radius;
   box-shadow: var(--shadow);
-  padding: 32rpx;
-  margin: 24rpx 32rpx;
+  padding: 28rpx;
+  margin: 20rpx 32rpx;
 }
 
 .muted {
@@ -133,35 +165,35 @@ body.theme-dark .uni-tabbar-border {
 
 /* 卡片外的小标题，如“选择试卷” */
 .section-label {
-  padding: 32rpx 40rpx 0;
+  padding: 28rpx 32rpx 0;
   color: var(--muted);
   font-size: 26rpx;
 }
 
 /* 大数字头部：如“今日已刷 12 题” */
 .hero {
-  padding: 32rpx 40rpx 8rpx;
+  padding: 28rpx 32rpx 4rpx;
 }
 .hero-label {
   color: var(--muted);
-  font-size: 28rpx;
+  font-size: 26rpx;
 }
 .hero-num {
-  font-size: 112rpx;
+  font-size: 80rpx;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 .hero-unit {
-  font-size: 36rpx;
+  font-size: 30rpx;
   margin-left: 8rpx;
   color: var(--text);
   font-weight: 500;
 }
 .hero-sub {
   color: var(--muted);
-  font-size: 26rpx;
+  font-size: 24rpx;
 }
 
 /* 按钮：默认描边，primary 实心赭红，ghost 浅赭红 */
@@ -217,13 +249,13 @@ body.theme-dark .uni-tabbar-border {
 
 /* 列表卡片：行与行之间细线分隔 */
 .list-card {
-  padding: 8rpx 32rpx;
+  padding: 4rpx 28rpx;
 }
 .list-row {
   display: flex;
   align-items: center;
   gap: 20rpx;
-  padding: 28rpx 0;
+  padding: 26rpx 0;
   border-bottom: 1px solid var(--line);
 }
 .list-row:last-child {

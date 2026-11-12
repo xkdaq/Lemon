@@ -22,10 +22,10 @@ onLoad(async (query) => {
 
 <style lang="scss" scoped>
 .page {
-  padding: 32rpx 40rpx 64rpx;
+  padding: 32rpx 32rpx 64rpx;
 }
 .title {
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 700;
 }
 .date {

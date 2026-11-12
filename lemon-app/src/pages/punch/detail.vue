@@ -236,7 +236,7 @@ const isToday = (d: CalendarDay) => d.day === localToday()
   margin-bottom: 20rpx;
 }
 .name {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 700;
   margin-bottom: 8rpx;
 }
@@ -255,7 +255,7 @@ const isToday = (d: CalendarDay) => d.day === localToday()
   align-items: center;
 }
 .stat-num {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: $lemon-primary;
   font-variant-numeric: tabular-nums;
@@ -285,7 +285,7 @@ const isToday = (d: CalendarDay) => d.day === localToday()
   font-weight: 600;
 }
 .cal-nav {
-  font-size: 44rpx;
+  font-size: 40rpx;
   padding: 0 24rpx;
   color: $lemon-primary;
 }

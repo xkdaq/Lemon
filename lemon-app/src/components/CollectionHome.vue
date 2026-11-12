@@ -169,7 +169,7 @@ async function doExport(answers: 'inline' | 'end') {
   line-height: 2;
 }
 .empty-title {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 600;
 }
 .empty-icon {
@@ -209,7 +209,7 @@ async function doExport(answers: 'inline' | 'end') {
   justify-content: space-between;
 }
 .summary-num {
-  font-size: 56rpx;
+  font-size: 52rpx;
   font-weight: 700;
   color: $lemon-primary;
 }
@@ -313,7 +313,7 @@ async function doExport(answers: 'inline' | 'end') {
   padding: 36rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
 }
 .sheet-title {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 700;
   text-align: center;
 }
