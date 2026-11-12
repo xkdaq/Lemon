@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.lemon.biz.access.service.AccessAdminService;
 import com.lemon.biz.access.service.AccessAdminService.CodeQuery;
 import com.lemon.biz.access.service.ActivationService;
+import com.lemon.biz.access.service.ModuleUserAdminService;
 import com.lemon.common.PageResult;
 import com.lemon.common.R;
 import com.lemon.security.StpAdminUtil;
@@ -42,6 +43,7 @@ public class AdminAccessController {
 
     private final ActivationService activationService;
     private final AccessAdminService adminService;
+    private final ModuleUserAdminService moduleUserService;
 
     public record GenerateReq(
             @NotNull Long moduleId,
@@ -101,6 +103,29 @@ public class AdminAccessController {
     public R<Void> voidCode(@PathVariable Long id) {
         activationService.voidCode(id);
         return R.ok();
+    }
+
+    @Operation(summary = "模块用户：开通过模块的用户（关键字：手机号 / 用户名 / 昵称 / 激活码）")
+    @GetMapping("/module-users")
+    public R<PageResult<ModuleUserAdminService.ModuleUserVO>> moduleUsers(@Valid ModuleUserAdminService.Query query) {
+        return R.ok(moduleUserService.page(query));
+    }
+
+    @Operation(summary = "各模块的有效 / 7 天内到期 / 已过期人数")
+    @GetMapping("/module-users/stats")
+    public R<List<ModuleUserAdminService.ModuleStat>> moduleUserStats() {
+        return R.ok(moduleUserService.stats());
+    }
+
+    @Operation(summary = "导出模块用户 CSV（按当前筛选条件）")
+    @GetMapping("/module-users/export")
+    public ResponseEntity<byte[]> exportModuleUsers(@Valid ModuleUserAdminService.Query query) {
+        String name = "模块用户-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")) + ".csv";
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(name, StandardCharsets.UTF_8).build().toString())
+                .body(moduleUserService.export(query));
     }
 
     @Operation(summary = "用户的模块权限和变更记录")
