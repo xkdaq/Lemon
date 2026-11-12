@@ -37,9 +37,11 @@ public class WebConfig implements WebMvcConfigurer {
     private String uploadUrlPrefix;
 
     private final LocalFileStorage localFileStorage;
+    private final com.lemon.biz.stats.service.ActivityTracker activityTracker;
 
-    public WebConfig(LocalFileStorage localFileStorage) {
+    public WebConfig(LocalFileStorage localFileStorage, com.lemon.biz.stats.service.ActivityTracker activityTracker) {
         this.localFileStorage = localFileStorage;
+        this.activityTracker = activityTracker;
     }
 
     @Override
@@ -53,7 +55,7 @@ public class WebConfig implements WebMvcConfigurer {
             SaRouter.match("/api/admin/admins/**", "/api/admin/roles/**",
                             "/api/admin/app-users/**", "/api/admin/notices/**", "/api/admin/configs/**",
                             "/api/admin/banners/**", "/api/admin/sms-logs/**",
-                            "/api/admin/activation-codes/**", "/api/admin/module-users/**", "/api/admin/documents/**", "/api/admin/risk-alerts/**")
+                            "/api/admin/activation-codes/**", "/api/admin/module-users/**", "/api/admin/documents/**", "/api/admin/risk-alerts/**", "/api/admin/stats/**")
                     .check(r -> StpAdminUtil.LOGIC.checkRole(AdminRole.SUPER_ADMIN));
             SaRouter.match(SaHttpMethod.POST, SaHttpMethod.PUT, SaHttpMethod.DELETE)
                     .match("/api/admin/modules/**")
@@ -68,6 +70,8 @@ public class WebConfig implements WebMvcConfigurer {
                     .notMatch(APP_PUBLIC)
                     .check(r -> StpAppUtil.checkLogin());
         })).addPathPatterns("/api/**");
+        // 用户活跃日（在登录校验之后）
+        registry.addInterceptor(activityTracker).addPathPatterns("/api/app/**");
     }
 
     /** 本地上传目录对外提供访问（上线后由 Nginx 或对象存储提供，这里只服务开发环境） */

@@ -10,6 +10,7 @@ import com.lemon.biz.content.mapper.QuestionMapper;
 import com.lemon.biz.practice.entity.AnswerRecord;
 import com.lemon.biz.practice.mapper.AnswerRecordMapper;
 import com.lemon.biz.risk.service.RiskAlertAdminService;
+import com.lemon.biz.stats.service.StatsService;
 import com.lemon.biz.user.entity.AppUser;
 import com.lemon.biz.user.mapper.AppUserMapper;
 import com.lemon.common.Status;
@@ -32,6 +33,7 @@ public class DashboardService {
     private final ExamModuleMapper moduleMapper;
     private final AnswerRecordMapper answerMapper;
     private final RiskAlertAdminService riskService;
+    private final StatsService statsService;
 
     public record ModuleStat(Long moduleId, String name, long bankCount, long questionCount) {
     }
@@ -39,7 +41,7 @@ public class DashboardService {
     /**
      * @param userTotal     注册用户数
      * @param userToday     今日新增用户
-     * @param activeToday   今日活跃（今日有登录）
+     * @param activeToday   今日活跃（今天用过用户端的登录用户）
      * @param answerToday   今日答题数
      * @param questionTotal 上架题目数
      * @param draftTotal    下架题目数（待完善）
@@ -61,7 +63,7 @@ public class DashboardService {
         return new Dashboard(
                 userMapper.selectCount(null),
                 userMapper.selectCount(Wrappers.<AppUser>lambdaQuery().ge(AppUser::getCreatedAt, today)),
-                userMapper.selectCount(Wrappers.<AppUser>lambdaQuery().ge(AppUser::getLastLoginAt, today)),
+                statsService.activeToday(),
                 answerMapper.selectCount(Wrappers.<AnswerRecord>lambdaQuery().ge(AnswerRecord::getCreatedAt, today)),
                 questionMapper.selectCount(Wrappers.<Question>lambdaQuery().eq(Question::getStatus, Status.ON)),
                 questionMapper.selectCount(Wrappers.<Question>lambdaQuery().eq(Question::getStatus, Status.OFF)),

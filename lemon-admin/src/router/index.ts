@@ -18,6 +18,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '工作台', icon: 'Odometer' },
   },
   {
+    path: 'stats',
+    name: 'stats',
+    component: () => import('@/views/stats/StatsView.vue'),
+    meta: { title: '数据统计', icon: 'TrendCharts', roles: SUPER },
+  },
+  {
     path: 'content/modules',
     name: 'modules',
     component: () => import('@/views/content/ModuleView.vue'),
