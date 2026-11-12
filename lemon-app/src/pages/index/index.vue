@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { getCurrentInstance, nextTick, ref } from 'vue'
 import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import { getHome } from '@/api/content'
 import type { Banner, ExamModule, LastSession, Notice } from '@/api/types'
@@ -31,6 +31,7 @@ async function load() {
   camps.value = c.filter((x) => x.endDate >= today())
   modules.value = res.modules
   notices.value = res.notices
+  nextTick(measureNotice)
   lastSession.value = res.lastSession
   banners.value = res.banners
 }
@@ -40,6 +41,38 @@ onShow(load)
 onPullDownRefresh(async () => {
   await load().finally(() => uni.stopPullDownRefresh())
 })
+
+/** 公告：所有公告标题连成一行，放不下就从右往左循环滚动 */
+const instance = getCurrentInstance()
+const noticeScroll = ref(false)
+const noticeDuration = ref(10)
+const NOTICE_SPEED = 50 // 每秒滚动的像素
+function measureNotice() {
+  noticeScroll.value = false
+  if (!notices.value.length) return
+  nextTick(() => {
+    uni.createSelectorQuery().in(instance?.proxy)
+      .select('.notice-box').boundingClientRect()
+      .select('.notice-item').boundingClientRect()
+      .exec(([box, item]) => {
+        if (!box || !item || item.width <= box.width) return
+        noticeDuration.value = Math.max(6, Math.round(item.width / NOTICE_SPEED))
+        noticeScroll.value = true
+      })
+  })
+}
+const noticeText = () => notices.value.map((n) => n.title).join('　　')
+
+function openNotice() {
+  const n = notices.value[0]
+  if (notices.value.length === 1 && !n.content) return
+  uni.showModal({
+    title: notices.value.length === 1 ? '公告' : `公告（${notices.value.length}）`,
+    content: notices.value.map((x) => (x.content ? `${x.title}\n${x.content}` : x.title)).join('\n\n'),
+    showCancel: false,
+    confirmText: '知道了',
+  })
+}
 
 /** Banner 跳转：站内页面直接打开；外链只有 H5 能打开 */
 function openBanner(b: Banner) {
@@ -105,9 +138,14 @@ function openModule(m: ExamModule) {
       </swiper-item>
     </swiper>
 
-    <view v-if="notices.length" class="card notice">
+    <view v-if="notices.length" class="card notice" @click="openNotice">
       <text class="tag">公告</text>
-      <text class="notice-text">{{ notices[0].title }}</text>
+      <view class="notice-box">
+        <view class="notice-track" :class="{ scrolling: noticeScroll }" :style="{ animationDuration: `${noticeDuration}s` }">
+          <text class="notice-item">{{ noticeText() }}</text>
+          <text v-if="noticeScroll" class="notice-item">{{ noticeText() }}</text>
+        </view>
+      </view>
     </view>
 
     <view v-if="lastSession" class="card continue">
@@ -178,11 +216,31 @@ function openModule(m: ExamModule) {
   align-items: center;
   gap: 16rpx;
 }
-.notice-text {
+.notice-box {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
+}
+.notice-track {
+  display: inline-flex;
   white-space: nowrap;
-  text-overflow: ellipsis;
+}
+.notice-item {
+  flex-shrink: 0;
+}
+.notice-track.scrolling .notice-item {
+  padding-right: 96rpx;
+}
+.notice-track.scrolling {
+  animation: notice-marquee linear infinite;
+}
+@keyframes notice-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .continue-bar {
   height: 6rpx;
