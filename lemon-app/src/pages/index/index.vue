@@ -222,7 +222,8 @@ function openModule(m: ExamModule) {
   overflow: hidden;
 }
 .notice-track {
-  display: inline-flex;
+  display: flex;
+  width: max-content;
   white-space: nowrap;
 }
 .notice-item {
