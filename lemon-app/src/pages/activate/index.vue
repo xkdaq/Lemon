@@ -6,17 +6,19 @@ import { clearAccessCache, loadAccess } from '@/utils/access'
 import { isLoggedIn } from '@/utils/auth'
 
 /**
- * 激活码：输入激活码激活对应模块（模块下所有题库都能刷），同时显示各模块的激活状态。
- * 同一模块没到期再激活会顺延。
+ * 我的模块：各模块的激活状态；激活码输入默认收起，点「输入激活码」展开。
+ * 从「需要激活」进来（带 moduleId）时直接展开。同一模块没到期再激活会顺延。
  */
 const info = ref<AccessInfo | null>(null)
 const code = ref('')
 const loading = ref(false)
 /** 从「需要激活」进来时高亮的模块 */
 const focusModule = ref(0)
+const showCode = ref(false)
 
 onLoad((query) => {
   focusModule.value = Number(query?.moduleId) || 0
+  showCode.value = focusModule.value > 0
 })
 
 onShow(async () => {
@@ -56,16 +58,6 @@ async function submit() {
 
 <template>
   <view class="page">
-    <view class="card">
-      <view class="title">输入激活码</view>
-      <view class="muted sub">一个激活码对应一个模块，激活后该模块下的所有题库都可以刷。</view>
-      <view class="field">
-        <input v-model="code" maxlength="40" placeholder="如 ABCD-EFGH-JKMN" class="code-input" @confirm="submit" />
-      </view>
-      <button class="submit" :loading="loading" :disabled="loading" @click="submit">激活</button>
-    </view>
-
-    <view class="section-label">我的模块</view>
     <view v-if="info" class="card list-card">
       <view v-for="m in info.modules" :key="m.moduleId" class="list-row" :class="{ focus: m.moduleId === focusModule && !m.active }">
         <view class="grow">{{ m.name }}</view>
@@ -78,6 +70,17 @@ async function submit() {
     <view v-if="info && info.trialQuestions > 0" class="muted foot">
       未激活的模块可以浏览全部题库，每个章节免费试做前 {{ info.trialQuestions }} 题。
     </view>
+
+    <view v-if="showCode" class="card">
+      <view class="title">输入激活码</view>
+      <view class="muted sub">一个激活码对应一个模块，激活后该模块下的所有题库都可以刷。</view>
+      <view class="field">
+        <input v-model="code" maxlength="40" placeholder="如 ABCD-EFGH-JKMN" class="code-input" @confirm="submit" />
+      </view>
+      <button class="submit" :loading="loading" :disabled="loading" @click="submit">激活</button>
+    </view>
+
+    <view v-else class="code-link" @click="showCode = true">输入激活码 ›</view>
   </view>
 </template>
 
@@ -121,6 +124,11 @@ async function submit() {
 }
 .focus {
   background: var(--accent-soft);
+}
+.code-link {
+  padding: 32rpx 40rpx;
+  font-size: 26rpx;
+  color: $lemon-primary;
 }
 .foot {
   padding: 8rpx 40rpx;

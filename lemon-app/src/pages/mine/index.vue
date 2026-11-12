@@ -64,7 +64,7 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
 
     <view class="card list-card">
       <view class="list-row" @click="go('/pages/activate/index')">
-        <text class="menu-text">激活码</text><text class="row-arrow">›</text>
+        <text class="menu-text">我的模块</text><text class="row-arrow">›</text>
       </view>
       <view class="list-row" @click="go('/pages/restore/index')">
         <text class="menu-text">恢复老系统错题</text><text class="row-arrow">›</text>
