@@ -12,6 +12,7 @@ import com.lemon.biz.content.mapper.QuestionBankMapper;
 import com.lemon.biz.content.mapper.QuestionMapper;
 import com.lemon.biz.favorite.service.FavoriteService;
 import com.lemon.biz.note.service.NoteService;
+import com.lemon.biz.risk.service.RiskGuardService;
 import com.lemon.biz.practice.dto.PracticeDtos.Ans;
 import com.lemon.biz.practice.dto.PracticeDtos.AnswerReq;
 import com.lemon.biz.practice.dto.PracticeDtos.AnswerResult;
@@ -82,6 +83,7 @@ public class PracticeService {
     private final AnswerRecorder recorder;
     private final FavoriteService favoriteService;
     private final NoteService noteService;
+    private final RiskGuardService riskGuard;
     private final ApplicationEventPublisher events;
     private final AccessService accessService;
 
@@ -89,6 +91,7 @@ public class PracticeService {
 
     @Transactional
     public SessionVO start(Long userId, StartReq req) {
+        riskGuard.onSessionStarted(userId);
         PracticeMode mode = PracticeMode.of(req.mode());
         Chapter chapter = chapterMapper.selectById(req.chapterId());
         BizException.throwIf(chapter == null || chapter.getStatus() != Status.ON, "章节不存在或已下架");
@@ -234,6 +237,7 @@ public class PracticeService {
         boolean finished = s.getStatus() != IN_PROGRESS;
         Map<Long, Question> questions = questionMapper.selectByIds(ids).stream()
                 .collect(Collectors.toMap(Question::getId, Function.identity()));
+        riskGuard.onQuestionsViewed(userId, ids);
         Set<Long> favorited = favoriteService.favoritedIn(userId, ids);
         Map<Long, NoteService.NoteVO> notes = noteService.notesIn(userId, ids);
 

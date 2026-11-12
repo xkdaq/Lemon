@@ -53,7 +53,7 @@ public class WebConfig implements WebMvcConfigurer {
             SaRouter.match("/api/admin/admins/**", "/api/admin/roles/**",
                             "/api/admin/app-users/**", "/api/admin/notices/**", "/api/admin/configs/**",
                             "/api/admin/banners/**", "/api/admin/sms-logs/**",
-                            "/api/admin/activation-codes/**", "/api/admin/module-users/**", "/api/admin/documents/**")
+                            "/api/admin/activation-codes/**", "/api/admin/module-users/**", "/api/admin/documents/**", "/api/admin/risk-alerts/**")
                     .check(r -> StpAdminUtil.LOGIC.checkRole(AdminRole.SUPER_ADMIN));
             SaRouter.match(SaHttpMethod.POST, SaHttpMethod.PUT, SaHttpMethod.DELETE)
                     .match("/api/admin/modules/**")

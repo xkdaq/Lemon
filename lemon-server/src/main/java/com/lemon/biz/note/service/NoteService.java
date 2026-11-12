@@ -15,6 +15,7 @@ import com.lemon.biz.content.mapper.QuestionMapper;
 import com.lemon.biz.file.FileService;
 import com.lemon.biz.note.entity.QuestionNote;
 import com.lemon.biz.note.mapper.QuestionNoteMapper;
+import com.lemon.biz.risk.service.RiskGuardService;
 import com.lemon.common.BizException;
 import com.lemon.common.HtmlUtil;
 import com.lemon.common.JsonUtil;
@@ -62,6 +63,7 @@ public class NoteService {
     private final AccessService accessService;
     private final FileService fileService;
     private final StringRedisTemplate redis;
+    private final RiskGuardService riskGuard;
 
     @Value("${lemon.upload.url-prefix}")
     private String urlPrefix;
@@ -95,6 +97,7 @@ public class NoteService {
 
     public NoteDetail detail(Long userId, Long questionId) {
         Question q = BizException.notNull(questionMapper.selectById(questionId), "题目不存在");
+        riskGuard.onQuestionsViewed(userId, List.of(questionId));
         QuestionNote n = find(userId, questionId);
         boolean reveal = accessService.accessibleModules(userId).contains(q.getModuleId());
         QuestionBank bank = bankMapper.selectById(q.getBankId());

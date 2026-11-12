@@ -96,6 +96,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: 'Banner', icon: 'Picture', group: '运营', roles: SUPER },
   },
   {
+    path: 'operation/risk-alerts',
+    name: 'riskAlerts',
+    component: () => import('@/views/operation/RiskAlertView.vue'),
+    meta: { title: '风险告警', icon: 'Warning', group: '运营', roles: SUPER },
+  },
+  {
     path: 'operation/notices',
     name: 'notices',
     component: () => import('@/views/operation/NoticeView.vue'),

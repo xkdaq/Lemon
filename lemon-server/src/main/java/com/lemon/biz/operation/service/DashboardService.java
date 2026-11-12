@@ -9,6 +9,7 @@ import com.lemon.biz.content.mapper.QuestionBankMapper;
 import com.lemon.biz.content.mapper.QuestionMapper;
 import com.lemon.biz.practice.entity.AnswerRecord;
 import com.lemon.biz.practice.mapper.AnswerRecordMapper;
+import com.lemon.biz.risk.service.RiskAlertAdminService;
 import com.lemon.biz.user.entity.AppUser;
 import com.lemon.biz.user.mapper.AppUserMapper;
 import com.lemon.common.Status;
@@ -30,6 +31,7 @@ public class DashboardService {
     private final QuestionBankMapper bankMapper;
     private final ExamModuleMapper moduleMapper;
     private final AnswerRecordMapper answerMapper;
+    private final RiskAlertAdminService riskService;
 
     public record ModuleStat(Long moduleId, String name, long bankCount, long questionCount) {
     }
@@ -41,9 +43,10 @@ public class DashboardService {
      * @param answerToday   今日答题数
      * @param questionTotal 上架题目数
      * @param draftTotal    下架题目数（待完善）
+     * @param riskPending   待处理的风险告警数
      */
     public record Dashboard(long userTotal, long userToday, long activeToday, long answerToday,
-                            long questionTotal, long draftTotal, List<ModuleStat> modules) {
+                            long questionTotal, long draftTotal, long riskPending, List<ModuleStat> modules) {
     }
 
     public Dashboard get() {
@@ -62,6 +65,7 @@ public class DashboardService {
                 answerMapper.selectCount(Wrappers.<AnswerRecord>lambdaQuery().ge(AnswerRecord::getCreatedAt, today)),
                 questionMapper.selectCount(Wrappers.<Question>lambdaQuery().eq(Question::getStatus, Status.ON)),
                 questionMapper.selectCount(Wrappers.<Question>lambdaQuery().eq(Question::getStatus, Status.OFF)),
+                riskService.pendingCount(),
                 modules);
     }
 }

@@ -7,6 +7,7 @@ export interface Dashboard {
   answerToday: number
   questionTotal: number
   draftTotal: number
+  riskPending: number
   modules: { moduleId: number; name: string; bankCount: number; questionCount: number }[]
 }
 export const getDashboard = () => http.get<Dashboard>('/dashboard')
@@ -136,3 +137,28 @@ export const listBanners = () => http.get<Banner[]>('/banners')
 export const createBanner = (data: BannerSave) => http.post<number>('/banners', data)
 export const updateBanner = (id: number, data: BannerSave) => http.put<void>(`/banners/${id}`, data)
 export const deleteBanner = (id: number) => http.delete<void>(`/banners/${id}`)
+
+// ---- 风险告警（防偷题） ----
+export interface RiskAlert {
+  id: number
+  userId: number
+  username: string | null
+  phone: string | null
+  nickname: string | null
+  /** 用户状态：1 正常 0 禁用 */
+  userStatus: number | null
+  alertType: 'hour_questions' | 'day_questions' | 'hour_sessions'
+  alertDate: string
+  metric: number
+  threshold: number
+  ip: string | null
+  status: number
+  handledBy: string | null
+  handledAt: string | null
+  remark: string | null
+  createdAt: string
+  updatedAt: string
+}
+export const pageRiskAlerts = (params: { pageNum: number; pageSize: number; status?: number; alertType?: string }) =>
+  http.get<PageResult<RiskAlert>>('/risk-alerts', params)
+export const handleRiskAlert = (id: number, remark: string) => http.put<void>(`/risk-alerts/${id}/handle`, { remark })

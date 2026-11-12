@@ -2,8 +2,10 @@
 import { onMounted, ref } from 'vue'
 import { getDashboard, type Dashboard } from '@/api/operation'
 import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
+const router = useRouter()
 const data = ref<Dashboard>()
 
 onMounted(async () => {
@@ -17,7 +19,14 @@ const tiles = [
   { key: 'answerToday', label: '今日答题' },
   { key: 'questionTotal', label: '上架题目' },
   { key: 'draftTotal', label: '下架题目' },
+  { key: 'riskPending', label: '待处理告警' },
 ] as const
+
+/** 有待处理的风险告警时标红，点击进入「风险告警」（仅超级管理员可见该页面） */
+const isRisk = (key: string) => key === 'riskPending' && (data.value?.riskPending ?? 0) > 0
+function onTile(key: string) {
+  if (key === 'riskPending' && userStore.isSuperAdmin) router.push('/operation/risk-alerts')
+}
 </script>
 
 <template>
@@ -25,7 +34,7 @@ const tiles = [
     <div class="page-card">
       <h3 class="welcome">欢迎回来，{{ userStore.info?.nickname ?? '管理员' }}</h3>
       <div class="tiles">
-        <div v-for="t in tiles" :key="t.key" class="tile">
+        <div v-for="t in tiles" :key="t.key" class="tile" :class="{ risk: isRisk(t.key), link: t.key === 'riskPending' && userStore.isSuperAdmin }" @click="onTile(t.key)">
           <div class="tile-value">{{ data ? data[t.key].toLocaleString() : '—' }}</div>
           <div class="tile-label">{{ t.label }}</div>
         </div>
@@ -39,7 +48,6 @@ const tiles = [
         <el-table-column prop="bankCount" label="题库数" />
         <el-table-column prop="questionCount" label="上架题目数" />
       </el-table>
-      <div class="hint">答题、活跃等数据在用户端做题功能（M3）上线后开始累计。</div>
     </div>
   </div>
 </template>
@@ -58,6 +66,16 @@ const tiles = [
   border-radius: 8px;
   padding: 16px;
 }
+.tile.link {
+  cursor: pointer;
+}
+.tile.risk {
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+}
+.tile.risk .tile-label {
+  color: var(--el-color-danger);
+}
 .tile-value {
   font-size: 26px;
   font-weight: 600;
@@ -70,10 +88,5 @@ const tiles = [
 }
 .section-title {
   margin: 0 0 12px;
-}
-.hint {
-  margin-top: 10px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
 }
 </style>
