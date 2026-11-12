@@ -92,23 +92,18 @@ async function init() {
       const m = modeByName[query?.mode ?? 'practice'] ?? Mode.PRACTICE
       const section = query?.section ? decodeURIComponent(query.section) : undefined
       s = await api.startSession(Number(query?.chapterId), m, query?.restart === '1', section)
-      if (s.status === 0 && (s.answeredCount > 0 || s.currentIndex > 0) && query?.restart !== '1') {
-        const { confirm } = await confirmModal({
-          title: '继续上次进度？',
-          content: `上次做到第 ${s.currentIndex + 1} 题，已答 ${s.answeredCount} 题`,
-          confirmText: '继续',
-          cancelText: '重新开始',
-        })
-        if (!confirm) {
-          s = await api.startSession(s.chapterId!, s.mode, true, s.section ?? undefined)
-        }
-      }
+      // 有进度直接续上（不弹确认框：部分 iOS 内置浏览器在页面还没渲染时弹框，点按钮后页面会一直闪），
+      // 顶部给「重新开始」
+      resumed.value = s.status === 0 && (s.answeredCount > 0 || s.currentIndex > 0) && query?.restart !== '1'
     }
     session.value = s
     uni.setNavigationBarTitle({ title: s.chapterName || modeLabel[s.mode] })
     const start = Number(query?.index ?? (s.status === 0 ? s.currentIndex : 0))
     await goTo(Math.min(Math.max(start, 0), s.questionIds.length - 1))
     startTimer()
+    if (resumed.value && s.currentIndex > 0) {
+      uni.showToast({ title: `从第 ${s.currentIndex + 1} 题继续`, icon: 'none' })
+    }
   } catch (e) {
     // 未登录时请求层已跳转登录页，这里不能再返回，否则会把登录页关掉
     if (e instanceof ApiError && e.code === NEED_ACTIVATION) {
@@ -120,6 +115,29 @@ async function init() {
   } finally {
     loading = false
   }
+}
+
+/** 这次是接着上次的进度做（显示「重新开始」） */
+const resumed = ref(false)
+
+/** 重新开始：清空本次作答，从第 1 题开始 */
+async function restart() {
+  const s = session.value
+  if (!s || !s.chapterId || readonly.value) return
+  const { confirm } = await confirmModal({
+    title: '重新开始？',
+    content: '这次的作答会清空，从第 1 题开始',
+    confirmText: '重新开始',
+  })
+  if (!confirm) return
+  const ns = await api.startSession(s.chapterId, s.mode, true, s.section ?? undefined)
+  clearInterval(timer)
+  remaining.value = null
+  Object.keys(questions).forEach((k) => delete questions[Number(k)])
+  session.value = ns
+  resumed.value = false
+  await goTo(0)
+  startTimer()
 }
 
 onUnload(() => {
@@ -387,6 +405,7 @@ function onTouchEnd(e: TouchEvent) {
       <text v-else class="mode-tag" :class="`mode-${session.mode}`">{{ modeLabel[session.mode] }}</text>
       <text v-if="readonly" class="muted">（已结束 · 查看解析）</text>
       <text class="progress">{{ index + 1 }} / {{ ids.length }}</text>
+      <text v-if="resumed && !readonly" class="restart" @click="restart">重新开始</text>
       <text v-if="remaining !== null" class="timer" :class="{ urgent: remaining < 300 }">⏱ {{ formatSeconds(remaining) }}</text>
     </view>
 
@@ -565,6 +584,9 @@ function onTouchEnd(e: TouchEvent) {
 .progress {
   margin-left: auto;
   color: $lemon-muted;
+}
+.restart {
+  color: $lemon-primary;
 }
 .timer {
   font-variant-numeric: tabular-nums;
