@@ -91,7 +91,13 @@ public final class PracticeDtos {
             Long id, Integer type, String stem, List<OptionItem> options, BigDecimal score,
             String answer, String analysis, boolean favorited, Boolean deleted,
             /** 自己的笔记，没有为 null */
-            com.lemon.biz.note.service.NoteService.NoteVO note) {
+            com.lemon.biz.note.service.NoteService.NoteVO note,
+            /** 全站作答统计，还没人做过为 null */
+            QuestionStat stat) {
+    }
+
+    /** 一道题的全站作答次数和正确率（%） */
+    public record QuestionStat(long answerCount, int correctRate) {
     }
 
     /** 练习模式提交一题的结果 */

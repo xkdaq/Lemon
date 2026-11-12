@@ -191,6 +191,30 @@ function onNoteSaved(e: NoteSavedEvent) {
   if (q) q.note = e.note
 }
 
+/** 复制解析：去掉格式，只复制文字（含正确答案） */
+function copyAnalysis() {
+  const q = current.value
+  if (!q?.analysis) return
+  const text = htmlText(q.analysis)
+  const ans = q.type !== QType.SUBJECTIVE && q.answer ? `正确答案：${answerText(q)}\n` : ''
+  uni.setClipboardData({ data: ans + text, success: () => uni.showToast({ title: '解析已复制', icon: 'none' }) })
+}
+
+function htmlText(html: string) {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6]|blockquote|tr)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 function previewNote(i: number) {
   const n = current.value?.note
   if (n) uni.previewImage({ urls: n.images.map(assetUrl), current: i })
@@ -486,9 +510,15 @@ function onTouchEnd(e: TouchEvent) {
               <text :class="myAnswer.c === 1 ? 'right' : myAnswer.c === 0 ? 'wrong' : ''">{{ answerText(current, myAnswer.a) }}</text>
             </template>
           </view>
+          <view v-if="current.stat" class="stat-line">
+            全站作答 {{ current.stat.answerCount.toLocaleString() }} 次 · 正确率 {{ current.stat.correctRate }}%
+          </view>
           <text v-if="isCard" class="muted">背诵题：熟读上面的内容，背下来后自评</text>
           <template v-else>
-            <view class="analysis-title">{{ current.type === QType.SUBJECTIVE ? '参考答案' : '解析' }}</view>
+            <view class="analysis-head">
+              <text class="analysis-title">{{ current.type === QType.SUBJECTIVE ? '参考答案' : '解析' }}</text>
+              <text v-if="current.analysis" class="copy-btn" @click="copyAnalysis">复制解析</text>
+            </view>
             <rich-text v-if="current.analysis" :nodes="renderHtml(current.analysis)" />
             <text v-else class="muted">暂无解析</text>
           </template>
@@ -770,9 +800,24 @@ function onTouchEnd(e: TouchEvent) {
   height: 160rpx;
   border-radius: 10rpx;
 }
+.analysis-head {
+  display: flex;
+  align-items: center;
+  margin: 8rpx 0;
+}
 .analysis-title {
   font-weight: 600;
-  margin: 8rpx 0;
+}
+.copy-btn {
+  margin-left: auto;
+  font-size: 24rpx;
+  color: $lemon-primary;
+  padding: 4rpx 0 4rpx 24rpx;
+}
+.stat-line {
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  color: $lemon-muted;
 }
 .self-assess {
   margin-top: 28rpx;

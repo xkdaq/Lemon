@@ -18,6 +18,7 @@ import com.lemon.biz.practice.dto.PracticeDtos.AnswerReq;
 import com.lemon.biz.practice.dto.PracticeDtos.AnswerResult;
 import com.lemon.biz.practice.dto.PracticeDtos.LastSession;
 import com.lemon.biz.practice.dto.PracticeDtos.QuestionItem;
+import com.lemon.biz.practice.dto.PracticeDtos.QuestionStat;
 import com.lemon.biz.practice.dto.PracticeDtos.ResultVO;
 import com.lemon.biz.practice.dto.PracticeDtos.SessionVO;
 import com.lemon.biz.practice.dto.PracticeDtos.StartReq;
@@ -26,6 +27,7 @@ import com.lemon.biz.content.service.ScoreService;
 import com.lemon.biz.practice.entity.PracticeSession;
 import com.lemon.biz.practice.enums.PracticeMode;
 import com.lemon.biz.practice.event.PracticeFinishedEvent;
+import com.lemon.biz.practice.mapper.AnswerRecordMapper;
 import com.lemon.biz.practice.mapper.PracticeSessionMapper;
 import com.lemon.common.BizException;
 import com.lemon.common.ErrorCode;
@@ -77,6 +79,7 @@ public class PracticeService {
     };
 
     private final PracticeSessionMapper sessionMapper;
+    private final AnswerRecordMapper recordMapper;
     private final QuestionMapper questionMapper;
     private final ChapterMapper chapterMapper;
     private final QuestionBankMapper bankMapper;
@@ -240,12 +243,16 @@ public class PracticeService {
         riskGuard.onQuestionsViewed(userId, ids);
         Set<Long> favorited = favoriteService.favoritedIn(userId, ids);
         Map<Long, NoteService.NoteVO> notes = noteService.notesIn(userId, ids);
+        Map<Long, QuestionStat> stats = recordMapper.countByQuestions(ids).stream()
+                .filter(c -> c.getTotal() > 0)
+                .collect(Collectors.toMap(AnswerRecordMapper.QuestionCount::getQuestionId,
+                        c -> new QuestionStat(c.getTotal(), (int) Math.round(c.getRightCount() * 100.0 / c.getTotal()))));
 
         List<QuestionItem> items = new ArrayList<>();
         for (Long id : ids) {
             Question q = questions.get(id);
             if (q == null) {
-                items.add(new QuestionItem(id, null, null, null, null, null, null, false, true, null));
+                items.add(new QuestionItem(id, null, null, null, null, null, null, false, true, null, null));
                 continue;
             }
             // 练习模式：作答后公布；主观题没有可“泄露”的标准答案，先看参考答案再自评，所以直接给
@@ -255,7 +262,7 @@ public class PracticeService {
             List<OptionItem> options = JsonUtil.parse(q.getOptions(), OPTIONS_TYPE);
             items.add(new QuestionItem(q.getId(), q.getType(), q.getStem(), options == null ? List.of() : options,
                     q.getScore(), reveal ? q.getAnswer() : null, reveal ? q.getAnalysis() : null,
-                    favorited.contains(id), null, notes.get(id)));
+                    favorited.contains(id), null, notes.get(id), stats.get(id)));
         }
         return items;
     }

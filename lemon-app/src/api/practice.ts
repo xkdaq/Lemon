@@ -61,6 +61,8 @@ export interface QuestionItem {
   deleted?: boolean
   /** 自己的笔记 */
   note?: Note | null
+  /** 全站作答统计，还没人做过为 null */
+  stat?: { answerCount: number; correctRate: number } | null
 }
 
 export interface AnswerResult {
