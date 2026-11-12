@@ -91,6 +91,18 @@ export interface SysConfig {
 export const listConfigs = () => http.get<SysConfig[]>('/configs')
 export const updateConfig = (key: string, value: string) => http.put<void>(`/configs/${key}`, { value })
 
+// ---- 协议文档（用户协议、隐私政策） ----
+export interface AppDocument {
+  id: number
+  docKey: string
+  title: string
+  content: string
+  updatedAt: string
+}
+export const listDocuments = () => http.get<AppDocument[]>('/documents')
+export const updateDocument = (key: string, title: string, content: string) =>
+  http.put<void>(`/documents/${key}`, { title, content })
+
 // ---- 反馈 ----
 export interface Feedback {
   id: number

@@ -4,6 +4,7 @@ import * as authApi from '@/api/auth'
 import { setToken } from '@/utils/auth'
 import { clearAccessCache } from '@/utils/access'
 import { useCountdown } from '@/utils/useCountdown'
+import { openDocument } from '@/api/site'
 
 /**
  * Web：手机号 / 用户名 + 密码登录；注册 = 手机号 + 短信验证码 + 设置密码；忘记密码用短信验证码重置。
@@ -14,6 +15,8 @@ type Mode = 'login' | 'register' | 'reset'
 const mode = ref<Mode>('login')
 const loading = ref(false)
 const sending = ref(false)
+/** 注册须勾选同意用户协议和隐私政策（默认不勾选） */
+const agreed = ref(false)
 const form = reactive({ account: '', phone: '', code: '', password: '', confirm: '', nickname: '' })
 const { seconds, start } = useCountdown()
 
@@ -38,6 +41,7 @@ function switchMode(m: Mode) {
 async function sendCode() {
   if (seconds.value > 0 || sending.value) return
   if (!phoneOk()) return toast('请输入正确的手机号')
+  if (mode.value === 'register' && !agreed.value) return toast('请先阅读并同意用户协议和隐私政策')
   sending.value = true
   try {
     await authApi.sendCode(form.phone, mode.value === 'register' ? 'register' : 'reset')
@@ -58,6 +62,7 @@ function validate(): string | null {
   if (!/^\d{4,6}$/.test(form.code)) return '请输入验证码'
   if (form.password.length < 6) return '密码至少 6 位'
   if (form.password !== form.confirm) return '两次输入的密码不一致'
+  if (mode.value === 'register' && !agreed.value) return '请先阅读并同意用户协议和隐私政策'
   return null
 }
 
@@ -154,6 +159,13 @@ function goBack() {
       </view>
     </template>
 
+    <view v-if="mode === 'register'" class="agree" @click="agreed = !agreed">
+      <view class="check" :class="{ on: agreed }">{{ agreed ? '✓' : '' }}</view>
+      <text>已阅读并同意</text>
+      <text class="doc-link" @click.stop="openDocument('agreement')">《用户协议》</text>
+      <text>和</text>
+      <text class="doc-link" @click.stop="openDocument('privacy')">《隐私政策》</text>
+    </view>
     <button class="submit" :loading="loading" :disabled="loading" @click="submit">{{ submitText }}</button>
 
     <view class="switch">
@@ -204,6 +216,32 @@ function goBack() {
 }
 .link {
   font-size: 26rpx;
+  color: $lemon-primary;
+}
+.agree {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $lemon-muted;
+}
+.check {
+  width: 30rpx;
+  height: 30rpx;
+  line-height: 30rpx;
+  margin-right: 10rpx;
+  border: 1px solid $lemon-muted;
+  border-radius: 6rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #fff;
+}
+.check.on {
+  background: $lemon-primary;
+  border-color: $lemon-primary;
+}
+.doc-link {
   color: $lemon-primary;
 }
 .submit {

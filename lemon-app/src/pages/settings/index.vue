@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { isLoggedIn } from '@/utils/auth'
+import { openDocument, type DocKey } from '@/api/site'
 import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
 
 /**
- * 设置：外观（主题，仅 H5）、做题（字号、答对自动下一题）、数据（清除做题记录）。
+ * 设置：外观（主题，仅 H5）、做题（字号、答对自动下一题）、数据（清除做题记录）、关于（用户协议、隐私政策）。
  * 账号相关（昵称、密码）在「我的 → 个人信息」。
  */
 const THEMES: { value: ThemeMode; label: string }[] = [
@@ -30,6 +31,10 @@ function pickFont(v: number) {
 function toggleAutoNext() {
   autoNext.value = !autoNext.value
   setAutoNext(autoNext.value)
+}
+
+function openDoc(key: DocKey) {
+  openDocument(key)
 }
 
 function openRecords() {
@@ -73,6 +78,18 @@ function openRecords() {
     <view class="card list-card">
       <view class="list-row" @click="openRecords">
         <view class="grow label">清除做题记录</view>
+        <text class="row-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="section-label">关于</view>
+    <view class="card list-card">
+      <view class="list-row" @click="openDoc('agreement')">
+        <view class="grow label">用户协议</view>
+        <text class="row-arrow">›</text>
+      </view>
+      <view class="list-row" @click="openDoc('privacy')">
+        <view class="grow label">隐私政策</view>
         <text class="row-arrow">›</text>
       </view>
     </view>

@@ -47,6 +47,7 @@ public class AppContentController {
     private final QuestionMapper questionMapper;
     private final SysConfigService configService;
     private final ScoreService scoreService;
+    private final com.lemon.biz.document.service.AppDocumentService documentService;
 
     /** 用户端全局配置：theme 为主题配色（预设名或自定义主色 #RRGGBB） */
     public record AppConfigResp(String theme) {
@@ -56,6 +57,27 @@ public class AppContentController {
     @GetMapping("/app-config")
     public R<AppConfigResp> appConfig() {
         return R.ok(new AppConfigResp(configService.getString(SysConfigService.APP_THEME, SysConfigService.DEFAULT_THEME)));
+    }
+
+    public record DocumentResp(String title, String content,
+                               @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd") java.time.LocalDateTime updatedAt) {
+    }
+
+    @Operation(summary = "协议文档：agreement 用户协议 / privacy 隐私政策")
+    @GetMapping("/documents/{key}")
+    public R<DocumentResp> document(@org.springframework.web.bind.annotation.PathVariable String key) {
+        var d = documentService.get(key);
+        return R.ok(new DocumentResp(d.getTitle(), d.getContent(), d.getUpdatedAt()));
+    }
+
+    public record ServiceInfo(String wechat, String note) {
+    }
+
+    @Operation(summary = "联系客服：客服微信号和说明")
+    @GetMapping("/service-info")
+    public R<ServiceInfo> serviceInfo() {
+        return R.ok(new ServiceInfo(configService.getString(SysConfigService.SERVICE_WECHAT, ""),
+                configService.getString(SysConfigService.SERVICE_NOTE, "")));
     }
 
     /** lastSession：登录用户最近一次未完成的练习，未登录或没有时为 null */

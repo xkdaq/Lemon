@@ -26,6 +26,8 @@ public class WebConfig implements WebMvcConfigurer {
             "/api/app/modules/**",
             "/api/app/banks/**",
             "/api/app/punch-camps/**",
+            "/api/app/documents/**",
+            "/api/app/service-info",
     };
 
     @Value("${lemon.cors.allowed-origins:*}")
@@ -51,7 +53,7 @@ public class WebConfig implements WebMvcConfigurer {
             SaRouter.match("/api/admin/admins/**", "/api/admin/roles/**",
                             "/api/admin/app-users/**", "/api/admin/notices/**", "/api/admin/configs/**",
                             "/api/admin/banners/**", "/api/admin/sms-logs/**",
-                            "/api/admin/activation-codes/**", "/api/admin/module-users/**")
+                            "/api/admin/activation-codes/**", "/api/admin/module-users/**", "/api/admin/documents/**")
                     .check(r -> StpAdminUtil.LOGIC.checkRole(AdminRole.SUPER_ADMIN));
             SaRouter.match(SaHttpMethod.POST, SaHttpMethod.PUT, SaHttpMethod.DELETE)
                     .match("/api/admin/modules/**")

@@ -53,6 +53,7 @@ public class AdminOperationController {
     private final FeedbackService feedbackService;
     private final BannerService bannerService;
     private final SmsLogAdminService smsLogService;
+    private final com.lemon.biz.document.service.AppDocumentService documentService;
 
     @Operation(summary = "工作台统计")
     @GetMapping("/dashboard")
@@ -186,6 +187,24 @@ public class AdminOperationController {
     @PutMapping("/configs/{key}")
     public R<Void> updateConfig(@PathVariable String key, @Valid @RequestBody ConfigUpdate req) {
         configService.update(key, req.value());
+        return R.ok();
+    }
+
+    // -------- 协议文档 --------
+
+    public record DocumentUpdate(@Size(max = 64) String title, @Size(max = 50000) String content) {
+    }
+
+    @Operation(summary = "协议文档列表（用户协议、隐私政策）")
+    @GetMapping("/documents")
+    public R<List<com.lemon.biz.document.entity.AppDocument>> documents() {
+        return R.ok(documentService.list());
+    }
+
+    @Operation(summary = "修改协议文档")
+    @PutMapping("/documents/{key}")
+    public R<Void> updateDocument(@PathVariable String key, @Valid @RequestBody DocumentUpdate req) {
+        documentService.update(key, req.title(), req.content());
         return R.ok();
     }
 }

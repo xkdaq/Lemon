@@ -21,6 +21,9 @@ public class SysConfigService {
     /** 用户端主题配色：预设名（与用户端 utils/theme.ts 一致）或自定义主色 #RRGGBB */
     public static final String APP_THEME = "app.theme";
     public static final String DEFAULT_THEME = "paper";
+    /** 客服微信号、客服说明（如服务时间） */
+    public static final String SERVICE_WECHAT = "app.service_wechat";
+    public static final String SERVICE_NOTE = "app.service_note";
 
     private record Rule(Predicate<String> check, String hint) {
     }
@@ -28,6 +31,8 @@ public class SysConfigService {
     private static final Map<String, Rule> RULES = Map.of(
             WRONG_REMOVE_STREAK, new Rule(v -> v.matches("^([1-9]|10)$"), "请输入 1~10 的整数"),
             "app.trial_questions", new Rule(v -> v.matches("^([0-9]|[1-9][0-9]|100)$"), "请输入 0~100 的整数"),
+            SERVICE_WECHAT, new Rule(v -> v.matches("^[A-Za-z0-9_-]{0,40}$"), "微信号只能包含字母、数字、下划线和横线"),
+            SERVICE_NOTE, new Rule(v -> v.length() <= 100, "最多 100 字"),
             "app.register_gift_days", new Rule(v -> v.matches("^\\d{1,4}$") && Integer.parseInt(v) <= 3650, "请输入 0~3650 的整数"),
             APP_THEME, new Rule(v -> v.matches("^(paper|indigo|teal|amber|rose|violet|coffee|graphite)$|^#[0-9a-fA-F]{6}$"),
                     "请选择预设主题，或填写 #RRGGBB 格式的主色"));

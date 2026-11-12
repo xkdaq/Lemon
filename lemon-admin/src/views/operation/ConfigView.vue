@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as api from '@/api/operation'
 import AppThemeCard from './AppThemeCard.vue'
+import DocumentCard from './DocumentCard.vue'
 
 /** 主题配色有专门的选择卡片，不放在下面的通用表格里 */
 const THEME_KEY = 'app.theme'
@@ -47,5 +48,6 @@ async function save(row: Row) {
         </template>
       </el-table-column>
     </el-table>
+    <DocumentCard />
   </div>
 </template>
