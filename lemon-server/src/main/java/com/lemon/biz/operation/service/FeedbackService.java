@@ -117,7 +117,7 @@ public class FeedbackService {
         return PageResult.of(page, f -> {
             Question q = f.getQuestionId() == null ? null : questions.get(f.getQuestionId());
             String stem = f.getQuestionId() == null ? null : q == null ? "该题已被删除" : preview(q.getStem());
-            AppUser u = users.get(f.getUserId());
+            AppUser u = f.getUserId() == null ? null : users.get(f.getUserId());
             String user = u == null ? null : Objects.toString(u.getNickname(), "") + (u.getPhone() == null ? "" : "（" + u.getPhone() + "）");
             return new FeedbackVO(f.getId(), f.getType(), f.getQuestionId(), stem, f.getContent(), f.getStatus(),
                     f.getReply(), withUser ? user : null, f.getCreatedAt(), f.getUpdatedAt());

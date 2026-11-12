@@ -151,7 +151,9 @@ public class AccessAdminService {
         Map<Long, String> admins = adminIds.isEmpty() ? Map.of() : adminMapper.selectByIds(adminIds).stream()
                 .collect(Collectors.toMap(SysAdmin::getId, a -> a.getNickname() != null ? a.getNickname() : a.getUsername()));
         List<LogVO> logVOs = logs.stream().map(l -> new LogVO(l.getId(), names.get(l.getModuleId()), l.getSource(),
-                codes.get(l.getCodeId()), admins.get(l.getAdminId()), l.getBeforeExpire(), l.getAfterExpire(),
+                // Map.of().get(null) 会抛 NPE：赠送 / 后台记录没有激活码，激活码记录没有管理员
+                l.getCodeId() == null ? null : codes.get(l.getCodeId()),
+                l.getAdminId() == null ? null : admins.get(l.getAdminId()), l.getBeforeExpire(), l.getAfterExpire(),
                 l.getRemark(), l.getCreatedAt())).toList();
         return new UserAccess(brief(u), modules, logVOs);
     }
