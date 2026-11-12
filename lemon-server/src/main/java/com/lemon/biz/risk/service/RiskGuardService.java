@@ -1,7 +1,10 @@
 package com.lemon.biz.risk.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.lemon.biz.notify.FeishuNotifier;
 import com.lemon.biz.operation.service.SysConfigService;
+import com.lemon.biz.user.entity.AppUser;
+import com.lemon.biz.user.mapper.AppUserMapper;
 import com.lemon.biz.risk.entity.RiskAlert;
 import com.lemon.biz.risk.mapper.RiskAlertMapper;
 import java.time.Duration;
@@ -40,6 +43,8 @@ public class RiskGuardService {
     private final StringRedisTemplate redis;
     private final RiskAlertMapper mapper;
     private final SysConfigService configService;
+    private final FeishuNotifier notifier;
+    private final AppUserMapper userMapper;
 
     /** 用户看到了这些题目（拉题目详情、看笔记详情） */
     public void onQuestionsViewed(Long userId, Collection<Long> questionIds) {
@@ -106,6 +111,7 @@ public class RiskGuardService {
             try {
                 mapper.insert(a);
                 log.warn("[风险告警] userId={} type={} value={} threshold={} ip={}", userId, type, value, threshold, ip);
+                pushAlert(userId, type, value, threshold, ip);
             } catch (DuplicateKeyException ignored) {
                 // 并发：另一个请求已经记录
             }
@@ -114,6 +120,27 @@ public class RiskGuardService {
             existing.setIp(ip);
             mapper.updateById(existing);
         }
+    }
+
+    private static final java.util.Map<String, String> TYPE_LABELS = java.util.Map.of(
+            RiskAlert.HOUR_QUESTIONS, "1 小时内看题过多",
+            RiskAlert.DAY_QUESTIONS, "1 天内看题过多",
+            RiskAlert.HOUR_SESSIONS, "1 小时内开练习过多");
+
+    private void pushAlert(Long userId, String type, long value, int threshold, String ip) {
+        AppUser u = userMapper.selectById(userId);
+        String who = u == null ? "用户 #" + userId
+                : u.getNickname() + "（" + u.getUsername() + (u.getPhone() == null ? "" : "，" + maskPhone(u.getPhone())) + "）";
+        notifier.send(FeishuNotifier.Level.WARN, "风险告警：疑似批量获取题目",
+                "**类型**：" + TYPE_LABELS.getOrDefault(type, type)
+                        + "\n**用户**：" + who
+                        + "\n**数值 / 阈值**：" + value + " / " + threshold
+                        + (ip == null ? "" : "\n**IP**：" + ip)
+                        + "\n请到后台「运营 → 风险告警」查看处理");
+    }
+
+    static String maskPhone(String phone) {
+        return phone.length() == 11 ? phone.substring(0, 3) + "****" + phone.substring(7) : phone;
     }
 
     private static String clientIp() {

@@ -162,3 +162,7 @@ export interface RiskAlert {
 export const pageRiskAlerts = (params: { pageNum: number; pageSize: number; status?: number; alertType?: string }) =>
   http.get<PageResult<RiskAlert>>('/risk-alerts', params)
 export const handleRiskAlert = (id: number, remark: string) => http.put<void>(`/risk-alerts/${id}/handle`, { remark })
+
+// ---- 飞书推送 ----
+export const sendFeishuTest = () => http.post<void>('/notify/test')
+export const sendDailyReport = (date?: string) => http.post<void>(`/notify/daily-report${date ? `?date=${date}` : ''}`)

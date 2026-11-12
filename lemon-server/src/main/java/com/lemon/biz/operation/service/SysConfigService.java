@@ -33,6 +33,9 @@ public class SysConfigService {
             "app.trial_questions", new Rule(v -> v.matches("^([0-9]|[1-9][0-9]|100)$"), "请输入 0~100 的整数"),
             SERVICE_WECHAT, new Rule(v -> v.matches("^[A-Za-z0-9_-]{0,40}$"), "微信号只能包含字母、数字、下划线和横线"),
             SERVICE_NOTE, new Rule(v -> v.length() <= 100, "最多 100 字"),
+            "notify.feishu_webhook", new Rule(v -> v.isEmpty() || v.matches("^https://open\\.(feishu\\.cn|larksuite\\.com)/open-apis/bot/v2/hook/[A-Za-z0-9-]+$"),
+                    "请填写飞书群机器人的 webhook 地址（https://open.feishu.cn/open-apis/bot/v2/hook/...）"),
+            "notify.feishu_secret", new Rule(v -> v.length() <= 100, "最多 100 字"),
             "app.register_gift_days", new Rule(v -> v.matches("^\\d{1,4}$") && Integer.parseInt(v) <= 3650, "请输入 0~3650 的整数"),
             APP_THEME, new Rule(v -> v.matches("^(paper|indigo|teal|amber|rose|violet|coffee|graphite)$|^#[0-9a-fA-F]{6}$"),
                     "请选择预设主题，或填写 #RRGGBB 格式的主色"));

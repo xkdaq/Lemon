@@ -107,10 +107,17 @@ public class StatsService {
 
     /** 最近 days 天的内容热度 */
     public Content content(int days) {
-        LocalDateTime from = LocalDate.now().minusDays(days - 1L).atStartOfDay();
-        List<RankRow> bankRows = mapper.hotBanks(from, 10);
-        List<RankRow> chapterRows = mapper.hotChapters(from, 10);
-        List<RankRow> hardRows = mapper.hardQuestions(from, HARD_MIN_ATTEMPTS, 20);
+        LocalDate today = LocalDate.now();
+        return content(today.minusDays(days - 1L), today.plusDays(1), 10, 20);
+    }
+
+    /** [from, to) 的内容热度 */
+    public Content content(LocalDate fromDay, LocalDate toDay, int rankLimit, int hardLimit) {
+        LocalDateTime from = fromDay.atStartOfDay();
+        LocalDateTime to = toDay.atStartOfDay();
+        List<RankRow> bankRows = mapper.hotBanks(from, to, rankLimit);
+        List<RankRow> chapterRows = mapper.hotChapters(from, to, rankLimit);
+        List<RankRow> hardRows = mapper.hardQuestions(from, to, HARD_MIN_ATTEMPTS, hardLimit);
 
         Map<Long, Chapter> chapters = byId(chapterRows.isEmpty() ? List.of()
                 : chapterMapper.selectByIds(ids(chapterRows)), Chapter::getId);

@@ -99,23 +99,23 @@ public interface StatsMapper {
             SELECT c.bank_id AS id, COUNT(*) AS answers, COUNT(DISTINCT a.user_id) AS users,
                    COALESCE(SUM(a.is_correct = 0), 0) AS wrong
             FROM answer_record a JOIN chapter c ON c.id = a.chapter_id
-            WHERE a.created_at >= #{from} GROUP BY c.bank_id ORDER BY answers DESC LIMIT #{limit}
+            WHERE a.created_at >= #{from} AND a.created_at < #{to} GROUP BY c.bank_id ORDER BY answers DESC LIMIT #{limit}
             """)
-    List<RankRow> hotBanks(@Param("from") LocalDateTime from, @Param("limit") int limit);
+    List<RankRow> hotBanks(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("limit") int limit);
 
     @Select("""
             SELECT chapter_id AS id, COUNT(*) AS answers, COUNT(DISTINCT user_id) AS users,
                    COALESCE(SUM(is_correct = 0), 0) AS wrong
-            FROM answer_record WHERE created_at >= #{from} GROUP BY chapter_id ORDER BY answers DESC LIMIT #{limit}
+            FROM answer_record WHERE created_at >= #{from} AND created_at < #{to} GROUP BY chapter_id ORDER BY answers DESC LIMIT #{limit}
             """)
-    List<RankRow> hotChapters(@Param("from") LocalDateTime from, @Param("limit") int limit);
+    List<RankRow> hotChapters(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("limit") int limit);
 
     /** 错误率最高的题（至少 minAttempts 次判题作答） */
     @Select("""
             SELECT question_id AS id, COUNT(*) AS answers, COUNT(DISTINCT user_id) AS users, SUM(is_correct = 0) AS wrong
-            FROM answer_record WHERE created_at >= #{from} AND is_correct IS NOT NULL
+            FROM answer_record WHERE created_at >= #{from} AND created_at < #{to} AND is_correct IS NOT NULL
             GROUP BY question_id HAVING COUNT(*) >= #{minAttempts}
             ORDER BY SUM(is_correct = 0) / COUNT(*) DESC, COUNT(*) DESC LIMIT #{limit}
             """)
-    List<RankRow> hardQuestions(@Param("from") LocalDateTime from, @Param("minAttempts") int minAttempts, @Param("limit") int limit);
+    List<RankRow> hardQuestions(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("minAttempts") int minAttempts, @Param("limit") int limit);
 }

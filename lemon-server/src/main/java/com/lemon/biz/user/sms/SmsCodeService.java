@@ -1,5 +1,6 @@
 package com.lemon.biz.user.sms;
 
+import com.lemon.biz.notify.FeishuNotifier;
 import com.lemon.biz.user.mapper.SmsLogMapper;
 import com.lemon.common.BizException;
 import java.security.SecureRandom;
@@ -29,6 +30,7 @@ public class SmsCodeService {
     private final StringRedisTemplate redis;
     private final SpugSmsSender sender;
     private final SmsLogMapper logMapper;
+    private final FeishuNotifier notifier;
 
     /**
      * @param scene SmsLog.SCENE_*，记录用
@@ -47,6 +49,11 @@ public class SmsCodeService {
         SpugSmsSender.Result r = sender.send(phone, code);
         writeLog(phone, scene, ip, r);
         if (r.status() == SmsLog.STATUS_FAIL) {
+            // 短信发不出去用户就没法注册 / 找回密码：推送飞书（10 分钟内只推一次）
+            notifier.sendThrottled("sms-fail", java.time.Duration.ofMinutes(10), FeishuNotifier.Level.DANGER,
+                    "短信发送失败：用户收不到验证码",
+                    "**错误**：" + (r.error() == null ? "未知" : r.error())
+                            + "\n可能是短信服务余额不足或模板异常，请检查 Spug 控制台和后台「短信记录」");
             redis.delete("sms:cool:" + phone); // 没发出去不占冷却时间
             throw new BizException("短信发送失败，请稍后再试");
         }

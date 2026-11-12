@@ -4,6 +4,10 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
 import jakarta.validation.ConstraintViolationException;
+import com.lemon.biz.notify.FeishuNotifier;
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.Duration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -18,7 +22,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final FeishuNotifier notifier;
 
     @ExceptionHandler(BizException.class)
     public R<Object> handleBiz(BizException e) {
@@ -60,8 +67,20 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public R<Void> handleOther(Exception e) {
+    public R<Void> handleOther(Exception e, HttpServletRequest request) {
         log.error("未处理异常", e);
+        // 推送飞书：同一接口同一类异常 10 分钟内只推一次
+        try {
+            String path = request.getMethod() + " " + request.getRequestURI().replaceAll("/\\d+", "/{id}");
+            String msg = e.getMessage() == null ? "" : e.getMessage();
+            notifier.sendThrottled("error:" + path + ":" + e.getClass().getName(), Duration.ofMinutes(10),
+                    FeishuNotifier.Level.DANGER, "系统异常：用户看到「服务器开小差了」",
+                    "**接口**：" + path + "\n**异常**：" + e.getClass().getSimpleName()
+                            + "\n**信息**：" + (msg.length() > 300 ? msg.substring(0, 300) + "…" : msg)
+                            + "\n同类异常 10 分钟内不重复推送，详细堆栈见服务器日志");
+        } catch (Exception ignored) {
+            // 推送失败不影响返回
+        }
         return R.fail(ErrorCode.SERVER_ERROR);
     }
 }

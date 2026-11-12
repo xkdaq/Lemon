@@ -24,6 +24,17 @@ async function load() {
 }
 onMounted(load)
 
+const sending = ref('')
+async function feishu(kind: 'test' | 'report') {
+  sending.value = kind
+  try {
+    await (kind === 'test' ? api.sendFeishuTest() : api.sendDailyReport())
+    ElMessage.success('已发送，请到飞书群查看')
+  } finally {
+    sending.value = ''
+  }
+}
+
 async function save(row: Row) {
   await api.updateConfig(row.configKey, row.draft)
   ElMessage.success('已保存')
@@ -48,6 +59,40 @@ async function save(row: Row) {
         </template>
       </el-table-column>
     </el-table>
+    <div class="notify-card">
+      <div>
+        <div class="notify-title">飞书推送</div>
+        <div class="notify-sub">重要告警（风险告警、系统异常、短信发送失败）即时推送，每天 9 点推送前一天的日报。先在上面填好 webhook 地址并保存。</div>
+      </div>
+      <div class="notify-btns">
+        <el-button :loading="sending === 'test'" @click="feishu('test')">发送测试消息</el-button>
+        <el-button :loading="sending === 'report'" @click="feishu('report')">推送昨天的日报</el-button>
+      </div>
+    </div>
     <DocumentCard />
   </div>
 </template>
+
+<style scoped>
+.notify-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-top: 16px;
+}
+.notify-title {
+  font-weight: 600;
+}
+.notify-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.notify-btns {
+  flex-shrink: 0;
+}
+</style>
