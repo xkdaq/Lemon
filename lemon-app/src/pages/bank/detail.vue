@@ -24,7 +24,9 @@ onLoad((query) => {
 
 // 从考试页返回时刷新成绩
 onShow(async () => {
-  const res = await getBankDetail(bankId)
+  // 刷新期间标题栏显示加载，避免把旧进度当成没保存
+  uni.showNavigationBarLoading()
+  const res = await getBankDetail(bankId).finally(() => uni.hideNavigationBarLoading())
   bank.value = res.bank
   courses.value = res.courses
   papers.value = res.chapters
