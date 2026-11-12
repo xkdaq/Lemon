@@ -70,10 +70,13 @@ function back() {
     </view>
 
     <view class="actions">
-      <button v-if="firstWrongIndex >= 0" class="btn primary" @click="review(firstWrongIndex)">查看错题</button>
-      <button class="btn" @click="review(0)">查看全部解析</button>
-      <button v-if="canRestart" class="btn" @click="again">{{ isExam ? '重新考试' : '再练一次' }}</button>
-      <button class="btn plain" @click="back">返回</button>
+      <view v-if="firstWrongIndex >= 0" class="act-main" @click="review(firstWrongIndex)">查看错题</view>
+      <view v-else class="act-main" @click="review(0)">查看全部解析</view>
+      <view class="act-row">
+        <view v-if="firstWrongIndex >= 0" class="act-sub" @click="review(0)">查看全部解析</view>
+        <view v-if="canRestart" class="act-sub" @click="again">{{ isExam ? '重新考试' : '再练一次' }}</view>
+      </view>
+      <view class="act-back" @click="back">返回</view>
     </view>
     <view v-if="result.wrongQuestionIds.length" class="muted foot">答错的题已自动加入错题集</view>
     <view v-else-if="result.mode === Mode.WRONG && result.correct" class="muted foot">连续答对达到设定次数的题会自动移出错题集</view>
@@ -122,22 +125,42 @@ function back() {
   color: $lemon-danger;
 }
 .actions {
-  padding: 8rpx 24rpx;
+  padding: 8rpx 32rpx;
 }
-.btn {
-  margin-bottom: 20rpx;
+.act-main,
+.act-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
   border-radius: 999rpx;
   font-size: 30rpx;
-  background: $lemon-surface;
-  color: $lemon-text;
 }
-.btn.primary {
+.act-main {
   background: $lemon-primary;
   color: #fff;
+  font-weight: 600;
 }
-.btn.plain {
-  background: transparent;
+.act-row {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.act-row:empty {
+  display: none;
+}
+.act-sub {
+  flex: 1;
+  background: $lemon-surface;
+  border: 1px solid $lemon-line;
+  color: $lemon-text;
+}
+.act-back {
+  margin-top: 28rpx;
+  text-align: center;
+  font-size: 28rpx;
   color: $lemon-muted;
+  padding: 12rpx;
 }
 .foot {
   text-align: center;
