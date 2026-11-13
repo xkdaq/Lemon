@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { getBankDetail } from '@/api/content'
 import { BankType, type Chapter, type Course, type QuestionBank } from '@/api/types'
 import { goPractice } from '@/utils/nav'
@@ -21,6 +21,8 @@ let bankId = 0
 onLoad((query) => {
   bankId = Number(query?.bankId)
 })
+
+onShareAppMessage(() => ({ title: bank.value ? `一起刷「${bank.value.name}」` : 'Lemon 刷题', path: `/pages/bank/detail?bankId=${bankId}` }))
 
 // 从考试页返回时刷新成绩
 onShow(async () => {

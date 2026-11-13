@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { getCamp, getRank, joinCamp, startPunch, type CalendarDay, type CampDetail, type RankItem } from '@/api/punch'
 import { isLoggedIn } from '@/utils/auth'
 import { assetUrl } from '@/utils/html'
@@ -22,6 +22,8 @@ let month: string | undefined
 onLoad((query) => {
   campId = Number(query?.id)
 })
+
+onShareAppMessage(() => ({ title: camp.value ? `一起打卡：${camp.value.name}` : '每日打卡', path: `/pages/punch/detail?id=${campId}` }))
 
 // 做完题回来刷新日历和排行
 onShow(() => load())

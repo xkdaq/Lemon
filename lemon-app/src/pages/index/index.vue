@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getCurrentInstance, nextTick, ref } from 'vue'
-import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
+import { getCurrentInstance, nextTick, onUnmounted, ref } from 'vue'
+import { onPullDownRefresh, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { getHome } from '@/api/content'
 import type { Banner, ExamModule, LastSession, Notice } from '@/api/types'
 import { assetUrl } from '@/utils/html'
@@ -8,6 +8,7 @@ import { modeLabel } from '@/api/practice'
 import { getStats, type Stats } from '@/api/mine'
 import { isLoggedIn } from '@/utils/auth'
 import { listCamps, type CampCard } from '@/api/punch'
+import { LOGIN_EVENT } from '@/utils/wxAuth'
 
 const modules = ref<ExamModule[]>([])
 const notices = ref<Notice[]>([])
@@ -38,6 +39,14 @@ async function load() {
 
 // 每次回到首页刷新“继续上次练习”
 onShow(load)
+// 小程序启动时静默登录可能比首页加载晚，登录完成后再刷新一次
+uni.$on(LOGIN_EVENT, load)
+onUnmounted(() => uni.$off(LOGIN_EVENT, load))
+
+// 小程序分享（转发给朋友 / 朋友圈）
+const SHARE_TITLE = '考研政治、教育学刷题，错题自动整理'
+onShareAppMessage(() => ({ title: SHARE_TITLE, path: '/pages/index/index' }))
+onShareTimeline(() => ({ title: SHARE_TITLE }))
 onPullDownRefresh(async () => {
   await load().finally(() => uni.stopPullDownRefresh())
 })

@@ -37,19 +37,24 @@ public class AppAuthController {
             @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
             @NotBlank @Size(max = 8) String code,
             @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password,
-            @Size(max = 32) String nickname) {
+            @Size(max = 32) String nickname,
+            /** 小程序里调用时带上 wx.login 的 code，注册成功后绑定微信 */
+            @Size(max = 128) String wxCode) {
     }
 
     public record ResetReq(
             @NotBlank @Pattern(regexp = PHONE_REGEX, message = "格式不正确") String phone,
             @NotBlank @Size(max = 8) String code,
-            @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password) {
+            @NotBlank @Size(min = 6, max = 32, message = "长度需为 6-32 位") String password,
+            @Size(max = 128) String wxCode) {
     }
 
     public record LoginReq(
             /** 手机号或用户名 */
             @NotBlank @Size(max = 32) String account,
-            @NotBlank String password) {
+            @NotBlank String password,
+            /** 小程序里调用时带上 wx.login 的 code，登录成功后绑定微信 */
+            @Size(max = 128) String wxCode) {
     }
 
     public record ChangePasswordReq(
@@ -64,6 +69,16 @@ public class AppAuthController {
     public record TokenResp(String token) {
     }
 
+    public record WxCodeReq(@NotBlank @Size(max = 128) String code) {
+    }
+
+    public record WxLoginReq(
+            /** wx.login 拿到的 code */
+            @NotBlank @Size(max = 128) String code,
+            /** 手机号快速验证（button open-type=getPhoneNumber）拿到的 code */
+            @NotBlank @Size(max = 128) String phoneCode) {
+    }
+
     @Operation(summary = "发送短信验证码（注册 / 找回密码）")
     @PostMapping("/api/app/auth/sms-code")
     public R<Void> smsCode(@Valid @RequestBody CodeReq req, HttpServletRequest request) {
@@ -74,19 +89,31 @@ public class AppAuthController {
     @Operation(summary = "注册：手机号 + 验证码 + 密码（注册后自动登录）")
     @PostMapping("/api/app/auth/register")
     public R<TokenResp> register(@Valid @RequestBody RegisterReq req) {
-        return R.ok(new TokenResp(appAuthService.register(req.phone(), req.code(), req.password(), req.nickname())));
+        return R.ok(new TokenResp(appAuthService.register(req.phone(), req.code(), req.password(), req.nickname(), req.wxCode())));
     }
 
     @Operation(summary = "找回密码：手机号 + 验证码 + 新密码（重置后自动登录，其他设备下线）")
     @PostMapping("/api/app/auth/reset-password")
     public R<TokenResp> resetPassword(@Valid @RequestBody ResetReq req) {
-        return R.ok(new TokenResp(appAuthService.resetPassword(req.phone(), req.code(), req.password())));
+        return R.ok(new TokenResp(appAuthService.resetPassword(req.phone(), req.code(), req.password(), req.wxCode())));
     }
 
     @Operation(summary = "账号密码登录（账号 = 手机号或用户名）")
     @PostMapping("/api/app/auth/login")
     public R<TokenResp> login(@Valid @RequestBody LoginReq req) {
-        return R.ok(new TokenResp(appAuthService.login(req.account(), req.password())));
+        return R.ok(new TokenResp(appAuthService.login(req.account(), req.password(), req.wxCode())));
+    }
+
+    @Operation(summary = "小程序静默登录：openid 绑过账号直接登录，没绑过 token 为 null（再走授权手机号）")
+    @PostMapping("/api/app/auth/wx-silent-login")
+    public R<TokenResp> wxSilentLogin(@Valid @RequestBody WxCodeReq req) {
+        return R.ok(new TokenResp(appAuthService.wxSilentLogin(req.code())));
+    }
+
+    @Operation(summary = "小程序授权手机号登录：按手机号并入已有账号，没有就新建")
+    @PostMapping("/api/app/auth/wx-login")
+    public R<TokenResp> wxLogin(@Valid @RequestBody WxLoginReq req) {
+        return R.ok(new TokenResp(appAuthService.wxLogin(req.code(), req.phoneCode())));
     }
 
     @Operation(summary = "退出登录")

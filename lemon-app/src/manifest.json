@@ -12,7 +12,7 @@
     "themeLocation": "theme.json"
   },
   "mp-weixin": {
-    "appid": "",
+    "appid": "wx13d9372f0e91a86d",
     "setting": { "urlCheck": false, "es6": true, "minified": true },
     "usingComponents": true,
     "darkmode": true,

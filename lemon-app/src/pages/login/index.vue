@@ -5,11 +5,14 @@ import { setToken } from '@/utils/auth'
 import { clearAccessCache } from '@/utils/access'
 import { useCountdown } from '@/utils/useCountdown'
 import { openDocument } from '@/api/site'
+import { onLoad } from '@dcloudio/uni-app'
+import { getWxCode, markLoggedIn, silentLogin } from '@/utils/wxAuth'
 
 /**
  * Web：手机号 / 用户名 + 密码登录；注册 = 手机号 + 短信验证码 + 设置密码；忘记密码用短信验证码重置。
  * 短信只在注册和找回密码时发，省短信费。
- * 二期小程序：授权手机号直接登录（条件编译 #ifdef MP-WEIXIN），按手机号并入同一个账号。
+ * 小程序（个人主体用不了手机号快速验证）：页面一样，登录 / 注册 / 找回密码时顺带把微信绑到账号上，
+ * 以后打开小程序静默登录，不用再输密码。
  */
 type Mode = 'login' | 'register' | 'reset'
 const mode = ref<Mode>('login')
@@ -19,6 +22,19 @@ const sending = ref(false)
 const agreed = ref(false)
 const form = reactive({ account: '', phone: '', code: '', password: '', confirm: '', nickname: '' })
 const { seconds, start } = useCountdown()
+const isMp = ref(false)
+// #ifdef MP-WEIXIN
+isMp.value = true
+// #endif
+
+// 小程序：从别的页面跳来登录时，先试静默登录（这个微信绑过账号就直接回去）
+onLoad(async () => {
+  if (!isMp.value) return
+  if (await silentLogin()) {
+    clearAccessCache()
+    goBack()
+  }
+})
 
 const TITLES: Record<Mode, string> = { login: '欢迎回来', register: '注册账号', reset: '找回密码' }
 const submitText = computed(() => ({ login: '登录', register: '注册并登录', reset: '重置密码并登录' })[mode.value])
@@ -71,13 +87,16 @@ async function submit() {
   if (err) return toast(err)
   loading.value = true
   try {
+    // 小程序：带上 wx.login 的 code，登录成功后后端把这个微信绑到账号上（H5 为 undefined）
+    const wxCode = await getWxCode()
     const res =
       mode.value === 'login'
-        ? await authApi.login({ account: form.account.trim(), password: form.password })
+        ? await authApi.login({ account: form.account.trim(), password: form.password, wxCode })
         : mode.value === 'register'
-          ? await authApi.register({ phone: form.phone, code: form.code, password: form.password, nickname: form.nickname.trim() || undefined })
-          : await authApi.resetPassword({ phone: form.phone, code: form.code, password: form.password })
+          ? await authApi.register({ phone: form.phone, code: form.code, password: form.password, nickname: form.nickname.trim() || undefined, wxCode })
+          : await authApi.resetPassword({ phone: form.phone, code: form.code, password: form.password, wxCode })
     setToken(res.token)
+    markLoggedIn()
     clearAccessCache()
     await afterLogin()
   } finally {
@@ -125,6 +144,7 @@ function goBack() {
   <view class="login">
     <view class="title">{{ TITLES[mode] }}</view>
     <view class="muted sub">{{ mode === 'reset' ? '用注册时的手机号接收验证码，设置新密码' : '登录后同步做题进度、收藏和错题' }}</view>
+    <view v-if="isMp && mode === 'login'" class="mp-tip muted">网页版的账号可以直接登录，做题记录互通。登录一次后，以后打开小程序会自动登录。</view>
 
     <template v-if="mode === 'login'">
       <view class="field">
@@ -185,6 +205,11 @@ function goBack() {
 }
 .sub {
   margin: 12rpx 0 48rpx;
+}
+.mp-tip {
+  margin: -24rpx 0 40rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
 }
 .field {
   background: $lemon-surface;

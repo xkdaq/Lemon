@@ -10,3 +10,6 @@ lemon:
   sms:
     # 开发环境没配 SMS_SPUG_URL 时，验证码打印到日志里
     log-code: true
+  wx:
+    # 没配 WX_APPID 时走模拟登录，方便本地联调
+    mock: ${WX_MOCK:true}

@@ -5,6 +5,7 @@ import * as authApi from '@/api/auth'
 import type { AppUser } from '@/api/types'
 import { clearAccessCache } from '@/utils/access'
 import { isLoggedIn, removeToken } from '@/utils/auth'
+import { markLoggedOut } from '@/utils/wxAuth'
 import { confirmModal } from '@/utils/modal'
 
 /** 个人信息：昵称、用户名、手机号、密码、退出登录 */
@@ -51,6 +52,7 @@ async function logout() {
   if (!confirm) return
   await authApi.logout().catch(() => undefined)
   removeToken()
+  markLoggedOut()
   clearAccessCache()
   uni.switchTab({ url: '/pages/mine/index' })
 }

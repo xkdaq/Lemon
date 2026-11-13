@@ -5,15 +5,15 @@ import type { AppUser } from './types'
 export const sendCode = (phone: string, purpose: 'register' | 'reset') => http.post<void>('/auth/sms-code', { phone, purpose })
 
 /** 注册：手机号 + 验证码 + 密码，注册后自动登录 */
-export const register = (data: { phone: string; code: string; password: string; nickname?: string }) =>
+export const register = (data: { phone: string; code: string; password: string; nickname?: string; wxCode?: string }) =>
   http.post<{ token: string }>('/auth/register', data)
 
 /** 找回密码：手机号 + 验证码 + 新密码，重置后自动登录 */
-export const resetPassword = (data: { phone: string; code: string; password: string }) =>
+export const resetPassword = (data: { phone: string; code: string; password: string; wxCode?: string }) =>
   http.post<{ token: string }>('/auth/reset-password', data)
 
-/** 账号密码登录：账号 = 手机号或用户名 */
-export const login = (data: { account: string; password: string }) => http.post<{ token: string }>('/auth/login', data)
+/** 账号密码登录：账号 = 手机号或用户名。小程序里带上 wx.login 的 code，登录后绑定微信 */
+export const login = (data: { account: string; password: string; wxCode?: string }) => http.post<{ token: string }>('/auth/login', data)
 
 export const logout = () => http.post<void>('/auth/logout')
 

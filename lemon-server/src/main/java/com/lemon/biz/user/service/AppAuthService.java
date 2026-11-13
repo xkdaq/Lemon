@@ -6,12 +6,14 @@ import com.lemon.biz.user.entity.AppUser;
 import com.lemon.biz.user.mapper.AppUserMapper;
 import com.lemon.biz.user.sms.SmsCodeService;
 import com.lemon.biz.user.sms.SmsLog;
+import com.lemon.biz.user.wx.WxMiniClient;
 import com.lemon.common.BizException;
 import com.lemon.common.Status;
 import com.lemon.security.StpAppUtil;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,18 +27,21 @@ import org.springframework.transaction.annotation.Transactional;
  * <ul>
  *   <li>Web：注册 = 手机号 + 短信验证码 + 设置密码；登录 = 手机号或用户名 + 密码；
  *       忘记密码用短信验证码重置，也可以找后台重置</li>
- *   <li>小程序（二期）：授权手机号直接登录（没有账号自动注册、分配用户名），按手机号并入 Web 端同一个账号。
+ *   <li>小程序：首次用账号密码登录（或短信注册 / 找回密码）时绑定微信 openid，以后打开小程序静默登录。
  *       详见 docs/账号与登录.md</li>
  *   <li>早期「手机号 + 密码」注册时没验证手机号（phone_verified = 0），可能被人抢注；
  *       真正的机主用「忘记密码」验证手机号后，密码被重置、其他设备全部下线，账号归验证过的人</li>
  * </ul>
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AppAuthService {
 
     /** Web 注册来源 */
     private static final int FROM_WEB = 1;
+    /** 小程序注册来源 */
+    private static final int FROM_MINI = 2;
     private static final String PHONE_REGEX = "^1[3-9]\\d{9}$";
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -44,6 +49,7 @@ public class AppAuthService {
     private final PasswordEncoder passwordEncoder;
     private final SmsCodeService smsCodeService;
     private final ActivationService activationService;
+    private final WxMiniClient wxMiniClient;
 
     /** 发验证码。register：注册（手机号不能已注册）；reset：找回密码（手机号必须已注册） */
     public void sendCode(String phone, String purpose, String ip) {
@@ -59,7 +65,7 @@ public class AppAuthService {
 
     /** 注册：手机号 + 验证码 + 密码，注册后自动登录；赠送「政治」「教育学」（系统参数 app.register_gift_days，默认 365 天） */
     @Transactional(rollbackFor = Exception.class)
-    public String register(String phone, String code, String password, String nickname) {
+    public String register(String phone, String code, String password, String nickname, String wxCode) {
         BizException.throwIf(findByPhone(phone) != null, "该手机号已注册，请直接登录");
         smsCodeService.verify(phone, code);
         AppUser user = new AppUser();
@@ -72,13 +78,14 @@ public class AppAuthService {
         user.setLastLoginAt(LocalDateTime.now());
         insertWithUsername(user);
         activationService.grantRegister(user.getId());
+        bindWx(user.getId(), wxCode);
         StpAppUtil.login(user.getId());
         return StpAppUtil.token();
     }
 
     /** 找回密码：手机号 + 验证码 + 新密码；其他设备全部下线，当前设备直接登录 */
     @Transactional(rollbackFor = Exception.class)
-    public String resetPassword(String phone, String code, String password) {
+    public String resetPassword(String phone, String code, String password, String wxCode) {
         AppUser user = BizException.notNull(findByPhone(phone), "该手机号还没有注册");
         smsCodeService.verify(phone, code);
         BizException.throwIf(user.getStatus() != Status.ON, "账号已被禁用");
@@ -89,12 +96,13 @@ public class AppAuthService {
                 .set(AppUser::getLastLoginAt, LocalDateTime.now())
                 .eq(AppUser::getId, user.getId()));
         StpAppUtil.LOGIC.logout(user.getId());
+        bindWx(user.getId(), wxCode);
         StpAppUtil.login(user.getId());
         return StpAppUtil.token();
     }
 
     /** 账号密码登录：账号可以是手机号或用户名 */
-    public String login(String account, String password) {
+    public String login(String account, String password, String wxCode) {
         String a = account.trim();
         AppUser user = a.matches(PHONE_REGEX) ? findByPhone(a)
                 : userMapper.selectOne(Wrappers.<AppUser>lambdaQuery().eq(AppUser::getUsername, a.toLowerCase()));
@@ -104,6 +112,106 @@ public class AppAuthService {
         }
         BizException.throwIf(user.getStatus() != Status.ON, "账号已被禁用");
         touchLogin(user.getId());
+        bindWx(user.getId(), wxCode);
+        StpAppUtil.login(user.getId());
+        return StpAppUtil.token();
+    }
+
+    /**
+     * 小程序里用账号密码登录 / 注册 / 找回密码成功后，把这个微信绑到该账号上，以后打开小程序就静默登录。
+     * 这个微信之前绑在别的账号上：以最后一次登录为准改绑（用户输对了密码或验证了手机号，能证明账号是他的）。
+     * 绑定失败（微信接口异常等）不影响这次登录，只是下次还要手动登录。
+     */
+    private void bindWx(Long userId, String wxCode) {
+        if (wxCode == null || wxCode.isBlank()) {
+            return;
+        }
+        try {
+            WxMiniClient.Session session = wxMiniClient.code2Session(wxCode);
+            userMapper.update(null, Wrappers.<AppUser>lambdaUpdate()
+                    .set(AppUser::getOpenid, null).set(AppUser::getUnionid, null)
+                    .eq(AppUser::getOpenid, session.openid()).ne(AppUser::getId, userId));
+            var update = Wrappers.<AppUser>lambdaUpdate()
+                    .set(AppUser::getOpenid, session.openid())
+                    .eq(AppUser::getId, userId);
+            if (session.unionid() != null) {
+                update.set(AppUser::getUnionid, session.unionid());
+            }
+            userMapper.update(null, update);
+        } catch (RuntimeException e) {
+            log.warn("绑定小程序 openid 失败 userId={}：{}", userId, e.getMessage());
+        }
+    }
+
+    /**
+     * 小程序静默登录：wx.login 的 code 换 openid，绑过账号就直接登录；没绑过返回 null，前端再让用户授权手机号。
+     */
+    public String wxSilentLogin(String code) {
+        WxMiniClient.Session session = wxMiniClient.code2Session(code);
+        AppUser user = findByOpenid(session.openid());
+        if (user == null || user.getStatus() != Status.ON) {
+            return null;
+        }
+        touchLogin(user.getId());
+        StpAppUtil.login(user.getId());
+        return StpAppUtil.token();
+    }
+
+    /**
+     * 小程序授权手机号登录（规则见 docs/账号与登录.md）。
+     * 手机号快速验证只对「已认证的非个人主体」开放，现在的小程序是个人主体，前端没有启用这个入口；
+     * 以后换成企业主体可以直接用。
+     * <ul>
+     *   <li>这个微信已绑在别的手机号账号上：不自动改绑，提示用原手机号授权</li>
+     *   <li>手机号已有账号（含 Web 注册的）：绑定 openid（换了微信号以手机号为准，旧微信号不能再静默登录），
+     *       手机号标记已验证；之前没验证过手机号的（可能被抢注），旧密码作废、其他设备全部下线</li>
+     *   <li>没有账号：新建（没有密码，分配用户名，赠送注册礼包）</li>
+     * </ul>
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public String wxLogin(String code, String phoneCode) {
+        WxMiniClient.Session session = wxMiniClient.code2Session(code);
+        String phone = wxMiniClient.phoneNumber(phoneCode);
+        BizException.throwIf(!phone.matches(PHONE_REGEX), "暂不支持该手机号，请使用中国大陆手机号");
+
+        AppUser bound = findByOpenid(session.openid());
+        if (bound != null && !phone.equals(bound.getPhone())) {
+            throw new BizException("该微信已绑定手机号 " + maskPhone(bound.getPhone()) + "，请用这个手机号授权登录");
+        }
+
+        AppUser user = findByPhone(phone);
+        if (user == null) {
+            user = new AppUser();
+            user.setPhone(phone);
+            user.setPhoneVerified(1);
+            user.setOpenid(session.openid());
+            user.setUnionid(session.unionid());
+            user.setNickname(defaultNickname(phone));
+            user.setRegisterFrom(FROM_MINI);
+            user.setStatus(Status.ON);
+            user.setLastLoginAt(LocalDateTime.now());
+            insertWithUsername(user);
+            activationService.grantRegister(user.getId());
+        } else {
+            BizException.throwIf(user.getStatus() != Status.ON, "账号已被禁用");
+            boolean unverified = user.getPhoneVerified() == null || user.getPhoneVerified() != 1;
+            var update = Wrappers.<AppUser>lambdaUpdate()
+                    .set(AppUser::getOpenid, session.openid())
+                    .set(AppUser::getPhoneVerified, 1)
+                    .set(AppUser::getLastLoginAt, LocalDateTime.now())
+                    .eq(AppUser::getId, user.getId());
+            if (session.unionid() != null) {
+                update.set(AppUser::getUnionid, session.unionid());
+            }
+            if (unverified) {
+                // 手机号第一次被验证：账号归机主，抢注者设的密码作废
+                update.set(AppUser::getPassword, null).set(AppUser::getMustChangePassword, 0);
+            }
+            userMapper.update(null, update);
+            if (unverified) {
+                StpAppUtil.LOGIC.logout(user.getId());
+            }
+        }
         StpAppUtil.login(user.getId());
         return StpAppUtil.token();
     }
@@ -172,6 +280,14 @@ public class AppAuthService {
         update.setId(userId);
         update.setLastLoginAt(LocalDateTime.now());
         userMapper.updateById(update);
+    }
+
+    private AppUser findByOpenid(String openid) {
+        return userMapper.selectOne(Wrappers.<AppUser>lambdaQuery().eq(AppUser::getOpenid, openid));
+    }
+
+    private static String maskPhone(String phone) {
+        return phone == null || phone.length() < 7 ? "" : phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 
     private AppUser findByPhone(String phone) {

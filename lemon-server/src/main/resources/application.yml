@@ -80,6 +80,12 @@ lemon:
     spug-url: ${SMS_SPUG_URL:}
     minutes: ${SMS_SPUG_MINUTES:}
     log-code: false
+  # 微信小程序：AppSecret 只放服务器环境变量，不进代码仓库。
+  # mock=true 时不调微信接口（开发 / 自动化测试用）：code 当作 openid，phoneCode 当作手机号
+  wx:
+    appid: ${WX_APPID:}
+    secret: ${WX_SECRET:}
+    mock: false
   upload:
     dir: ${UPLOAD_DIR:./uploads}
     url-prefix: ${UPLOAD_URL_PREFIX:/uploads}

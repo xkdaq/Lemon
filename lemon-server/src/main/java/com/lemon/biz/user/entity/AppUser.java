@@ -35,10 +35,12 @@ public class AppUser extends BaseEntity {
     /** 1 = 后台重置过密码，登录后提示用户修改 */
     private Integer mustChangePassword;
 
-    /** 小程序 openid（二期） */
+    /** 小程序 openid */
+    @JsonIgnore
     private String openid;
 
-    /** 微信 unionid（二期） */
+    /** 微信 unionid */
+    @JsonIgnore
     private String unionid;
 
     /** 昵称 */

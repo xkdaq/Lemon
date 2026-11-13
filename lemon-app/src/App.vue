@@ -2,6 +2,7 @@
 import { onLaunch, onShow } from '@dcloudio/uni-app'
 import { applyTheme, watchSystemTheme } from '@/utils/settings'
 import { syncAppTheme } from '@/utils/theme'
+import { silentLogin } from '@/utils/wxAuth'
 
 onLaunch(() => {
   // #ifdef H5
@@ -18,6 +19,8 @@ onLaunch(() => {
   applyTheme()
   watchSystemTheme()
   syncAppTheme(applyTheme)
+  // 小程序：微信绑过账号的直接登录（H5 下什么都不做）
+  silentLogin()
 })
 
 // 底部 Tab 在启动时可能还没渲染，回到前台时再设置一次颜色

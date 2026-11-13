@@ -1,4 +1,5 @@
 import { getToken, removeToken } from './auth'
+import { silentLogin } from './wxAuth'
 
 /** 接口错误，code 为后端业务码（401 未登录等），网络错误为 -1 */
 export class ApiError extends Error {
@@ -21,11 +22,30 @@ export const NEED_ACTIVATION = 1010
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
+export interface RequestOptions {
+  /** 出错时不弹提示、不跳转（静默登录等后台请求用） */
+  quiet?: boolean
+  /** 内部用：401 后已经静默登录重试过一次 */
+  retried?: boolean
+}
+
+/** 多个请求同时 401 时只打开一次登录页 */
+let lastLoginNav = 0
+function goLogin() {
+  const now = Date.now()
+  if (now - lastLoginNav < 1500) return
+  const pages = getCurrentPages()
+  if (pages[pages.length - 1]?.route === 'pages/login/index') return
+  lastLoginNav = now
+  uni.navigateTo({ url: '/pages/login/index' })
+}
+
 /**
  * uni.request 封装：H5 / 小程序通用。
- * code=401 时清 token 并跳登录页；其它非 0 code 弹 toast 并 reject。
+ * code=401 时清 token：小程序先静默登录（微信绑过账号）再重发一次，不行再跳登录页；
+ * 其它非 0 code 弹 toast 并 reject。
  */
-export function request<T>(method: Method, url: string, data?: object): Promise<T> {
+export function request<T>(method: Method, url: string, data?: object, opts: RequestOptions = {}): Promise<T> {
   return new Promise((resolve, reject) => {
     const token = getToken()
     uni.request({
@@ -35,6 +55,7 @@ export function request<T>(method: Method, url: string, data?: object): Promise<
       header: token ? { Authorization: `Bearer ${token}` } : {},
       success: (res) => {
         if (res.statusCode === 429) {
+          if (opts.quiet) return reject(new ApiError(429, '操作太频繁'))
           uni.showToast({ title: '操作太频繁，请稍后再试', icon: 'none' })
           reject(new ApiError(429, '操作太频繁'))
           return
@@ -44,9 +65,24 @@ export function request<T>(method: Method, url: string, data?: object): Promise<
           resolve(body.data)
           return
         }
+        if (opts.quiet) {
+          reject(new ApiError(body?.code ?? -1, body?.msg ?? '请求失败'))
+          return
+        }
         if (body?.code === 401) {
           removeToken()
-          uni.navigateTo({ url: '/pages/login/index' })
+          if (!opts.retried) {
+            silentLogin().then((ok) => {
+              if (ok) {
+                request<T>(method, url, data, { ...opts, retried: true }).then(resolve, reject)
+              } else {
+                goLogin()
+                reject(new ApiError(401, body.msg ?? '请先登录'))
+              }
+            })
+            return
+          }
+          goLogin()
         } else if (body?.code === NEED_ACTIVATION) {
           // 模块未激活：引导去激活（没登录先登录）
           const moduleId = (body.data as { moduleId?: number } | null)?.moduleId
@@ -65,6 +101,7 @@ export function request<T>(method: Method, url: string, data?: object): Promise<
         reject(new ApiError(body?.code ?? -1, body?.msg ?? '请求失败'))
       },
       fail: (err) => {
+        if (opts.quiet) return reject(new ApiError(-1, err.errMsg ?? '网络异常'))
         uni.showToast({ title: '网络异常，请稍后再试', icon: 'none' })
         reject(new ApiError(-1, err.errMsg ?? '网络异常'))
       },
