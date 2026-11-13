@@ -11,6 +11,9 @@ const THEME_KEY = 'app.theme'
 type Row = api.SysConfig & { draft: string }
 const list = ref<Row[]>([])
 const loading = ref(false)
+/** 取值只有 1 / 0 的开关参数：显示成开关，切换即保存 */
+const SWITCH_KEYS = ['app.mp_activation', 'app.mp_restore']
+const isSwitch = (key: string) => SWITCH_KEYS.includes(key)
 const themeValue = computed(() => list.value.find((c) => c.configKey === THEME_KEY)?.configValue ?? 'paper')
 const plainList = computed(() => list.value.filter((c) => c.configKey !== THEME_KEY))
 
@@ -35,6 +38,15 @@ async function feishu(kind: 'test' | 'report') {
   }
 }
 
+async function toggle(row: Row, value: string) {
+  try {
+    await api.updateConfig(row.configKey, value)
+    ElMessage.success(value === '1' ? '已开启' : '已关闭')
+  } finally {
+    load()
+  }
+}
+
 async function save(row: Row) {
   await api.updateConfig(row.configKey, row.draft)
   ElMessage.success('已保存')
@@ -50,12 +62,19 @@ async function save(row: Row) {
       <el-table-column prop="configKey" label="参数键" width="220" />
       <el-table-column label="值" width="220">
         <template #default="{ row }">
-          <el-input v-model="row.draft" />
+          <el-switch
+            v-if="isSwitch(row.configKey)"
+            :model-value="row.configValue === '1'"
+            active-text="显示"
+            inactive-text="隐藏"
+            @change="(v: boolean | string | number) => toggle(row as Row, v ? '1' : '0')"
+          />
+          <el-input v-else v-model="row.draft" />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100">
         <template #default="{ row }">
-          <el-button link type="primary" :disabled="row.draft === row.configValue" @click="save(row as Row)">保存</el-button>
+          <el-button v-if="!isSwitch(row.configKey)" link type="primary" :disabled="row.draft === row.configValue" @click="save(row as Row)">保存</el-button>
         </template>
       </el-table-column>
     </el-table>

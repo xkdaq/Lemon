@@ -5,6 +5,7 @@ import * as authApi from '@/api/auth'
 import { getStats, type Stats } from '@/api/mine'
 import type { AppUser } from '@/api/types'
 import { isLoggedIn } from '@/utils/auth'
+import { showRestore } from '@/utils/features'
 
 const user = ref<AppUser | null>(null)
 const stats = ref<Stats | null>(null)
@@ -69,7 +70,7 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
       <view class="list-row" @click="go('/pages/note/list')">
         <text class="menu-text">我的笔记</text><text class="row-arrow">›</text>
       </view>
-      <view class="list-row" @click="go('/pages/restore/index')">
+      <view v-if="showRestore" class="list-row" @click="go('/pages/restore/index')">
         <text class="menu-text">恢复老系统错题</text><text class="row-arrow">›</text>
       </view>
       <view class="list-row" @click="openSettings">

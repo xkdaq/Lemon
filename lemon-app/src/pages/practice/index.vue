@@ -10,6 +10,7 @@ import { isLoggedIn } from '@/utils/auth'
 import { getAutoNext, getFontScale } from '@/utils/settings'
 import { ApiError, NEED_ACTIVATION } from '@/utils/request'
 import { goActivate } from '@/utils/access'
+import { showActivation } from '@/utils/features'
 import { NOTE_SAVED, type Note, type NoteSavedEvent } from '@/api/note'
 import NoteSheet from '@/components/NoteSheet.vue'
 import { assetUrl } from '@/utils/html'
@@ -465,9 +466,9 @@ function onTouchEnd(e: TouchEvent) {
     </view>
 
     <!-- 未激活的试做 -->
-    <view v-if="session.trial" class="trial-tip" @click="goActivate(session.moduleId)">
-      <text>试做本章前 {{ ids.length }} 题，激活后可刷全部题目</text>
-      <text class="trial-link">去激活 ›</text>
+    <view v-if="session.trial" class="trial-tip" @click="showActivation && goActivate(session.moduleId)">
+      <text>试做本章前 {{ ids.length }} 题{{ showActivation ? '，激活后可刷全部题目' : '' }}</text>
+      <text v-if="showActivation" class="trial-link">去激活 ›</text>
     </view>
 
     <!-- 题目 -->

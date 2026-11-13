@@ -49,14 +49,19 @@ public class AppContentController {
     private final ScoreService scoreService;
     private final com.lemon.biz.document.service.AppDocumentService documentService;
 
-    /** 用户端全局配置：theme 为主题配色（预设名或自定义主色 #RRGGBB） */
-    public record AppConfigResp(String theme) {
+    /**
+     * 用户端全局配置：theme 为主题配色（预设名或自定义主色 #RRGGBB）；
+     * mpActivation / mpRestore：小程序是否显示激活码入口、「恢复老系统错题」入口（网页端忽略，始终显示）
+     */
+    public record AppConfigResp(String theme, boolean mpActivation, boolean mpRestore) {
     }
 
-    @Operation(summary = "用户端全局配置（主题配色），启动时读取，无需登录")
+    @Operation(summary = "用户端全局配置（主题配色、小程序功能开关），启动时读取，无需登录")
     @GetMapping("/app-config")
     public R<AppConfigResp> appConfig() {
-        return R.ok(new AppConfigResp(configService.getString(SysConfigService.APP_THEME, SysConfigService.DEFAULT_THEME)));
+        return R.ok(new AppConfigResp(configService.getString(SysConfigService.APP_THEME, SysConfigService.DEFAULT_THEME),
+                "1".equals(configService.getString(SysConfigService.MP_ACTIVATION, "0")),
+                "1".equals(configService.getString(SysConfigService.MP_RESTORE, "0"))));
     }
 
     public record DocumentResp(String title, String content,

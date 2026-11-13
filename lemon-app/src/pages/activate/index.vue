@@ -4,6 +4,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { activate, type AccessInfo } from '@/api/access'
 import { clearAccessCache, loadAccess } from '@/utils/access'
 import { isLoggedIn } from '@/utils/auth'
+import { showActivation } from '@/utils/features'
 
 /**
  * 我的模块：各模块的激活状态；激活码输入默认收起，点「输入激活码」展开。
@@ -64,14 +65,15 @@ async function submit() {
         <text v-if="m.free" class="state on">免费</text>
         <text v-else-if="m.active" class="state on">已激活 · 至 {{ day(m.expireAt) }}</text>
         <text v-else-if="m.expireAt" class="state">已过期（{{ day(m.expireAt) }}）</text>
-        <text v-else class="state">未激活</text>
+        <text v-else class="state">{{ showActivation ? '未激活' : '未开通' }}</text>
       </view>
     </view>
     <view v-if="info && info.trialQuestions > 0" class="muted foot">
       未激活的模块可以浏览全部题库，每个章节免费试做前 {{ info.trialQuestions }} 题。
     </view>
 
-    <view v-if="showCode" class="card">
+    <!-- 小程序可由后台开关隐藏激活码入口 -->
+    <view v-if="showActivation && showCode" class="card">
       <view class="title">输入激活码</view>
       <view class="muted sub">一个激活码对应一个模块，激活后该模块下的所有题库都可以刷。</view>
       <view class="field">
@@ -80,7 +82,7 @@ async function submit() {
       <button class="submit" :loading="loading" :disabled="loading" @click="submit">激活</button>
     </view>
 
-    <view v-else class="code-link" @click="showCode = true">输入激活码 ›</view>
+    <view v-else-if="showActivation" class="code-link" @click="showCode = true">输入激活码 ›</view>
   </view>
 </template>
 

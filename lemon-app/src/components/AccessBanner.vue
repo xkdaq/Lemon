@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import type { ModuleAccess } from '@/api/access'
 import { goActivate, loadAccess } from '@/utils/access'
+import { showActivation } from '@/utils/features'
 
 /** 模块没激活时的提示条：可以试做每章前几题，引导去激活 */
 const props = defineProps<{ moduleId?: number }>()
@@ -21,12 +22,19 @@ onShow(refresh)
 </script>
 
 <template>
-  <view v-if="info && !info.active" class="access-banner" @click="goActivate(info.moduleId)">
+  <view v-if="info && !info.active && showActivation" class="access-banner" @click="goActivate(info.moduleId)">
     <view class="text">
       <view class="title">「{{ info.name }}」未激活</view>
       <view class="sub">{{ trial > 0 ? `每个章节可以免费试做前 ${trial} 题，激活后可刷全部题目` : '激活后才能刷题' }}</view>
     </view>
     <text class="btn">去激活</text>
+  </view>
+  <!-- 小程序隐藏激活码入口时：只说明可以试做，不引导激活 -->
+  <view v-else-if="info && !info.active" class="access-banner">
+    <view class="text">
+      <view class="title">「{{ info.name }}」暂未开通</view>
+      <view class="sub">{{ trial > 0 ? `每个章节可以免费试做前 ${trial} 题` : '暂时只能浏览题库目录' }}</view>
+    </view>
   </view>
 </template>
 

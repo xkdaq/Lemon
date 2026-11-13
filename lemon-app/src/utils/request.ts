@@ -1,5 +1,6 @@
 import { getToken, removeToken } from './auth'
 import { silentLogin } from './wxAuth'
+import { showActivation } from './features'
 
 /** 接口错误，code 为后端业务码（401 未登录等），网络错误为 -1 */
 export class ApiError extends Error {
@@ -86,6 +87,12 @@ export function request<T>(method: Method, url: string, data?: object, opts: Req
         } else if (body?.code === NEED_ACTIVATION) {
           // 模块未激活：引导去激活（没登录先登录）
           const moduleId = (body.data as { moduleId?: number } | null)?.moduleId
+          if (!showActivation.value) {
+            // 小程序隐藏了激活码入口：只提示，不引导去激活
+            uni.showModal({ title: '暂未开通', content: body.msg, showCancel: false, confirmText: '知道了' })
+            reject(new ApiError(body.code, body.msg))
+            return
+          }
           uni.showModal({
             title: '需要激活',
             content: `${body.msg}。可以在「我的 → 我的模块」里输入激活码。`,

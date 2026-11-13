@@ -24,11 +24,17 @@ public class SysConfigService {
     /** 客服微信号、客服说明（如服务时间） */
     public static final String SERVICE_WECHAT = "app.service_wechat";
     public static final String SERVICE_NOTE = "app.service_note";
+    /** 小程序是否显示激活码入口：1 显示 / 0 隐藏（网页端始终显示） */
+    public static final String MP_ACTIVATION = "app.mp_activation";
+    /** 小程序是否显示「恢复老系统错题」入口：1 显示 / 0 隐藏（网页端始终显示） */
+    public static final String MP_RESTORE = "app.mp_restore";
 
     private record Rule(Predicate<String> check, String hint) {
     }
 
     private static final Map<String, Rule> RULES = Map.of(
+            MP_ACTIVATION, new Rule(v -> v.matches("^[01]$"), "请填 1（显示）或 0（隐藏）"),
+            MP_RESTORE, new Rule(v -> v.matches("^[01]$"), "请填 1（显示）或 0（隐藏）"),
             WRONG_REMOVE_STREAK, new Rule(v -> v.matches("^([1-9]|10)$"), "请输入 1~10 的整数"),
             "app.trial_questions", new Rule(v -> v.matches("^([0-9]|[1-9][0-9]|100)$"), "请输入 0~100 的整数"),
             SERVICE_WECHAT, new Rule(v -> v.matches("^[A-Za-z0-9_-]{0,40}$"), "微信号只能包含字母、数字、下划线和横线"),

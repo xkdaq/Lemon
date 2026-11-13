@@ -6,6 +6,7 @@
  * - 默认配色 paper 写在 App.vue 里；其他配色在 H5 运行时注入一段样式覆盖。
  *   小程序暂不支持运行时换配色（全局 CSS 变量无法动态修改），始终使用默认配色。
  */
+import { setMpFeatures } from './features'
 import { http } from './request'
 
 export interface Palette {
@@ -201,7 +202,9 @@ export function getAppTheme(): string {
 /** 启动时从服务器拉取最新配色，有变化就重新应用 */
 export async function syncAppTheme(apply: () => void) {
   try {
-    const { theme } = await http.get<{ theme: string }>('/app-config')
+    const cfg = await http.get<{ theme: string; mpActivation?: boolean; mpRestore?: boolean }>('/app-config')
+    setMpFeatures(cfg)
+    const { theme } = cfg
     if (theme && theme !== getAppTheme()) {
       uni.setStorageSync(CACHE_KEY, theme)
       apply()
