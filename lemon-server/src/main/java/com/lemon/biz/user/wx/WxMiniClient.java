@@ -14,7 +14,8 @@ import org.springframework.web.client.RestClient;
  * 微信小程序服务端接口：登录凭证校验（code 换 openid）、手机号快速验证（phoneCode 换手机号）。
  * <p>
  * access_token 用「稳定版」接口获取（多实例 / 重启不会互相顶掉），缓存在 Redis，提前 5 分钟过期。
- * mock 模式（开发环境默认开）不调微信：code 原样当 openid，phoneCode 原样当手机号，方便本地和自动化测试。
+ * mock 模式（开发环境默认开）不调微信：所有 code 都当成同一个微信（openid = mock-devtools），
+ * code 写成 "mock:xxx" 时 openid = mock-xxx（模拟不同微信）；phoneCode 原样当手机号。方便本地和自动化测试。
  */
 @Slf4j
 @Component
@@ -46,7 +47,9 @@ public class WxMiniClient {
     /** wx.login 拿到的 code 换 openid（code 只能用一次，5 分钟有效） */
     public Session code2Session(String code) {
         if (mock) {
-            return new Session("mock-" + code, null);
+            // 开发者工具每次 wx.login 的 code 都不同，而真实 openid 对同一个微信是固定的：
+            // 默认当成同一个微信用户；接口测试要模拟不同微信时传 code = "mock:<任意标识>"
+            return new Session(code.startsWith("mock:") ? "mock-" + code.substring(5) : "mock-devtools", null);
         }
         checkConfigured();
         Map<?, ?> resp = client.get()
