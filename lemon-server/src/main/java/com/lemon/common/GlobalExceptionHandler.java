@@ -10,6 +10,8 @@ import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -59,6 +61,16 @@ public class GlobalExceptionHandler {
     public R<Void> handleBadRequest(Exception e) {
         log.warn("请求参数错误: {}", e.getMessage());
         return R.fail(ErrorCode.BAD_REQUEST.getCode(), ErrorCode.BAD_REQUEST.getMsg());
+    }
+
+    /**
+     * 请求方式 / 格式不对（如浏览器直接打开 POST 接口、爬虫用 HEAD 探测）：客户端问题，
+     * 不当作系统异常（不打 ERROR、不推送飞书）
+     */
+    @ExceptionHandler({HttpRequestMethodNotSupportedException.class, HttpMediaTypeNotSupportedException.class})
+    public R<Void> handleBadMethod(Exception e, HttpServletRequest request) {
+        log.debug("请求方式不正确: {} {} - {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        return R.fail(405, "请求方式不正确");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
