@@ -22,6 +22,11 @@
     { "path": "pages/doc/index", "style": { "navigationBarTitleText": "" } },
     { "path": "pages/service/index", "style": { "navigationBarTitleText": "联系客服" } },
     { "path": "pages/feedback/index", "style": { "navigationBarTitleText": "意见反馈" } },
+    { "path": "pages/recite/index", "style": { "navigationBarTitleText": "背诵", "enablePullDownRefresh": true } },
+    { "path": "pages/recite/seq", "style": { "navigationBarTitleText": "按套背" } },
+    { "path": "pages/recite/points", "style": { "navigationBarTitleText": "考点" } },
+    { "path": "pages/recite/dist", "style": { "navigationBarTitleText": "易混辨析" } },
+    { "path": "pages/recite/traps", "style": { "navigationBarTitleText": "错误说法" } },
     { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
     { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } }
   ],
@@ -45,10 +50,12 @@
       // 小程序按 theme.json 自动切换深色图标；H5 不支持图标变量，用固定路径，深色时由 utils/theme.ts 的 applyTabBar 换图标
       // #ifdef MP-WEIXIN
       { "pagePath": "pages/index/index", "text": "首页", "iconPath": "@tabHomeIcon", "selectedIconPath": "@tabHomeActiveIcon" },
+      { "pagePath": "pages/recite/index", "text": "背诵", "iconPath": "@tabReciteIcon", "selectedIconPath": "@tabReciteActiveIcon" },
       { "pagePath": "pages/mine/index", "text": "我的", "iconPath": "@tabMineIcon", "selectedIconPath": "@tabMineActiveIcon" }
       // #endif
       // #ifndef MP-WEIXIN
       { "pagePath": "pages/index/index", "text": "首页", "iconPath": "static/tabbar/home.png", "selectedIconPath": "static/tabbar/home-active.png" },
+      { "pagePath": "pages/recite/index", "text": "背诵", "iconPath": "static/tabbar/recite.png", "selectedIconPath": "static/tabbar/recite-active.png" },
       { "pagePath": "pages/mine/index", "text": "我的", "iconPath": "static/tabbar/mine.png", "selectedIconPath": "static/tabbar/mine-active.png" }
       // #endif
     ]

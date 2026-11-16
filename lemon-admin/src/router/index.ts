@@ -54,6 +54,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '题目搜索', icon: 'Search', group: '内容' },
   },
   {
+    path: 'content/recite',
+    name: 'recite',
+    component: () => import('@/views/content/ReciteView.vue'),
+    meta: { title: '背诵资料', icon: 'Reading', group: '内容' },
+  },
+  {
     path: 'operation/punch',
     name: 'punch',
     component: () => import('@/views/operation/PunchView.vue'),

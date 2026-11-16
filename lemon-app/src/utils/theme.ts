@@ -264,7 +264,8 @@ export function applyTabBar(theme: string, dark: boolean) {
   // #ifdef H5
   base = '/static/tabbar'
   // #endif
-  ;['home', 'mine'].forEach((name, index) =>
+  // 顺序和 pages.json 的 tabBar.list 一致
+  ;['home', 'recite', 'mine'].forEach((name, index) =>
     retry((fail) =>
       uni.setTabBarItem({
         index,

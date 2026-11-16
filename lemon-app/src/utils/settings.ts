@@ -63,13 +63,13 @@ function applyMpChrome() {
   const p = mpPalette.value
   uni.setNavigationBarColor({ frontColor: isDark.value ? '#ffffff' : '#000000', backgroundColor: p.bg, fail: () => undefined })
   uni.setBackgroundColor?.({ backgroundColor: p.bg, backgroundColorTop: p.bg, backgroundColorBottom: p.bg, fail: () => undefined })
-  // 底部 Tab 只能在 Tab 页设置（首页、我的显示时会再调用一次）
+  // 底部 Tab 只能在 Tab 页设置（首页、背诵、我的显示时会再调用一次）
   const route = getCurrentPages().slice(-1)[0]?.route ?? ''
   if (TAB_PAGES.includes(route)) applyTabBar(appTheme.value, isDark.value)
   // #endif
 }
 
-const TAB_PAGES = ['pages/index/index', 'pages/mine/index']
+const TAB_PAGES = ['pages/index/index', 'pages/recite/index', 'pages/mine/index']
 
 /**
  * 每个页面调用：返回 page-meta 的 page-style，并在页面显示时设置标题栏等颜色。

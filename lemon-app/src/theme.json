@@ -9,6 +9,8 @@
     "tabBorderStyle": "white",
     "tabHomeIcon": "static/tabbar/home.png",
     "tabHomeActiveIcon": "static/tabbar/home-active.png",
+    "tabReciteIcon": "static/tabbar/recite.png",
+    "tabReciteActiveIcon": "static/tabbar/recite-active.png",
     "tabMineIcon": "static/tabbar/mine.png",
     "tabMineActiveIcon": "static/tabbar/mine-active.png"
   },
@@ -22,6 +24,8 @@
     "tabBorderStyle": "black",
     "tabHomeIcon": "static/tabbar/home-dark.png",
     "tabHomeActiveIcon": "static/tabbar/home-active-dark.png",
+    "tabReciteIcon": "static/tabbar/recite-dark.png",
+    "tabReciteActiveIcon": "static/tabbar/recite-active-dark.png",
     "tabMineIcon": "static/tabbar/mine-dark.png",
     "tabMineActiveIcon": "static/tabbar/mine-active-dark.png"
   }
