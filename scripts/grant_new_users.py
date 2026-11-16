@@ -13,7 +13,7 @@
 """
 import argparse, datetime as dt, getpass, json, os, urllib.parse, urllib.request
 
-BASE = os.environ.get('LEMON_ADMIN_BASE', 'http://106.15.45.85:8091/api/admin')
+BASE = os.environ.get('LEMON_ADMIN_BASE', 'https://admin.lemonsxu.top/api/admin')
 opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
