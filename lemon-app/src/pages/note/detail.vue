@@ -5,6 +5,10 @@ import { NOTE_SAVED, getNote, type Note, type NoteDetail, type NoteSavedEvent } 
 import NoteSheet from '@/components/NoteSheet.vue'
 import { QType, qTypeLabel } from '@/api/practice'
 import { assetUrl, renderHtml } from '@/utils/html'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 笔记详情：题目（激活了的模块带答案解析）+ 我的笔记 */
 let questionId = 0
@@ -52,6 +56,9 @@ function preview(i: number) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="d" class="page">
     <view class="card">
       <view class="meta muted">

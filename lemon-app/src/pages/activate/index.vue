@@ -5,6 +5,10 @@ import { activate, type AccessInfo } from '@/api/access'
 import { clearAccessCache, loadAccess } from '@/utils/access'
 import { isLoggedIn } from '@/utils/auth'
 import { showActivation } from '@/utils/features'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * 我的模块：各模块的激活状态；激活码输入默认收起，点「输入激活码」展开。
@@ -58,6 +62,9 @@ async function submit() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view v-if="info" class="card list-card">
       <view v-for="m in info.modules" :key="m.moduleId" class="list-row" :class="{ focus: m.moduleId === focusModule && !m.active }">

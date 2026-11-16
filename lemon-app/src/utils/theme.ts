@@ -4,7 +4,7 @@
  * - 配色值：预设名（paper / indigo / teal / amber / rose / violet / coffee / graphite）或自定义主色 #RRGGBB
  * - 每套配色都有浅色、深色两组颜色；用户在「设置」里选的 跟随系统 / 浅色 / 深色 决定用哪组
  * - 默认配色 paper 写在 App.vue 里；其他配色在 H5 运行时注入一段样式覆盖。
- *   小程序暂不支持运行时换配色（全局 CSS 变量无法动态修改），始终使用默认配色。
+ * - 小程序不能运行时改全局样式：每个页面用 page-meta 把当前配色的 CSS 变量写到页面根节点上（见 settings.ts 的 usePageTheme）。
  */
 import { setMpFeatures } from './features'
 import { http } from './request'
@@ -214,7 +214,7 @@ export async function syncAppTheme(apply: () => void) {
   }
 }
 
-const vars = (p: Palette) =>
+export const vars = (p: Palette) =>
   `--bg:${p.bg};--surface:${p.surface};--text:${p.text};--muted:${p.muted};--line:${p.line};` +
   `--accent:${p.accent};--accent-soft:${p.accentSoft};--key:${p.key};--g0:${p.g0};--g1:${p.g1};--g2:${p.g2};` +
   `--done-color:${p.doneColor};--g2-soft:${p.g2Soft};--g0-soft:${p.g0Soft};--shadow:${p.shadow};`
@@ -249,10 +249,29 @@ html body .uni-tabbar-border, html body.theme-light .uni-tabbar-border, html bod
   // #endif
 }
 
-/** 底部 Tab 的文字颜色只能用接口改：按当前实际是浅色还是深色取色 */
+/** 底部 Tab 的颜色和图标只能用接口改（H5 / 小程序都是）：按当前实际是浅色还是深色取色 */
 export function applyTabBar(theme: string, dark: boolean) {
-  // #ifdef H5
   const p = resolveScheme(theme)[dark ? 'dark' : 'light']
-  uni.setTabBarStyle({ color: p.muted, selectedColor: p.accent, backgroundColor: p.surface, fail: () => undefined })
+  const suf = dark ? '-dark' : ''
+  // 启动时 Tab 可能还没渲染，设置会失败：每 200ms 重试，最多 3 秒
+  const retry = (run: (fail: () => void) => void, n = 0) =>
+    run(() => n < 15 && setTimeout(() => retry(run, n + 1), 200))
+  retry((fail) =>
+    uni.setTabBarStyle({ color: p.muted, selectedColor: p.accent, backgroundColor: p.surface, borderStyle: dark ? 'black' : 'white', fail }),
+  )
+  // 图标按深浅色切换（用户在设置里手动选了深浅色时，小程序的 theme.json 自动切换不够用，也要手动换）
+  let base = 'static/tabbar'
+  // #ifdef H5
+  base = '/static/tabbar'
   // #endif
+  ;['home', 'mine'].forEach((name, index) =>
+    retry((fail) =>
+      uni.setTabBarItem({
+        index,
+        iconPath: `${base}/${name}${suf}.png`,
+        selectedIconPath: `${base}/${name}-active${suf}.png`,
+        fail,
+      }),
+    ),
+  )
 }

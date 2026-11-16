@@ -3,6 +3,10 @@ import { computed, ref } from 'vue'
 import { claimLegacy, lookupLegacy, type LegacyPreview } from '@/api/legacy'
 import { clearAccessCache } from '@/utils/access'
 import { confirmModal } from '@/utils/modal'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * 恢复老系统错题：输入当时的激活码或订单号 → 查到老账号 → 确认后把错题恢复进错题集
@@ -53,6 +57,9 @@ const goWrong = () => uni.redirectTo({ url: '/pages/wrong/index' })
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view class="card">
       <view class="title">找回老系统的错题</view>

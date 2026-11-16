@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import { onLoad, onReachBottom, onUnload } from '@dcloudio/uni-app'
 import { NOTE_SAVED, listNotes, type NoteItem, type NoteSavedEvent } from '@/api/note'
 import { assetUrl } from '@/utils/html'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 我的笔记：最近修改的在前 */
 const list = ref<NoteItem[]>([])
@@ -46,6 +50,9 @@ function open(n: NoteItem) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view v-for="n in list" :key="n.questionId" class="card item" @click="open(n)">
       <view class="stem muted">{{ n.stemText }}</view>

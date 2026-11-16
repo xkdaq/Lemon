@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import { listCamps, type CampCard } from '@/api/punch'
 import { assetUrl } from '@/utils/html'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 const camps = ref<CampCard[]>([])
 const loaded = ref(false)
@@ -30,6 +34,9 @@ function open(c: CampCard) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view v-for="c in camps" :key="c.id" class="card camp" @click="open(c)">
       <image v-if="c.cover" class="cover" :src="assetUrl(c.cover)" mode="aspectFill" />

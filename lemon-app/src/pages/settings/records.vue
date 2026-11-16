@@ -2,6 +2,10 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { clearRecords, getRecords, type BankRecord } from '@/api/mine'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 清除做题记录：列出做过题的题库，选择后清除 */
 const list = ref<BankRecord[]>([])
@@ -40,6 +44,9 @@ async function doClear(includeWrong: boolean) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view class="muted intro">清除后，该题库的做题进度、正确率和未完成的练习会重置，收藏不受影响。清除后无法恢复。</view>
 

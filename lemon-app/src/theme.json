@@ -6,7 +6,11 @@
     "tabColor": "#8a7f73",
     "tabSelectedColor": "#b4432f",
     "tabBgColor": "#fffdf8",
-    "tabBorderStyle": "white"
+    "tabBorderStyle": "white",
+    "tabHomeIcon": "static/tabbar/home.png",
+    "tabHomeActiveIcon": "static/tabbar/home-active.png",
+    "tabMineIcon": "static/tabbar/mine.png",
+    "tabMineActiveIcon": "static/tabbar/mine-active.png"
   },
   "dark": {
     "navBgColor": "#171412",
@@ -15,6 +19,10 @@
     "tabColor": "#9b9086",
     "tabSelectedColor": "#e0785f",
     "tabBgColor": "#221e1b",
-    "tabBorderStyle": "black"
+    "tabBorderStyle": "black",
+    "tabHomeIcon": "static/tabbar/home-dark.png",
+    "tabHomeActiveIcon": "static/tabbar/home-active-dark.png",
+    "tabMineIcon": "static/tabbar/mine-dark.png",
+    "tabMineActiveIcon": "static/tabbar/mine-active-dark.png"
   }
 }

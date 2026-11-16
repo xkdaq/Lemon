@@ -4,6 +4,10 @@ import { ref } from 'vue'
 import { onLoad, onReachBottom, onShow } from '@dcloudio/uni-app'
 import { getList, removeWrong, type CollectedQuestion, type Kind, type Scope } from '@/api/collection'
 import { unfavorite, qTypeLabel } from '@/api/practice'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 收藏集 / 错题集 某个范围下的题目列表：点题目从该题开始练习，可取消收藏 / 移出错题集 */
 const kind = ref<Kind>('favorite')
@@ -74,6 +78,9 @@ function startAll() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view>
     <view class="head">
       <text class="muted">共 {{ total }} 题</text>

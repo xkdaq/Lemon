@@ -14,6 +14,10 @@ import { showActivation } from '@/utils/features'
 import { NOTE_SAVED, type Note, type NoteSavedEvent } from '@/api/note'
 import NoteSheet from '@/components/NoteSheet.vue'
 import { assetUrl } from '@/utils/html'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * 做题页。三种模式共用：
@@ -451,6 +455,9 @@ function onTouchEnd(e: TouchEvent) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="session" class="practice" :style="{ '--fs': fontScale }">
     <!-- 顶部信息 -->
     <view class="topbar">

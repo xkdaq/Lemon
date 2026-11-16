@@ -7,6 +7,10 @@ import { clearAccessCache } from '@/utils/access'
 import { isLoggedIn, removeToken } from '@/utils/auth'
 import { markLoggedOut } from '@/utils/wxAuth'
 import { confirmModal } from '@/utils/modal'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 个人信息：昵称、用户名、手机号、密码、退出登录 */
 const user = ref<AppUser | null>(null)
@@ -59,6 +63,9 @@ async function logout() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="user" class="page">
     <view class="head">
       <view class="avatar">{{ user.nickname?.slice(0, 1) ?? '柠' }}</view>

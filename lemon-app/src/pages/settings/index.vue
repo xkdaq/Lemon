@@ -3,9 +3,13 @@ import { ref } from 'vue'
 import { isLoggedIn } from '@/utils/auth'
 import { openDocument, type DocKey } from '@/api/site'
 import { FONT_SCALES, getAutoNext, getFontScale, getTheme, setAutoNext, setFontScale, setTheme, type ThemeMode } from '@/utils/settings'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
- * 设置：外观（主题，仅 H5）、做题（字号、答对自动下一题）、数据（清除做题记录）、关于（意见反馈、联系客服、用户协议、隐私政策）。
+ * 设置：外观（主题：跟随系统 / 浅色 / 深色）、做题（字号、答对自动下一题）、数据（清除做题记录）、关于（意见反馈、联系客服、用户协议、隐私政策）。
  * 账号相关（昵称、密码）在「我的 → 个人信息」。
  */
 const THEMES: { value: ThemeMode; label: string }[] = [
@@ -52,8 +56,10 @@ function openRecords() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
-    <!-- #ifdef H5 -->
     <view class="section-label">外观</view>
     <view class="card list-card">
       <view class="list-row">
@@ -65,7 +71,6 @@ function openRecords() {
         </view>
       </view>
     </view>
-    <!-- #endif -->
 
     <view class="section-label">做题</view>
     <view class="card list-card">

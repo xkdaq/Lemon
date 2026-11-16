@@ -7,6 +7,10 @@ import { goPractice } from '@/utils/nav'
 import ProgressBar from '@/components/ProgressBar.vue'
 import ChapterSections from '@/components/ChapterSections.vue'
 import AccessBanner from '@/components/AccessBanner.vue'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * 题库详情：
@@ -58,6 +62,9 @@ function openCourse(c: Course) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="bank">
     <AccessBanner :module-id="bank.moduleId" />
     <template v-if="bank.type === BankType.COURSE">

@@ -7,6 +7,10 @@ import { useCountdown } from '@/utils/useCountdown'
 import { openDocument } from '@/api/site'
 import { onLoad } from '@dcloudio/uni-app'
 import { getWxCode, markLoggedIn, silentLogin } from '@/utils/wxAuth'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * Web：手机号 / 用户名 + 密码登录；注册 = 手机号 + 短信验证码 + 设置密码；忘记密码用短信验证码重置。
@@ -141,6 +145,9 @@ function goBack() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="login">
     <view class="title">{{ TITLES[mode] }}</view>
     <view class="muted sub">{{ mode === 'reset' ? '用注册时的手机号接收验证码，设置新密码' : '登录后同步做题进度、收藏和错题' }}</view>

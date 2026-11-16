@@ -2,6 +2,10 @@
 import { reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import * as authApi from '@/api/auth'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * 设置 / 修改密码：已有密码要输入原密码；还没有密码的（如小程序授权登录的用户）直接设置。
@@ -42,6 +46,9 @@ async function save() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view class="muted desc">
       {{

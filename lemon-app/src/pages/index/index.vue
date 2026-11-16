@@ -9,6 +9,10 @@ import { getStats, type Stats } from '@/api/mine'
 import { isLoggedIn } from '@/utils/auth'
 import { listCamps, type CampCard } from '@/api/punch'
 import { LOGIN_EVENT } from '@/utils/wxAuth'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 const modules = ref<ExamModule[]>([])
 const notices = ref<Notice[]>([])
@@ -127,6 +131,9 @@ function openModule(m: ExamModule) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view class="page">
     <view v-if="stats" class="hero">
       <view class="hero-label">今日作答</view>

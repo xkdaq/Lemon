@@ -7,6 +7,10 @@ import { goPractice } from '@/utils/nav'
 import ProgressBar from '@/components/ProgressBar.vue'
 import ChapterSections from '@/components/ChapterSections.vue'
 import AccessBanner from '@/components/AccessBanner.vue'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 const chapters = ref<Chapter[]>([])
 const loaded = ref(false)
@@ -34,6 +38,9 @@ const accuracy = computed(() => (total.value.done ? Math.round((total.value.corr
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view>
     <AccessBanner :module-id="moduleId" />
     <view v-if="chapters.length" class="hero">

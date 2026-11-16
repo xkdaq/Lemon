@@ -42,8 +42,15 @@
     "fontSize": "16px",
     "height": "56px",
     "list": [
-      { "pagePath": "pages/index/index", "text": "首页" },
-      { "pagePath": "pages/mine/index", "text": "我的" }
+      // 小程序按 theme.json 自动切换深色图标；H5 不支持图标变量，用固定路径，深色时由 utils/theme.ts 的 applyTabBar 换图标
+      // #ifdef MP-WEIXIN
+      { "pagePath": "pages/index/index", "text": "首页", "iconPath": "@tabHomeIcon", "selectedIconPath": "@tabHomeActiveIcon" },
+      { "pagePath": "pages/mine/index", "text": "我的", "iconPath": "@tabMineIcon", "selectedIconPath": "@tabMineActiveIcon" }
+      // #endif
+      // #ifndef MP-WEIXIN
+      { "pagePath": "pages/index/index", "text": "首页", "iconPath": "static/tabbar/home.png", "selectedIconPath": "static/tabbar/home-active.png" },
+      { "pagePath": "pages/mine/index", "text": "我的", "iconPath": "static/tabbar/mine.png", "selectedIconPath": "static/tabbar/mine-active.png" }
+      // #endif
     ]
   }
 }

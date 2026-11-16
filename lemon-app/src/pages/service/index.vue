@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getServiceInfo } from '@/api/site'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 联系客服：客服微信号（点击复制） */
 const info = ref<{ wechat: string; note: string } | null>(null)
@@ -17,6 +21,9 @@ function copy() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="info" class="page">
     <view class="card">
       <view class="label muted">客服微信</view>

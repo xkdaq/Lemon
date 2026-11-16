@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getDocument, type DocKey } from '@/api/site'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 用户协议 / 隐私政策 */
 const doc = ref<{ title: string; content: string; updatedAt: string } | null>(null)
@@ -13,6 +17,9 @@ onLoad(async (query) => {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="doc" class="page">
     <view class="title">{{ doc.title }}</view>
     <view class="muted date">更新日期：{{ doc.updatedAt }}</view>

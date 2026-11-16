@@ -3,6 +3,10 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { Mode, getResult, getSession, modeLabel, type Result } from '@/api/practice'
 import { formatSeconds } from '@/utils/html'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 const result = ref<Result>()
 const firstWrongIndex = ref(-1)
@@ -47,6 +51,9 @@ function back() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="result" class="result">
     <view class="card hero">
       <view class="muted">{{ result.chapterName ? `${result.chapterName} · ` : '' }}{{ modeLabel[result.mode] }}</view>

@@ -6,6 +6,10 @@ import { getStats, type Stats } from '@/api/mine'
 import type { AppUser } from '@/api/types'
 import { isLoggedIn } from '@/utils/auth'
 import { showRestore } from '@/utils/features'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 const user = ref<AppUser | null>(null)
 const stats = ref<Stats | null>(null)
@@ -29,6 +33,9 @@ const go = (url: string) => (user.value ? uni.navigateTo({ url }) : goLogin())
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view>
     <view class="card profile" @click="user ? openProfile() : goLogin()">
       <view class="avatar">{{ user?.nickname?.slice(0, 1) ?? '柠' }}</view>

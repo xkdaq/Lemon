@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { onLoad, onReachBottom } from '@dcloudio/uni-app'
 import { myFeedback, submitFeedback, type Feedback } from '@/api/mine'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /** 意见反馈 / 题目纠错（从做题页“纠错”进入时带 questionId）+ 我的反馈记录 */
 const questionId = ref<number>()
@@ -56,6 +60,9 @@ async function submit() {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view>
     <view class="card">
       <view v-if="questionId" class="muted q-tip">正在纠错题目 #{{ questionId }}</view>

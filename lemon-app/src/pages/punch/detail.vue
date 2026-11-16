@@ -5,6 +5,10 @@ import { getCamp, getRank, joinCamp, startPunch, type CalendarDay, type CampDeta
 import { isLoggedIn } from '@/utils/auth'
 import { assetUrl } from '@/utils/html'
 import { confirmModal } from '@/utils/modal'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 /**
  * 打卡活动：加入、今日打卡、打卡日历（可补卡）、排行榜
@@ -156,6 +160,9 @@ const isToday = (d: CalendarDay) => d.day === localToday()
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view v-if="camp" class="page">
     <view class="card head">
       <image v-if="camp.cover" class="cover" :src="assetUrl(camp.cover)" mode="aspectFill" />

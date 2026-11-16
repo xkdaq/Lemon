@@ -4,6 +4,10 @@ import { onLoad } from '@dcloudio/uni-app'
 import { getBanks, getCategories } from '@/api/content'
 import AccessBanner from '@/components/AccessBanner.vue'
 import { BankType, type BankCategory, type QuestionBank } from '@/api/types'
+import { usePageTheme } from '@/utils/settings'
+
+/** 小程序：页面配色（深浅色 / 后台配色），见 utils/settings.ts */
+const themeStyle = usePageTheme()
 
 const allBanks = ref<QuestionBank[]>([])
 const categories = ref<BankCategory[]>([])
@@ -50,6 +54,9 @@ function openBank(b: QuestionBank) {
 </script>
 
 <template>
+  <!-- #ifdef MP-WEIXIN -->
+  <page-meta :page-style="themeStyle" />
+  <!-- #endif -->
   <view>
     <AccessBanner :module-id="moduleIdRef" />
     <scroll-view v-if="tabs.length" scroll-x class="tabs" :show-scrollbar="false">
