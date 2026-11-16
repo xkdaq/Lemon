@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>柠檬题海 · 考研政治、教育学在线刷题</title>
+<meta name="description" content="柠檬题海：考研政治、教育学、专业二题库，章节练习、模拟考试、错题集、背诵考点，网页和微信小程序都能用。">
+<meta name="theme-color" content="#f6f1e8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<style>
+:root {
+  --bg: #f6f1e8;
+  --surface: #fffdf8;
+  --ink: #2a2420;
+  --muted: #8a7f73;
+  --line: #e8dfd2;
+  --accent: #b4432f;
+  --accent-ink: #fff;
+  --accent-soft: #f6e3dc;
+  --shadow: 0 1px 2px rgba(60, 40, 20, .04), 0 12px 32px rgba(60, 40, 20, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171412;
+    --surface: #221e1b;
+    --ink: #eee6dc;
+    --muted: #9b9086;
+    --line: #342e29;
+    --accent: #e0785f;
+    --accent-ink: #1a1210;
+    --accent-soft: #3a2620;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .35);
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* 顶栏 */
+.nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid transparent; transition: border-color .2s; }
+.nav.scrolled { border-bottom-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; height: 64px; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.brand img { width: 32px; height: 32px; border-radius: 8px; }
+.nav-links { margin-left: auto; display: flex; align-items: center; gap: 28px; font-size: 15px; color: var(--muted); }
+.nav-links a:hover { color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 600; transition: transform .15s, opacity .15s; white-space: nowrap; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { opacity: .92; }
+.btn-ghost { border: 1px solid var(--line); background: var(--surface); }
+.btn-ghost:hover { border-color: var(--muted); }
+.nav .btn { height: 38px; padding: 0 18px; font-size: 14px; color: var(--accent-ink); }
+
+/* 首屏 */
+.hero { padding: 72px 0 40px; }
+.hero .wrap { display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 48px; }
+.eyebrow { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 600; }
+.hero h1 { margin-top: 18px; font-size: 56px; line-height: 1.12; letter-spacing: -.01em; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero .lead { margin-top: 18px; font-size: 18px; color: var(--muted); max-width: 30em; }
+.hero .cta { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+.hero .note { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+.phones { position: relative; height: 560px; }
+.phone { position: absolute; width: 262px; aspect-ratio: 585 / 1000; border-radius: 34px; padding: 9px; background: #1d1a18; box-shadow: var(--shadow); }
+.phone img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 26px; }
+.phone.front { right: 12%; top: 0; z-index: 2; }
+.phone.back { right: 50%; top: 80px; transform: rotate(-5deg); opacity: .96; }
+
+/* 区块通用 */
+section { padding: 72px 0; }
+.sec-head { text-align: center; max-width: 36em; margin: 0 auto 44px; }
+.sec-head h2 { font-size: 34px; line-height: 1.25; }
+.sec-head p { margin-top: 12px; color: var(--muted); font-size: 16px; }
+
+/* 科目 */
+.subjects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.subject { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px 24px; }
+.subject h3 { font-size: 22px; }
+.subject p { margin-top: 8px; color: var(--muted); font-size: 15px; }
+.subject .tags { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.subject .tags span { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+
+/* 功能 */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.feature { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px 24px; }
+.feature .icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.feature .icon svg { width: 22px; height: 22px; }
+.feature h3 { margin-top: 16px; font-size: 18px; }
+.feature p { margin-top: 6px; color: var(--muted); font-size: 15px; }
+
+/* 使用方式 */
+.ways { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.way { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 32px; display: flex; flex-direction: column; }
+.way h3 { font-size: 22px; }
+.way p { margin-top: 8px; color: var(--muted); font-size: 15px; flex: 1; }
+.way .url { margin-top: 20px; font-size: 15px; font-weight: 600; color: var(--accent); word-break: break-all; }
+.way .btn { margin-top: 20px; align-self: flex-start; }
+.qr { margin-top: 20px; display: flex; align-items: center; gap: 16px; }
+.qr img { width: 136px; height: 136px; border-radius: 12px; background: #fff; padding: 6px; border: 1px solid var(--line); }
+.qr span { font-size: 14px; color: var(--muted); }
+
+/* 客服 */
+.contact { background: var(--accent); color: var(--accent-ink); border-radius: 28px; padding: 48px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.contact h2 { font-size: 28px; }
+.contact p { margin-top: 6px; opacity: .85; }
+.wechat { display: flex; align-items: center; gap: 10px; background: color-mix(in srgb, var(--accent-ink) 14%, transparent); border-radius: 999px; padding: 6px 6px 6px 20px; font-size: 16px; }
+.wechat b { letter-spacing: .02em; }
+.wechat button { height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--accent-ink); color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+/* 页脚 */
+footer { padding: 40px 0 calc(40px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); margin-top: 72px; color: var(--muted); font-size: 13px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+footer nav { display: flex; gap: 20px; flex-wrap: wrap; }
+footer a:hover { color: var(--ink); }
+
+/* 平板 */
+@media (max-width: 900px) {
+  .hero { padding-top: 48px; }
+  .hero .wrap { grid-template-columns: 1fr; gap: 32px; text-align: center; }
+  .hero .lead { margin-left: auto; margin-right: auto; }
+  .hero .cta { justify-content: center; }
+  .phones { height: 470px; max-width: 460px; margin: 0 auto; width: 100%; }
+  .phone { width: 220px; }
+  .phone.front { right: 8%; }
+  .phone.back { right: auto; left: 8%; top: 60px; }
+  .subjects, .features { grid-template-columns: 1fr 1fr; }
+}
+/* 手机 */
+@media (max-width: 600px) {
+  .wrap { padding: 0 16px; }
+  .nav-links a.hide-sm { display: none; }
+  .nav-links { gap: 16px; }
+  .hero h1 { font-size: 38px; }
+  .hero .lead { font-size: 16px; }
+  .hero .cta .btn { flex: 1; min-width: 0; }
+  .phones { height: 380px; }
+  .phone { width: 178px; border-radius: 26px; padding: 7px; }
+  .phone img { border-radius: 20px; }
+  .phone.front { right: 2%; }
+  .phone.back { left: 2%; top: 44px; }
+  section { padding: 52px 0; }
+  .sec-head { margin-bottom: 28px; }
+  .sec-head h2 { font-size: 26px; }
+  .subjects, .features, .ways { grid-template-columns: 1fr; gap: 12px; }
+  .subject, .feature { padding: 22px 20px; }
+  .way { padding: 24px 20px; }
+  .contact { padding: 32px 22px; border-radius: 22px; }
+  .contact h2 { font-size: 22px; }
+  .wechat { width: 100%; justify-content: space-between; }
+  footer { margin-top: 52px; }
+  footer .wrap { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="assets/icon-192.png" alt="">柠檬题海</a>
+    <nav class="nav-links">
+      <a class="hide-sm" href="#features">功能</a>
+      <a class="hide-sm" href="#use">使用方式</a>
+      <a class="hide-sm" href="#contact">联系客服</a>
+      <a class="btn btn-primary" href="https://app.lemonsxu.top/">开始刷题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">考研政治 · 教育学 · 专业二</span>
+        <h1>每天刷一点，<br><em>考研稳一点</em></h1>
+        <p class="lead">按章节练、整套模拟、错题自动收录，再配上肖八肖四的背诵考点。手机打开就能刷，进度自动保存。</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://app.lemonsxu.top/">网页版开始刷题</a>
+          <a class="btn btn-ghost" href="#use">微信小程序</a>
+        </div>
+        <p class="note">新用户注册即送政治、教育学模块</p>
+      </div>
+      <div class="phones" aria-hidden="true">
+        <div class="phone back"><img src="assets/screen-recite.jpg" alt="" loading="lazy"></div>
+        <div class="phone front"><img src="assets/screen-home.jpg" alt=""></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="subjects">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>三个科目，一套刷法</h2>
+        <p>每个科目都有题库、模拟卷和章节练习</p>
+      </div>
+      <div class="subjects">
+        <div class="subject">
+          <h3>政治</h3>
+          <p>分章节刷选择题，冲刺阶段配肖八肖四背诵。</p>
+          <div class="tags"><span>章节练习</span><span>模拟卷</span><span>肖八背诵</span></div>
+        </div>
+        <div class="subject">
+          <h3>教育学</h3>
+          <p>按知识点分章，客观题即时判分，主观题看参考答案。</p>
+          <div class="tags"><span>章节练习</span><span>模拟卷</span><span>参考答案</span></div>
+        </div>
+        <div class="subject">
+          <h3>专业二</h3>
+          <p>专业课题库同样按章节整理，随时练、随时查。</p>
+          <div class="tags"><span>题库</span><span>模拟卷</span><span>章节练习</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>刷题之外，帮你记住</h2>
+        <p>做过的题不白做，错过的题不再错</p>
+      </div>
+      <div class="features">
+        <div class="feature">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+          <h3>章节练习</h3>
+          <p>按题库、章节逐题练，答完立刻看答案和解析，解析一键复制。</p>
+        </div>
+        <div class="feature">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg></div>
+          <h3>模拟考试</h3>
+          <p>整套模拟卷一次做完，自动算分，之后随时回看每道题的解析。</p>
+        </div>
+        <div class="feature">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+          <h3>错题集与收藏</h3>
+          <p>做错的题自动进错题集，重点题一键收藏，考前集中过一遍。</p>
+        </div>
+        <div class="feature">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></div>
+          <h3>背诵考点</h3>
+          <p>肖八选择题按套背、按考点通读，易混辨析和错误说法单独整理。</p>
+        </div>
+        <div class="feature">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></div>
+          <h3>题目笔记</h3>
+          <p>每道题都能记自己的笔记，文字加图片，只有你自己看得到。</p>
+        </div>
+        <div class="feature">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+          <h3>全站正确率</h3>
+          <p>每道题显示全站作答次数和正确率，一眼看出哪些是大家都会错的。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="use">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>手机、平板、电脑都能用</h2>
+        <p>不用下载 App，打开就能刷</p>
+      </div>
+      <div class="ways">
+        <div class="way">
+          <h3>网页版</h3>
+          <p>用浏览器或微信直接打开，手机号注册登录，做题进度和错题自动保存，换设备登录照样接着刷。</p>
+          <div class="url">app.lemonsxu.top</div>
+          <a class="btn btn-primary" href="https://app.lemonsxu.top/">打开网页版</a>
+        </div>
+        <div class="way">
+          <h3>微信小程序</h3>
+          <p>在微信里扫码打开小程序。小程序和网页版是两套独立账号，两边都可以用。</p>
+          <div class="qr" id="mp-qr" hidden>
+            <img src="assets/mini-icon.jpg" alt="柠檬题海小程序码" onload="this.parentNode.hidden=false" onerror="this.parentNode.remove()">
+            <span>微信扫一扫<br>或在微信里长按识别</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact">
+        <div>
+          <h2>开通模块、遇到问题，找客服</h2>
+          <p>添加客服微信，备注「刷题」</p>
+        </div>
+        <div class="wechat">
+          <span>微信号 <b id="wx">monkeys29</b></span>
+          <button type="button" id="copy">复制</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>© <span id="year">2026</span> 柠檬题海 · <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">鄂ICP备2024066684号-9</a></div>
+    <nav>
+      <a href="https://app.lemonsxu.top/pages/doc/index?key=agreement">用户协议</a>
+      <a href="https://app.lemonsxu.top/pages/doc/index?key=privacy">隐私政策</a>
+      <a href="https://app.lemonsxu.top/">网页版</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+const nav = document.getElementById('nav');
+const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const text = document.getElementById('wx').textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = Object.assign(document.createElement('textarea'), { value: text });
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  e.target.textContent = '已复制';
+  setTimeout(() => (e.target.textContent = '复制'), 1500);
+});
+</script>
+</body>
+</html>
