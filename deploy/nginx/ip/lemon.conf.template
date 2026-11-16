@@ -1,4 +1,5 @@
 # 备案期间用 IP + 端口访问（仅限安全组放行的 IP）：容器 80 = 用户端，81 = 管理后台；不按域名区分
+include /etc/nginx/snippets/realip.conf;
 limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
 limit_req_status 429;
 

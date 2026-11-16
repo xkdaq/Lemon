@@ -3,6 +3,7 @@
 #   admin.${DOMAIN} 管理系统，只代理 /api/admin
 #   api.${DOMAIN}   小程序接口域名，只代理 /api/app
 # 登录 / 注册限流：每个 IP 每分钟 10 次，允许突发 10 次，防暴力破解密码
+include /etc/nginx/snippets/realip.conf;
 limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
 limit_req_status 429;
 
