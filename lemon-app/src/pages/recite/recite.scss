@@ -2,6 +2,9 @@
 .chips {
   white-space: nowrap;
   padding: 20rpx 32rpx 4rpx;
+  /* 内边距算进宽度里，否则比屏幕宽，整页能左右拖动 */
+  width: 100%;
+  box-sizing: border-box;
 }
 .chip {
   display: inline-block;

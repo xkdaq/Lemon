@@ -60,8 +60,6 @@ function chooseSet(no: number) {
 
 /** 吸顶题号条的高度（px），跳转时让开它，题目不被挡住 */
 const STRIP_H = 42
-/** H5 顶部标题栏高度：吸顶要从它下面开始（小程序为 0） */
-const windowTop = uni.getWindowInfo?.().windowTop ?? 0
 /** 当前选中的题号（点过 / 跳过来的），题号条里高亮 */
 const curNo = ref(0)
 const stripTarget = ref('')
@@ -84,7 +82,15 @@ function jump(no: number) {
       const rect = res?.[0] as UniApp.NodeInfo | null
       const vp = res?.[1] as UniApp.NodeInfo | null
       if (!rect || rect.top == null) return
-      const top = rect.top + (vp?.scrollTop ?? 0) - STRIP_H - 8
+      let fix = 0
+      // #ifdef H5
+      // 微信里页面自带标题栏被隐藏（App.vue 的 html.in-wechat），但 uni 量位置时仍按有标题栏算：
+      // 补上 uni 认为的标题栏高度和题号条实际吸顶位置的差
+      const strip = document.querySelector('.strip-wrap')
+      const stuckTop = strip ? parseFloat(getComputedStyle(strip).top) || 0 : 0
+      fix = (uni.getWindowInfo?.().windowTop ?? 0) - stuckTop
+      // #endif
+      const top = rect.top + (vp?.scrollTop ?? 0) - STRIP_H - 8 + fix
       uni.pageScrollTo({ scrollTop: Math.max(0, top), duration: 0 })
     })
 }
@@ -113,7 +119,7 @@ const rightText = (i: ReciteItem) =>
     </view>
 
     <!-- 题号条：一行横向滑动，吸顶，往下看题时也能随时跳 -->
-    <view class="strip-wrap" :style="{ top: `${windowTop}px` }">
+    <view class="strip-wrap">
       <scroll-view scroll-x class="strip" :scroll-into-view="stripTarget" scroll-with-animation :show-scrollbar="false">
         <view
           v-for="i in items"
@@ -193,6 +199,8 @@ const rightText = (i: ReciteItem) =>
 }
 .strip-wrap {
   position: sticky;
+  /* 吸在标题栏下面：H5 由 uni 提供 --window-top（微信里隐藏标题栏时为 0），小程序没有这个变量，取 0 */
+  top: var(--window-top, 0px);
   z-index: 10;
   margin-top: 12rpx;
   padding: 12rpx 0;
