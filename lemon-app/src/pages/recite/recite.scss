@@ -1,0 +1,116 @@
+/* 背诵模块四个页面共用的样式 */
+.chips {
+  white-space: nowrap;
+  padding: 20rpx 32rpx 4rpx;
+}
+.chip {
+  display: inline-block;
+  margin-right: 12rpx;
+  padding: 8rpx 22rpx;
+  border-radius: 999rpx;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 26rpx;
+}
+.chip.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.chip.toggle.on {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+.tag {
+  display: inline-block;
+  margin-right: 10rpx;
+  padding: 2rpx 14rpx;
+  border-radius: 999rpx;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+.subj {
+  color: #fff;
+}
+/* 遮住答案：灰块，点一下显示 */
+.ans {
+  color: var(--accent);
+}
+.ans.hide {
+  color: transparent;
+  background: var(--line);
+  border-radius: 6rpx;
+}
+.kv {
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+.box {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 14rpx;
+  background: var(--bg);
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+.box-title {
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+.wrong {
+  font-weight: 600;
+}
+.why {
+  color: var(--g2);
+}
+.tip {
+  margin-top: 8rpx;
+  color: var(--g1);
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+.mn {
+  margin-top: 6rpx;
+  color: var(--g2);
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+.drow {
+  display: flex;
+  gap: 16rpx;
+  padding: 10rpx 0;
+  border-top: 1px solid var(--line);
+}
+.drow:first-of-type {
+  border-top: 0;
+}
+.dk {
+  flex: 0 0 30%;
+  color: var(--accent);
+  font-weight: 600;
+}
+.dv {
+  flex: 1;
+}
+.search {
+  margin: 16rpx 32rpx 0;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 28rpx;
+}
+.src {
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+}
+.empty {
+  padding: 120rpx 0;
+  text-align: center;
+}

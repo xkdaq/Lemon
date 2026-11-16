@@ -22,6 +22,11 @@
     { "path": "pages/doc/index", "style": { "navigationBarTitleText": "" } },
     { "path": "pages/service/index", "style": { "navigationBarTitleText": "联系客服" } },
     { "path": "pages/feedback/index", "style": { "navigationBarTitleText": "意见反馈" } },
+    { "path": "pages/recite/index", "style": { "navigationBarTitleText": "背诵", "enablePullDownRefresh": true } },
+    { "path": "pages/recite/seq", "style": { "navigationBarTitleText": "按套背" } },
+    { "path": "pages/recite/points", "style": { "navigationBarTitleText": "考点" } },
+    { "path": "pages/recite/dist", "style": { "navigationBarTitleText": "易混辨析" } },
+    { "path": "pages/recite/traps", "style": { "navigationBarTitleText": "错误说法" } },
     { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
     { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } }
   ],
@@ -43,6 +48,7 @@
     "height": "56px",
     "list": [
       { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/recite/index", "text": "背诵" },
       { "pagePath": "pages/mine/index", "text": "我的" }
     ]
   }

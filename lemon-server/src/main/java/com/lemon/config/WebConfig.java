@@ -17,7 +17,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    /** 用户端无需登录即可访问的接口：登录注册、首页、题库目录浏览 */
+    /** 用户端无需登录即可访问的接口：登录注册、首页、题库目录浏览、背诵资料（免费开放） */
     private static final String[] APP_PUBLIC = {
             "/api/app/auth/**",
             "/api/app/home",
@@ -28,6 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
             "/api/app/punch-camps/**",
             "/api/app/documents/**",
             "/api/app/service-info",
+            "/api/app/recite/**",
     };
 
     @Value("${lemon.cors.allowed-origins:*}")
