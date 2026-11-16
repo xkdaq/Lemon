@@ -18,7 +18,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-                .info(new Info().title("Lemon 刷题 API").version("v1"))
+                .info(new Info().title("柠檬题海 API").version("v1"))
                 .components(new Components().addSecuritySchemes("token",
                         new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer")))
                 .addSecurityItem(new SecurityRequirement().addList("token"));

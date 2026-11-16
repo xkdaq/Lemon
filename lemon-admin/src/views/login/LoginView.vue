@@ -32,7 +32,7 @@ async function submit() {
 <template>
   <div class="login-page">
     <el-card class="login-card" shadow="always">
-      <h2>🍋 Lemon 刷题管理系统</h2>
+      <h2>🍋 柠檬题海管理系统</h2>
       <el-form ref="formRef" :model="form" :rules="rules" size="large" @keyup.enter="submit">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="用户名" prefix-icon="User" />

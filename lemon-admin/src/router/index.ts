@@ -155,7 +155,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  document.title = `${to.meta.title ?? ''} - Lemon 刷题管理系统`
+  document.title = `${to.meta.title ?? ''} - 柠檬题海管理系统`
   if (to.meta.public) {
     return
   }

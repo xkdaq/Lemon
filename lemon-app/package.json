@@ -2,7 +2,7 @@
   "name": "lemon-app",
   "version": "0.1.0",
   "private": true,
-  "description": "Lemon 刷题用户端：一期编译 H5 发布 Web，二期编译微信小程序",
+  "description": "柠檬题海用户端：一期编译 H5 发布 Web，二期编译微信小程序",
   "scripts": {
     "dev:h5": "uni",
     "build:h5": "uni build",

@@ -12,7 +12,7 @@
 	<artifactId>lemon-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>lemon-server</name>
-	<description>Lemon 刷题后端</description>
+	<description>柠檬题海后端</description>
 	<url/>
 	<licenses>
 		<license/>

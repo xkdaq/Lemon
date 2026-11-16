@@ -144,7 +144,7 @@ function openModule(m: ExamModule) {
     </view>
     <view v-else class="hero">
       <view class="hero-label">考研政治 · 教育学</view>
-      <view class="brand">Lemon 刷题</view>
+      <view class="brand">柠檬题海</view>
       <view class="hero-sub">每天刷一点，登录后记录进度</view>
     </view>
 

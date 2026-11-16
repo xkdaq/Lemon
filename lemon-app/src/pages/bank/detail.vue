@@ -26,7 +26,7 @@ onLoad((query) => {
   bankId = Number(query?.bankId)
 })
 
-onShareAppMessage(() => ({ title: bank.value ? `一起刷「${bank.value.name}」` : 'Lemon 刷题', path: `/pages/bank/detail?bankId=${bankId}` }))
+onShareAppMessage(() => ({ title: bank.value ? `一起刷「${bank.value.name}」` : '柠檬题海', path: `/pages/bank/detail?bankId=${bankId}` }))
 
 // 从考试页返回时刷新成绩
 onShow(async () => {

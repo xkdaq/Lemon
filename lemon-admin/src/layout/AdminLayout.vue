@@ -61,7 +61,7 @@ async function savePwd() {
 <template>
   <el-container class="layout">
     <el-aside width="210px" class="aside">
-      <div class="logo">🍋 Lemon 刷题</div>
+      <div class="logo">🍋 柠檬题海</div>
       <el-menu :default-active="activeMenu" router background-color="#1f2d3d" text-color="#bfcbd9" active-text-color="#ffd04b">
         <template v-for="g in menuGroups" :key="g.title">
           <div v-if="g.title" class="menu-group">{{ g.title }}</div>

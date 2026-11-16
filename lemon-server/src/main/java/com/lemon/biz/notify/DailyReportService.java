@@ -53,7 +53,7 @@ public class DailyReportService {
     }
 
     private static String title(LocalDate day) {
-        return "Lemon 刷题日报 · " + day.format(MD);
+        return "柠檬题海日报 · " + day.format(MD);
     }
 
     /** day 必须是今天之前的日期 */

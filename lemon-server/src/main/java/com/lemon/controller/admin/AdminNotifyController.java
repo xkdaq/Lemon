@@ -26,7 +26,7 @@ public class AdminNotifyController {
     @Operation(summary = "发送一条测试消息到飞书")
     @PostMapping("/test")
     public R<Void> test() {
-        String err = notifier.sendNow(FeishuNotifier.Level.OK, "Lemon 刷题：飞书推送测试",
+        String err = notifier.sendNow(FeishuNotifier.Level.OK, "柠檬题海：飞书推送测试",
                 "收到这条消息说明配置正确。之后重要告警和每天 9 点的日报会推送到这个群。");
         BizException.throwIf(err != null, err);
         return R.ok();
