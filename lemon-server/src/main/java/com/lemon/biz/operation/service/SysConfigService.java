@@ -42,11 +42,23 @@ public class SysConfigService {
             "notify.feishu_webhook", new Rule(v -> v.isEmpty() || v.matches("^https://open\\.(feishu\\.cn|larksuite\\.com)/open-apis/bot/v2/hook/[A-Za-z0-9-]+$"),
                     "请填写飞书群机器人的 webhook 地址（https://open.feishu.cn/open-apis/bot/v2/hook/...）"),
             "notify.feishu_secret", new Rule(v -> v.length() <= 100, "最多 100 字"),
-            "app.register_gift_days", new Rule(v -> v.matches("^\\d{1,4}$") && Integer.parseInt(v) <= 3650, "请输入 0~3650 的整数"),
+            "app.register_gift_until", new Rule(SysConfigService::isDateOrEmpty, "请填写日期，格式 2027-01-01；留空表示不赠送"),
             APP_THEME, new Rule(v -> v.matches("^(paper|indigo|teal|amber|rose|violet|coffee|graphite)$|^#[0-9a-fA-F]{6}$"),
                     "请选择预设主题，或填写 #RRGGBB 格式的主色"));
 
     private final SysConfigMapper mapper;
+
+    private static boolean isDateOrEmpty(String v) {
+        if (v.isEmpty()) {
+            return true;
+        }
+        try {
+            java.time.LocalDate.parse(v);
+            return true;
+        } catch (java.time.format.DateTimeParseException e) {
+            return false;
+        }
+    }
 
     public List<SysConfig> list() {
         return mapper.selectList(Wrappers.<SysConfig>lambdaQuery().orderByAsc(SysConfig::getId));

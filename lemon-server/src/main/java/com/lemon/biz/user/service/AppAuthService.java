@@ -63,7 +63,7 @@ public class AppAuthService {
         }
     }
 
-    /** 注册：手机号 + 验证码 + 密码，注册后自动登录；赠送「政治」「教育学」（系统参数 app.register_gift_days，默认 365 天） */
+    /** 注册：手机号 + 验证码 + 密码，注册后自动登录；赠送「政治」「教育学」到固定日期（系统参数 app.register_gift_until，默认 2027-01-01） */
     @Transactional(rollbackFor = Exception.class)
     public String register(String phone, String code, String password, String nickname, String wxCode) {
         BizException.throwIf(findByPhone(phone) != null, "该手机号已注册，请直接登录");

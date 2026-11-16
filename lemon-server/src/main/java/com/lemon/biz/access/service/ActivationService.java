@@ -225,18 +225,26 @@ public class ActivationService {
 
     // ==================== 新用户注册赠送 ====================
 
-    /** 新用户注册赠送天数（系统参数，0 = 不赠送）；赠送的模块和老系统赠送相同（政治、教育学） */
-    public static final String REGISTER_GIFT_DAYS = "app.register_gift_days";
-    private static final int DEFAULT_REGISTER_GIFT_DAYS = 365;
+    /** 新用户注册赠送的到期日期（系统参数，yyyy-MM-dd，在这一天 00:00:00 到期；留空 = 不赠送）；赠送的模块和老系统赠送相同（政治、教育学） */
+    public static final String REGISTER_GIFT_UNTIL = "app.register_gift_until";
+    private static final String DEFAULT_REGISTER_GIFT_UNTIL = "2027-01-01";
 
-    /** 新用户注册后赠送「政治」「教育学」N 天；已有更晚的到期时间不变 */
+    /** 新用户注册后赠送「政治」「教育学」到固定日期 00:00:00；日期已过或已有更晚的到期时间就不变 */
     @Transactional(rollbackFor = Exception.class)
     public void grantRegister(Long userId) {
-        int days = configService.getInt(REGISTER_GIFT_DAYS, DEFAULT_REGISTER_GIFT_DAYS);
-        if (days <= 0) {
+        String date = configService.getString(REGISTER_GIFT_UNTIL, "");
+        if (date.isBlank()) {
             return;
         }
-        LocalDateTime until = LocalDateTime.now().withNano(0).plusDays(days);
+        LocalDateTime until;
+        try {
+            until = LocalDate.parse(date.trim()).atStartOfDay();
+        } catch (java.time.format.DateTimeParseException e) {
+            until = LocalDate.parse(DEFAULT_REGISTER_GIFT_UNTIL).atStartOfDay();
+        }
+        if (!until.isAfter(LocalDateTime.now())) {
+            return;
+        }
         for (ExamModule m : moduleMapper.selectList(Wrappers.<ExamModule>lambdaQuery().in(ExamModule::getName, LEGACY_MODULES))) {
             UserModuleAccess access = lockAccess(userId, m.getId());
             LocalDateTime current = access == null ? null : access.getExpireAt();
