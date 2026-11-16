@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getReciteBook, getReciteItems, setLabel, typeLabel, type ReciteBook, type ReciteItem } from '@/api/recite'
 import { goPractice } from '@/utils/nav'
@@ -16,6 +16,8 @@ const all = ref<ReciteItem[]>([])
 const setNo = ref(1)
 const loaded = ref(false)
 const expanded = ref<Record<number, boolean>>({})
+/** 从考点 / 辨析 / 错误说法点“第几题”进来时，定位并短暂高亮这道题 */
+const focusNo = ref(0)
 const { hide, toggleHide, hidden, reveal } = useHideAnswer()
 
 onLoad(async (q) => {
@@ -26,6 +28,15 @@ onLoad(async (q) => {
   setNo.value = Number(q?.setNo) || first
   updateTitle()
   loaded.value = true
+  const target = Number(q?.no)
+  if (target && items.value.some((i) => i.no === target)) {
+    focusNo.value = target
+    curNo.value = target
+    await nextTick()
+    // 等列表渲染完再滚动
+    setTimeout(() => jump(target), 300)
+    setTimeout(() => (focusNo.value = 0), 2500)
+  }
 })
 
 const sets = computed(() => book.value?.sets ?? [])
@@ -41,12 +52,41 @@ function chooseSet(no: number) {
   if (no === setNo.value) return
   setNo.value = no
   expanded.value = {}
+  curNo.value = 0
+  stripTarget.value = ''
   updateTitle()
   uni.pageScrollTo({ scrollTop: 0, duration: 0 })
 }
 
+/** 吸顶题号条的高度（px），跳转时让开它，题目不被挡住 */
+const STRIP_H = 42
+/** H5 顶部标题栏高度：吸顶要从它下面开始（小程序为 0） */
+const windowTop = uni.getWindowInfo?.().windowTop ?? 0
+/** 当前选中的题号（点过 / 跳过来的），题号条里高亮 */
+const curNo = ref(0)
+const stripTarget = ref('')
+
+/**
+ * 滚到第 no 题，让开吸顶题号条；不加动画，长列表跳转更快。
+ * 节点位置是相对页面内容区（H5 在标题栏下方、小程序在导航栏下方）量的，所以不用再减标题栏高度。
+ * 不用 pageScrollTo 的 selector + offsetTop：H5 下 offsetTop 不生效，题目会被题号条挡住
+ */
 function jump(no: number) {
-  uni.pageScrollTo({ selector: `#q-${no}`, duration: 200, offsetTop: -8 })
+  curNo.value = no
+  stripTarget.value = `qs-${no}`
+  uni
+    .createSelectorQuery()
+    .select(`#q-${no}`)
+    .boundingClientRect()
+    .selectViewport()
+    .scrollOffset()
+    .exec((res) => {
+      const rect = res?.[0] as UniApp.NodeInfo | null
+      const vp = res?.[1] as UniApp.NodeInfo | null
+      if (!rect || rect.top == null) return
+      const top = rect.top + (vp?.scrollTop ?? 0) - STRIP_H - 8
+      uni.pageScrollTo({ scrollTop: Math.max(0, top), duration: 0 })
+    })
 }
 
 const rightText = (i: ReciteItem) =>
@@ -72,11 +112,23 @@ const rightText = (i: ReciteItem) =>
       <view v-if="curSet?.chapterId" class="chip" @click="goPractice(curSet!.chapterId!, 'practice')">去刷这套</view>
     </view>
 
-    <view class="qnav">
-      <view v-for="i in items" :key="i.no" class="qn" @click="jump(i.no)">{{ i.no }}</view>
+    <!-- 题号条：一行横向滑动，吸顶，往下看题时也能随时跳 -->
+    <view class="strip-wrap" :style="{ top: `${windowTop}px` }">
+      <scroll-view scroll-x class="strip" :scroll-into-view="stripTarget" scroll-with-animation :show-scrollbar="false">
+        <view
+          v-for="i in items"
+          :id="`qs-${i.no}`"
+          :key="i.no"
+          class="qn"
+          :class="{ on: curNo === i.no }"
+          @click="jump(i.no)"
+        >
+          {{ i.no }}
+        </view>
+      </scroll-view>
     </view>
 
-    <view v-for="i in items" :id="`q-${i.no}`" :key="i.id" class="card item">
+    <view v-for="i in items" :id="`q-${i.no}`" :key="i.id" class="card item" :class="{ focus: focusNo === i.no }">
       <view class="head">
         <text class="no">{{ i.no }}</text>
         <text class="tag subj" :style="{ background: subjectColor(i.subject) }">{{ i.subject || '未分类' }}</text>
@@ -139,21 +191,37 @@ const rightText = (i: ReciteItem) =>
   display: flex;
   padding: 16rpx 32rpx 0;
 }
-.qnav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  padding: 16rpx 32rpx 0;
+.strip-wrap {
+  position: sticky;
+  z-index: 10;
+  margin-top: 12rpx;
+  padding: 12rpx 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.strip {
+  white-space: nowrap;
+  padding: 0 32rpx;
+  box-sizing: border-box;
 }
 .qn {
-  width: 60rpx;
-  height: 52rpx;
-  line-height: 52rpx;
+  display: inline-block;
+  min-width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  margin-right: 10rpx;
+  padding: 0 6rpx;
   text-align: center;
-  border-radius: 10rpx;
+  border-radius: 12rpx;
   border: 1px solid var(--line);
   background: var(--surface);
   font-size: 24rpx;
+  box-sizing: border-box;
+}
+.qn.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 .head {
   display: flex;
@@ -201,6 +269,13 @@ const rightText = (i: ReciteItem) =>
 }
 .trap + .trap {
   margin-top: 10rpx;
+}
+.item.focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.item {
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 .pager {
   display: flex;

@@ -57,7 +57,7 @@ const groups = computed(() => {
 })
 
 function openSeq(i: ReciteItem) {
-  uni.navigateTo({ url: `/pages/recite/seq?bookId=${bookId.value}&setNo=${i.setNo}` })
+  uni.navigateTo({ url: `/pages/recite/seq?bookId=${bookId.value}&setNo=${i.setNo}&no=${i.no}` })
 }
 </script>
 

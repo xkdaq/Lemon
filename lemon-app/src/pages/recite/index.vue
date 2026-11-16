@@ -42,10 +42,7 @@ function open(b: ReciteBook, page: string) {
   <page-meta :page-style="themeStyle" />
   <!-- #endif -->
   <view class="page">
-    <view class="hero">
-      <view class="hero-label">选择题考点背诵</view>
-      <view class="hero-sub">每道题提炼要背的点、易混辨析和典型错误说法，先回忆再看答案</view>
-    </view>
+    <view class="section-label">肖八肖四背诵模块</view>
 
     <view v-for="b in books" :key="b.id" class="card book">
       <view class="book-name">{{ b.name }}</view>
