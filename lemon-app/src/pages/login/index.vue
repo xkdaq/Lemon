@@ -22,7 +22,7 @@ type Mode = 'login' | 'register' | 'reset'
 const mode = ref<Mode>('login')
 const loading = ref(false)
 const sending = ref(false)
-/** 注册须勾选同意用户协议和隐私政策（默认不勾选） */
+/** 注册须勾选同意用户协议和隐私政策（默认不勾选）；小程序里登录 / 找回密码也会绑定微信，同样要勾选 */
 const agreed = ref(false)
 const form = reactive({ account: '', phone: '', code: '', password: '', confirm: '', nickname: '' })
 const { seconds, start } = useCountdown()
@@ -43,6 +43,9 @@ onLoad(async () => {
 const TITLES: Record<Mode, string> = { login: '欢迎回来', register: '注册账号', reset: '找回密码' }
 const submitText = computed(() => ({ login: '登录', register: '注册并登录', reset: '重置密码并登录' })[mode.value])
 
+/** 当前模式是否要求勾选同意 */
+const needAgree = computed(() => mode.value === 'register' || isMp.value)
+
 const phoneOk = () => /^1[3-9]\d{9}$/.test(form.phone)
 
 function toast(title: string) {
@@ -61,7 +64,7 @@ function switchMode(m: Mode) {
 async function sendCode() {
   if (seconds.value > 0 || sending.value) return
   if (!phoneOk()) return toast('请输入正确的手机号')
-  if (mode.value === 'register' && !agreed.value) return toast('请先阅读并同意用户协议和隐私政策')
+  if (needAgree.value && !agreed.value) return toast('请先阅读并同意用户协议和隐私政策')
   sending.value = true
   try {
     await authApi.sendCode(form.phone, mode.value === 'register' ? 'register' : 'reset')
@@ -76,13 +79,14 @@ function validate(): string | null {
   if (mode.value === 'login') {
     if (!form.account.trim()) return '请输入手机号或用户名'
     if (!form.password) return '请输入密码'
+    if (needAgree.value && !agreed.value) return '请先阅读并同意用户协议和隐私政策'
     return null
   }
   if (!phoneOk()) return '请输入正确的手机号'
   if (!/^\d{4,6}$/.test(form.code)) return '请输入验证码'
   if (form.password.length < 6) return '密码至少 6 位'
   if (form.password !== form.confirm) return '两次输入的密码不一致'
-  if (mode.value === 'register' && !agreed.value) return '请先阅读并同意用户协议和隐私政策'
+  if (needAgree.value && !agreed.value) return '请先阅读并同意用户协议和隐私政策'
   return null
 }
 
@@ -186,7 +190,7 @@ function goBack() {
       </view>
     </template>
 
-    <view v-if="mode === 'register'" class="agree" @click="agreed = !agreed">
+    <view v-if="needAgree" class="agree" @click="agreed = !agreed">
       <view class="check" :class="{ on: agreed }">{{ agreed ? '✓' : '' }}</view>
       <text>已阅读并同意</text>
       <text class="doc-link" @click.stop="openDocument('agreement')">《用户协议》</text>

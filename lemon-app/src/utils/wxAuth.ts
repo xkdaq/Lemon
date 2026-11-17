@@ -6,8 +6,11 @@ import { getToken, setToken } from './auth'
  * - 以后：静默登录，wx.login 的 code 换 openid，这个微信绑过账号就直接登录
  * （个人主体的小程序用不了「手机号快速验证」，所以没有授权手机号登录）
  * 用户主动退出登录后不再静默登录，直到他再次手动登录。
+ * 隐私合规：本机从没手动登录过（没在登录页同意过用户协议和隐私政策）时不静默登录，不调 wx.login。
  */
 const LOGGED_OUT_KEY = 'lemon_wx_logged_out'
+/** 本机在登录页同意协议并登录过：之后才允许静默登录 */
+const CONSENTED_KEY = 'lemon_wx_consented'
 /** 静默登录成功时广播，首页等已经显示的页面据此刷新 */
 export const LOGIN_EVENT = 'lemon:login'
 
@@ -52,7 +55,7 @@ function wxCode(): Promise<string> {
 export function silentLogin(): Promise<boolean> {
   // #ifdef MP-WEIXIN
   if (getToken()) return Promise.resolve(true)
-  if (uni.getStorageSync(LOGGED_OUT_KEY)) return Promise.resolve(false)
+  if (uni.getStorageSync(LOGGED_OUT_KEY) || !uni.getStorageSync(CONSENTED_KEY)) return Promise.resolve(false)
   if (!pending) {
     pending = wxCode()
       .then((code) => post<{ token: string | null }>('/auth/wx-silent-login', { code }, true))
@@ -84,9 +87,12 @@ export async function getWxCode(): Promise<string | undefined> {
   // #endif
 }
 
-/** 手动登录成功（任何方式）后恢复静默登录 */
+/** 手动登录成功（任何方式，登录前已同意协议）后恢复静默登录 */
 export function markLoggedIn() {
   uni.removeStorageSync(LOGGED_OUT_KEY)
+  // #ifdef MP-WEIXIN
+  uni.setStorageSync(CONSENTED_KEY, 1)
+  // #endif
 }
 
 /** 主动退出登录：本机不再静默登录 */
