@@ -80,7 +80,7 @@ lemon:
     spug-url: ${SMS_SPUG_URL:}
     minutes: ${SMS_SPUG_MINUTES:}
     log-code: false
-  # 微信小程序：AppSecret 只放服务器环境变量，不进代码仓库。
+  # 微信小程序：AppID / AppSecret 优先用后台「系统参数」里填的；后台留空时用这里的环境变量。AppSecret 不进代码仓库。
   # mock=true 时不调微信接口（开发 / 自动化测试用）：code 当作 openid，phoneCode 当作手机号
   wx:
     appid: ${WX_APPID:}

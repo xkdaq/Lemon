@@ -14,13 +14,16 @@ const loading = ref(false)
 /** 取值只有 1 / 0 的开关参数：显示成开关，切换即保存 */
 const SWITCH_KEYS = ['app.mp_activation', 'app.mp_restore']
 const isSwitch = (key: string) => SWITCH_KEYS.includes(key)
+/** 密钥参数：后端只返回后 4 位，输入框留空，填新值覆盖 */
+const SECRET_KEYS = ['wx.secret']
+const isSecret = (key: string) => SECRET_KEYS.includes(key)
 const themeValue = computed(() => list.value.find((c) => c.configKey === THEME_KEY)?.configValue ?? 'paper')
 const plainList = computed(() => list.value.filter((c) => c.configKey !== THEME_KEY))
 
 async function load() {
   loading.value = true
   try {
-    list.value = (await api.listConfigs()).map((c) => ({ ...c, draft: c.configValue }))
+    list.value = (await api.listConfigs()).map((c) => ({ ...c, draft: isSecret(c.configKey) ? '' : c.configValue }))
   } finally {
     loading.value = false
   }
@@ -47,6 +50,8 @@ async function toggle(row: Row, value: string) {
   }
 }
 
+const canSave = (row: Row) => (isSecret(row.configKey) ? row.draft.trim() !== '' : row.draft !== row.configValue)
+
 async function save(row: Row) {
   await api.updateConfig(row.configKey, row.draft)
   ElMessage.success('已保存')
@@ -69,12 +74,20 @@ async function save(row: Row) {
             inactive-text="隐藏"
             @change="(v: boolean | string | number) => toggle(row as Row, v ? '1' : '0')"
           />
+          <el-input
+            v-else-if="isSecret(row.configKey)"
+            v-model="row.draft"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            :placeholder="row.configValue ? `已设置（${row.configValue}），填新值覆盖` : '未设置'"
+          />
           <el-input v-else v-model="row.draft" />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100">
         <template #default="{ row }">
-          <el-button v-if="!isSwitch(row.configKey)" link type="primary" :disabled="row.draft === row.configValue" @click="save(row as Row)">保存</el-button>
+          <el-button v-if="!isSwitch(row.configKey)" link type="primary" :disabled="!canSave(row as Row)" @click="save(row as Row)">保存</el-button>
         </template>
       </el-table-column>
     </el-table>

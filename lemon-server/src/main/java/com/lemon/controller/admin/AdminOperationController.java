@@ -54,6 +54,7 @@ public class AdminOperationController {
     private final BannerService bannerService;
     private final SmsLogAdminService smsLogService;
     private final com.lemon.biz.document.service.AppDocumentService documentService;
+    private final com.lemon.biz.user.wx.WxMiniClient wxMiniClient;
 
     @Operation(summary = "工作台统计")
     @GetMapping("/dashboard")
@@ -186,7 +187,12 @@ public class AdminOperationController {
     @Operation(summary = "修改系统参数值")
     @PutMapping("/configs/{key}")
     public R<Void> updateConfig(@PathVariable String key, @Valid @RequestBody ConfigUpdate req) {
-        configService.update(key, req.value());
+        String value = req.value() == null ? "" : req.value().trim();
+        // 小程序 AppSecret：格式对的话先向微信校验，填错了不保存（格式错由下面的 update 提示）
+        if (SysConfigService.WX_SECRET.equals(key) && value.matches("^[0-9A-Za-z]{32}$")) {
+            wxMiniClient.verify(value);
+        }
+        configService.update(key, value);
         return R.ok();
     }
 
