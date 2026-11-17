@@ -48,7 +48,9 @@
    cd lemon-app && npm install && npm run dev:h5
    ```
 
-   小程序：`npm run build:mp-weixin`，用微信开发者工具导入 `lemon-app/dist/build/mp-weixin`；联调前把 `.env.development` 的 `VITE_API_BASE` 改成后端完整地址。
+   小程序：`npm run dev:mp-weixin`（联调）/ `npm run build:mp-weixin`（正式包），用微信开发者工具导入 `lemon-app/dist/dev/mp-weixin` 或 `dist/build/mp-weixin`。
+   联调默认连线上接口；要连本机后端，新建 `lemon-app/.env.mp-dev.local` 写 `VITE_API_BASE=http://<本机局域网IP>:8080/api/app` 和 `VITE_ASSET_BASE=http://<本机局域网IP>:8080`，开发者工具里勾选「不校验合法域名」。
+   不要建 `.env.mp.local`：它会覆盖正式包的接口地址。
 
 ## 后端约定
 
